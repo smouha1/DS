@@ -1,0 +1,1471 @@
+/* ============================================================
+   QUICK ACCESS
+   ============================================================ */
+.quick-access-section{margin-top:20px;}
+.quick-access-title{
+  margin:0 0 10px;font-size:13px;font-weight:800;
+  text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);
+}
+.quick-access-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media (max-width:640px){
+  .quick-access-grid{grid-template-columns:1fr;}
+}
+.quick-access-card{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 18px;border-radius:var(--radius);
+  background:var(--crystal);
+  border:1px solid var(--border);
+  box-shadow:var(--shadow-sm);
+  text-decoration:none;color:var(--text);cursor:pointer;
+  transition:transform 150ms ease,box-shadow 150ms ease,border-color 150ms ease;
+}
+.quick-access-icon-badge{
+  width:28px;height:28px;border-radius:8px;flex-shrink:0;
+  overflow:hidden;display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--border);
+}
+.quick-access-icon-badge svg{width:100%;height:100%;display:block;}
+.quick-access-label{flex:1;font-size:14.5px;font-weight:700;}
+.quick-access-arrow{width:16px;height:16px;color:var(--primary);flex-shrink:0;transition:transform var(--transition);}
+@media (hover:hover) and (pointer:fine){
+  .quick-access-card:hover{
+    transform:translateY(-1px);
+    border-color:var(--primary);
+    box-shadow:var(--shadow-md);
+  }
+  .quick-access-card:hover .quick-access-arrow{transform:translate(1px,-1px);}
+}
+.quick-access-card:focus-visible{outline:2px solid var(--primary);outline-offset:2px;}
+
+/* ============================================================
+   PRODUCT CARD
+   ============================================================ */
+.result-area{margin-top:28px;}
+.product-card{
+  background:var(--crystal);
+  border:1px solid var(--crystal-border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow-md);
+  padding:16px;
+  transition:box-shadow var(--transition),border-color var(--transition);
+}
+@keyframes cardIn{from{opacity:0;transform:scale(.99);}to{opacity:1;transform:scale(1);}}
+/* Two-column layout: image (35%) + barcodes (65%), barcode always visible without
+   scrolling. Details (name/SKU/copy) sit below both columns. */
+.product-top-row{
+  display:flex;gap:12px;padding:12px;flex-wrap:nowrap;
+  border-bottom:1px solid var(--border);
+  align-items:stretch;
+}
+.product-live-col{
+  flex:0 0 200px;
+  max-width:220px;
+  min-width:160px;
+  display:flex;
+  align-items:stretch;
+}
+.product-image-col{
+  flex:0 0 30%;max-width:30%;
+  display:flex;align-items:flex-start;justify-content:center;
+}
+.product-image-wrap{
+  width:100%;max-width:178px;aspect-ratio:1/1;border-radius:var(--radius-sm);
+  overflow:hidden;flex-shrink:0;background:var(--bg);
+  position:relative;cursor:zoom-in;
+  border:1px solid var(--border);
+}
+.product-image-wrap img{width:100%;height:100%;object-fit:contain;transition:transform var(--transition);}
+.product-image-wrap:hover img{transform:scale(1.06);}
+.product-image-wrap.loading::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,var(--bg) 25%,var(--border) 50%,var(--bg) 75%);
+  background-size:200% 100%;animation:shimmer 1.4s infinite;
+}
+@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+.image-zoom-hint{
+  position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.55);color:#fff;
+  border-radius:8px;padding:4px 6px;font-size:10px;display:flex;align-items:center;gap:3px;
+  opacity:0;transition:opacity var(--transition);
+}
+.product-image-wrap:hover .image-zoom-hint{opacity:1;}
+.image-zoom-hint svg{width:11px;height:11px;}
+
+.product-barcodes-col{flex:1 1 65%;max-width:65%;padding:0 0 0 0;}
+
+.product-details-row{padding:16px 20px;display:flex;flex-direction:column;gap:10px;}
+.product-title-row{display:flex;align-items:flex-start;gap:10px;}
+.product-name{font-size:20px;font-weight:800;line-height:1.3;}
+@keyframes pop{0%{transform:scale(1);}45%{transform:scale(1.35);}100%{transform:scale(1);}}
+
+/* Favorite — now a third info card, matching SKU/Barcode exactly */
+.info-field-fav{color:var(--text);}
+.info-value-fav{display:flex;align-items:center;height:19px;color:var(--text-muted);}
+.info-value-fav svg{width:18px;height:18px;}
+.info-field-fav.active{border-color:var(--primary);background:var(--primary-light);}
+.info-field-fav.active .info-value-fav{color:var(--primary);}
+.info-field-fav.active .info-value-fav svg{fill:var(--primary);}
+.info-field-fav.pulse .info-value-fav svg{animation:pop 320ms ease;}
+
+/* SKU + Barcode — same row on wide screens, individually clickable to copy,
+   no separate large copy buttons. Fields size to their own content only. */
+.sku-barcode-row{display:flex;gap:8px;flex-wrap:wrap;}
+.info-field{
+  flex:1 1 0;display:flex;flex-direction:column;gap:3px;justify-content:center;
+  background:rgba(176,186,194,.22);
+  border:1px solid rgba(160,170,180,.35);border-radius:12px;
+  padding:10px 14px;cursor:pointer;text-align:left;min-width:0;min-height:52px;
+  font-family:inherit;transition:border-color 140ms ease,background-color 140ms ease,box-shadow 140ms ease;
+}
+.info-field:hover,.info-field:active{border-color:var(--primary);}
+.info-field-barcode{flex-direction:row;align-items:center;gap:4px;padding:5px 6px 5px 0;}
+.info-field-copy{
+  flex:1 1 auto;display:flex;flex-direction:column;gap:1px;background:none;border:none;
+  padding:7px 8px 7px 12px;cursor:pointer;text-align:left;font-family:inherit;min-width:0;
+  align-items:flex-start;
+}
+.info-label{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted);}
+.info-value{font-size:13.5px;font-weight:700;color:var(--text);line-height:1.25;word-break:break-all;}
+
+/* Product action bar — currently holds "Check in Dmart"; built so more
+   actions can be added later without restructuring. */
+.product-action-bar{display:flex;gap:8px;margin-top:2px;}
+.dmart-check-btn{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:9px;
+  padding:9px 16px;border-radius:12px;text-decoration:none;
+  background:var(--crystal);
+  border:1px solid var(--crystal-border);
+  color:var(--primary-dark);font-size:14px;font-weight:700;
+  box-shadow:var(--shadow-sm);
+  transition:transform 150ms ease,border-color 150ms ease,box-shadow 150ms ease;
+}
+.dmart-check-icon{width:20px;height:20px;border-radius:6px;overflow:hidden;flex-shrink:0;display:flex;border:1px solid var(--border);}
+.dmart-check-icon svg{width:100%;height:100%;display:block;}
+@media (hover:hover) and (pointer:fine){
+  .dmart-check-btn:hover{transform:translateY(-1px);border-color:var(--primary);box-shadow:var(--shadow-md);}
+}
+.dmart-check-btn:active{transform:scale(.98);}
+.dmart-check-btn:focus-visible{outline:2px solid var(--primary);outline-offset:2px;}
+
+/* Barcodes section — right column, primary visual priority, minimal chrome */
+.barcodes-section{padding:2px 0;display:flex;flex-direction:column;gap:2px;}
+.barcode-block{
+  display:flex;flex-direction:column;align-items:center;
+  padding:0;background:transparent;border-radius:var(--radius-sm);border:none;
+}
+/* NEVER apply glass/blur/transparency/orange tint here — scan reliability requires
+   pure opaque white with maximum contrast. This rule is exempt from the ambient theme. */
+.barcode-128-wrap{
+  background:#ffffff;
+  padding:1px 2px;
+  border-radius:4px;
+  box-shadow:none;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  width:60%;
+  max-width:60%;
+  box-sizing:border-box;
+}
+.barcode-128-wrap svg{display:block;width:100%;height:auto;}
+/* QR mode: fixed square slot — prevents mobile WebView from stretching
+   the vector path into a static-noise pattern. */
+.barcode-128-wrap.is-qr{
+  width:min(200px, 55%);
+  aspect-ratio:1 / 1;
+  padding:8px;
+  box-sizing:border-box;
+}
+.barcode-128-wrap.is-qr svg{
+  width:100%;
+  height:100%;
+  display:block;
+}
+
+/* Plain-text list of every barcode number — only one Code128 image is ever
+   generated (the first barcode); every number, including the first, is
+   still listed here so nothing is hidden. Click/tap any row to copy it. */
+.barcode-numbers-list{display:flex;flex-direction:column;}
+.barcode-number-item{
+  display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  padding:6px 4px;cursor:pointer;border-bottom:1px solid var(--border);
+  transition:background-color var(--transition);
+}
+.barcode-number-item:last-child{border-bottom:none;}
+.barcode-number-item:hover{background:var(--crystal);}
+.barcode-number-label{font-size:11px;color:var(--text-muted);font-weight:700;flex-shrink:0;}
+.barcode-number-value{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;word-break:break-all;text-align:right;}
+.icon-btn-sm{
+  width:32px;height:32px;border-radius:8px;border:1px solid var(--border);
+  background:var(--crystal);display:flex;align-items:center;justify-content:center;
+  color:var(--text-muted);cursor:pointer;flex-shrink:0;transition:background-color var(--transition),border-color var(--transition),color var(--transition);
+}
+.icon-btn-sm svg{width:15px;height:15px;}
+.icon-btn-sm:hover{border-color:var(--primary);color:var(--primary);}
+
+/* Buttons */
+
+/* ============================================================
+   TEAM MEMBERS MODAL — enterprise credits window
+   ============================================================ */
+.team-modal-box{
+  max-width:600px;min-width:520px;width:100%;
+  border-radius:16px;
+  transition:transform 180ms ease,opacity 180ms ease;
+}
+@media (max-width:640px){
+  .team-modal-box{min-width:0;width:90%;}
+}
+@media (max-width:480px){
+  .team-modal-box{width:95%;}
+}
+.team-modal-box .modal-header{align-items:flex-start;}
+.team-modal-subtitle{display:block;margin-top:3px;font-size:11.5px;font-weight:500;color:var(--text-muted);}
+.team-modal-body{padding:20px 22px 22px;}
+.team-section{display:flex;flex-direction:column;gap:10px;}
+.team-section-title{margin:0;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--text-muted);}
+.team-divider{height:1px;background:var(--border);margin:16px 0;}
+
+.team-leader{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+.team-leader-name{font-size:19px;font-weight:800;}
+.team-leader-role{font-size:13px;color:var(--text-muted);font-weight:600;}
+
+/* Outstanding Team Member — a subtly highlighted recognition card. This is
+   the one intentional accent color left in the app besides Talabat orange:
+   a calm blue tint, per spec, to visually set it apart from ordinary text. */
+.team-outstanding{
+  display:flex;flex-direction:column;gap:6px;
+  background:var(--blue-highlight);
+  border:1px solid var(--blue-highlight-border);
+  border-radius:12px;padding:14px 16px;
+}
+.team-outstanding-message{margin:0;font-size:13px;line-height:1.6;color:var(--text);font-weight:400;}
+.team-outstanding-highlight{font-weight:700;color:var(--blue-highlight-text);}
+
+.team-members-list{
+  list-style:none;margin:0;padding:0;
+  column-count:2;column-gap:20px;
+}
+@media (max-width:640px){
+  .team-members-list{column-count:1;}
+}
+.team-members-list li{
+  position:relative;padding:4px 0 4px 16px;font-size:13.5px;
+  break-inside:avoid;-webkit-column-break-inside:avoid;
+}
+.team-members-list li::before{
+  content:'';position:absolute;left:0;top:11px;
+  width:5px;height:5px;border-radius:50%;background:var(--primary);
+}
+
+.team-thanks-text{margin:0;font-size:13.5px;line-height:1.6;color:var(--text-muted);}
+.choice-item{
+  display:flex;align-items:center;gap:14px;padding:12px;border-radius:14px;
+  cursor:pointer;transition:background var(--transition);border:1px solid transparent;
+}
+.choice-item:hover{background:var(--primary-light);border-color:var(--primary);}
+.choice-thumb{width:52px;height:52px;border-radius:10px;object-fit:cover;background:var(--bg);flex-shrink:0;}
+.choice-info{flex:1;min-width:0;}
+.choice-name{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.choice-sub{font-size:12px;color:var(--text-muted);margin-top:2px;}
+
+/* Image zoom modal */
+.zoom-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,.9);
+  display:flex;align-items:center;justify-content:center;z-index:95;
+  opacity:0;pointer-events:none;transition:opacity 180ms ease;padding:30px;
+}
+.zoom-backdrop.open{opacity:1;pointer-events:auto;}
+.zoom-backdrop img{
+  max-width:90vw;max-height:85vh;object-fit:contain;border-radius:12px;
+  transform:scale(.9);opacity:0;
+  transition:transform 180ms ease,opacity 180ms ease;
+}
+.zoom-backdrop.open img{transform:scale(1);opacity:1;}
+.zoom-close{position:absolute;top:20px;right:20px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.12);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.zoom-close svg{width:20px;height:20px;}
+
+/* ============================================================
+   RECENT / FAVORITES PANELS
+   ============================================================ */
+.panels-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px;}
+@media (max-width:720px){.panels-row{grid-template-columns:1fr;}}
+.panel{background:var(--crystal);border:1px solid var(--crystal-border);border-radius:var(--radius);box-shadow:var(--shadow-sm);overflow:hidden;}
+.panel-header{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.panel-header h3{margin:0;font-size:14.5px;font-weight:800;display:flex;align-items:center;gap:8px;}
+.panel-header h3 svg{width:17px;height:17px;color:var(--primary);}
+.panel-clear{font-size:12px;color:var(--text-muted);background:none;border:none;cursor:pointer;font-weight:600;}
+.panel-clear:hover{color:var(--danger);}
+.panel-list{max-height:220px;overflow-y:auto;contain:layout paint style;}
+.panel-item{
+  display:flex;align-items:center;gap:12px;padding:8px 20px;cursor:pointer;
+  transition:background-color var(--transition);border-bottom:1px solid var(--border);
+  content-visibility:auto;contain-intrinsic-size:0 52px;
+}
+.panel-item:last-child{border-bottom:none;}
+.panel-item:hover{background:var(--primary-light);}
+.panel-thumb{width:32px;height:32px;border-radius:8px;object-fit:cover;background:var(--bg);flex-shrink:0;}
+.panel-text{flex:1;min-width:0;}
+.panel-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.panel-sub{font-size:11.5px;color:var(--text-muted);}
+.panel-empty{padding:24px 20px;text-align:center;color:var(--text-muted);font-size:13px;}
+
+
+/* Phase 2.1 desktop product hover */
+@media (hover:hover) and (pointer:fine){
+  .product-card{
+    box-shadow:var(--shadow-sm);
+    transition:box-shadow 160ms ease,border-color 160ms ease;
+  }
+  .product-card:hover{
+    box-shadow:var(--shadow-md);
+    border-color:var(--crystal-border);
+  }
+  .product-card:hover .product-image-wrap img{
+    transform:scale(1.03);
+  }
+  .product-image-wrap img{
+    transition:transform 180ms ease;
+  }
+}
+
+
+/* ============================================================
+   DMART LIVE INFO — premium, high clarity (left of product image)
+   ============================================================ */
+.dmart-live-card{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  padding:14px 14px 12px;
+  border-radius:16px;
+  border:1.5px solid rgba(255,107,0,.35);
+  background:linear-gradient(165deg, rgba(255,255,255,.95) 0%, rgba(255,248,242,.92) 100%);
+  box-shadow:0 4px 18px rgba(255,107,0,.10), var(--shadow-sm);
+  align-self:stretch;
+}
+[data-theme="dark"] .dmart-live-card{
+  background:linear-gradient(165deg, rgba(28,32,36,.95) 0%, rgba(40,28,20,.9) 100%);
+  border-color:rgba(255,107,0,.45);
+}
+.dmart-live-title{
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#FF6B00;
+  margin-bottom:10px;
+  padding-bottom:8px;
+  border-bottom:1px solid rgba(255,107,0,.2);
+}
+.dmart-live-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:8px 0;
+  border-bottom:1px solid rgba(0,0,0,.06);
+}
+[data-theme="dark"] .dmart-live-row{border-bottom-color:rgba(255,255,255,.08);}
+.dmart-live-row:last-of-type{border-bottom:none;}
+.dmart-live-label{
+  font-size:12px;
+  font-weight:700;
+  color:var(--text-muted);
+}
+.dmart-live-value{
+  font-size:15px;
+  font-weight:900;
+  font-variant-numeric:tabular-nums;
+  color:var(--text);
+  text-align:right;
+}
+.dmart-live-card.is-loading .dmart-live-value{
+  color:var(--text-muted);
+  font-weight:700;
+}
+.dmart-live-card.is-loading .dmart-live-title::after{
+  content:"";
+  display:inline-block;
+  width:7px;
+  height:7px;
+  margin-left:7px;
+  vertical-align:1px;
+  border:1.5px solid currentColor;
+  border-right-color:transparent;
+  border-radius:50%;
+  animation:dmartLiveSpin .75s linear infinite;
+  opacity:.8;
+}
+@keyframes dmartLiveSpin{to{transform:rotate(360deg)}}
+.dmart-live-card.is-error .dmart-live-value{
+  color:var(--text-muted);
+}
+.dmart-live-card.is-ready .dmart-live-value{/* per-field colors below */}
+[data-theme="dark"] .dmart-live-card.is-ready .dmart-live-value{
+  color:#5ddea0;
+}
+.dmart-live-status{
+  margin-top:8px;
+  font-size:11px;
+  line-height:1.35;
+  color:var(--text-muted);
+  font-weight:600;
+}
+
+
+/* Recent beside barcode (settings: recentBesideBarcode) */
+.product-recent-col{
+  display:none;
+  flex:0 0 200px;
+  max-width:220px;
+  min-width:160px;
+  border-left:1px solid var(--border);
+  padding-left:10px;
+  max-height:280px;
+  overflow:hidden;
+  flex-direction:column;
+}
+/* Desktop only: Recent Beside Barcode +30% width & height */
+@media (min-width:721px){
+  html.recent-beside-barcode .product-recent-col{
+    display:flex;
+    flex:0 0 260px !important;   /* 200 * 1.3 */
+    width:260px !important;
+    min-width:208px !important;  /* 160 * 1.3 */
+    max-width:286px !important;  /* 220 * 1.3 */
+    max-height:364px !important; /* 280 * 1.3 */
+  }
+  html.recent-beside-barcode .product-recent-list{
+    max-height:100%;
+  }
+}
+html.recent-beside-barcode .product-recent-col{
+  display:flex;
+}
+html.recent-beside-barcode .product-recent-col[hidden]{
+  display:none !important;
+}
+html.recent-beside-barcode .product-barcodes-col{
+  flex:1 1 auto;
+  max-width:none;
+}
+html.recent-beside-barcode .product-image-col{
+  flex:0 0 28%;
+  max-width:28%;
+}
+.product-recent-head{
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:12px;font-weight:800;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:.04em;
+  margin-bottom:6px;padding:0 2px;
+}
+.product-recent-list{
+  overflow-y:auto;flex:1;min-height:0;
+}
+.product-recent-list .panel-item{
+  padding:6px 8px;gap:8px;
+}
+.product-recent-list .panel-thumb{width:28px;height:28px;}
+.product-recent-list .panel-name{font-size:12px;}
+.product-recent-list .panel-sub{font-size:10.5px;}
+/* Hide bottom Recent panel when inline recent is active (desktop) */
+@media (min-width: 721px) {
+  html.recent-beside-barcode .panels-row .panel:first-child {
+    display:none;
+  }
+  html.recent-beside-barcode .panels-row {
+    grid-template-columns:1fr;
+  }
+}
+@media (max-width: 720px) {
+  html.recent-beside-barcode .product-recent-col {
+    display:none !important;
+  }
+}
+
+
+/* Tighter barcode frame on mobile */
+@media (max-width:720px){
+  .product-top-row{padding:8px;}
+  /* mobile width overridden in 1.5.4 */
+  .barcodes-section{padding:0;}
+}
+
+
+/* live col mobile */
+@media (max-width:720px){
+  .product-top-row{flex-wrap:wrap;}
+  .product-live-col{
+    flex:1 1 100%;
+    max-width:100%;
+    min-width:0;
+    order:-1;
+  }
+  .product-image-col{flex:1 1 40%;max-width:45%;}
+  .product-barcodes-col{flex:1 1 50%;max-width:55%;}
+}
+
+
+.dmart-live-available{color:#1a7a3c !important;}
+.dmart-live-reserved,.dmart-live-price{color:#111 !important;}
+[data-theme="dark"] .dmart-live-reserved,
+[data-theme="dark"] .dmart-live-price{color:#f2f5f7 !important;}
+[data-theme="dark"] .dmart-live-available{color:#5ddea0 !important;}
+
+.dmart-check-btn-inline{
+  margin-top:10px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  width:100%;
+  padding:7px 10px;
+  font-size:12px;
+  font-weight:700;
+  border-radius:10px;
+  border:1px solid rgba(255,107,0,.4);
+  background:rgba(255,107,0,.08);
+  color:#E85D00;
+  text-decoration:none;
+  box-sizing:border-box;
+}
+.dmart-check-btn-inline .dmart-check-icon{display:none;}
+.dmart-check-btn-inline:active{transform:scale(.98);}
+
+.state-icon-talabat{
+  width:48px;height:48px;
+  color:#9aa5ad;
+  opacity:.9;
+}
+
+
+
+/* ============================================================
+   Visual polish v1.5.1 — cleaner, premium, zero lag
+   CSS-only. No new JS. Transitions only on hover (skipped in
+   performance-mode).
+   ============================================================ */
+
+.product-card{
+  background:rgba(255,255,255,.88);
+  border:1px solid rgba(150,195,205,.28);
+  border-radius:20px;
+  box-shadow:0 2px 8px rgba(20,40,50,.04), 0 12px 28px rgba(20,40,50,.05);
+  padding:14px;
+}
+[data-theme="dark"] .product-card{
+  background:rgba(18,28,32,.88);
+  border-color:rgba(60,80,90,.45);
+  box-shadow:0 2px 10px rgba(0,0,0,.28);
+}
+
+.product-top-row{
+  gap:14px;
+  padding:10px 10px 14px;
+  border-bottom:1px solid rgba(150,195,205,.22);
+}
+[data-theme="dark"] .product-top-row{
+  border-bottom-color:rgba(60,80,90,.4);
+}
+
+.product-image-wrap{
+  border-radius:16px;
+  border:1px solid rgba(150,195,205,.25);
+  background:#fff;
+  box-shadow:0 1px 4px rgba(20,40,50,.04);
+}
+[data-theme="dark"] .product-image-wrap{
+  background:rgba(12,16,18,.9);
+  border-color:rgba(60,80,90,.4);
+}
+
+.product-details-row{
+  padding:14px 12px 6px;
+  gap:12px;
+}
+.product-name{
+  font-size:18px;
+  font-weight:800;
+  letter-spacing:-.01em;
+  line-height:1.35;
+  color:var(--text);
+}
+
+.info-field{
+  background:rgba(186,196,204,.18);
+  border:1px solid rgba(160,170,180,.28);
+  border-radius:14px;
+  padding:11px 14px;
+  min-height:54px;
+  box-shadow:none;
+}
+[data-theme="dark"] .info-field{
+  background:rgba(40,52,58,.55);
+  border-color:rgba(70,90,100,.4);
+}
+.info-field:hover,.info-field:active{
+  border-color:rgba(255,107,0,.45);
+  background:rgba(255,107,0,.06);
+}
+.info-label{
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.06em;
+  color:var(--text-muted);
+}
+.info-value{
+  font-size:13.5px;
+  font-weight:700;
+}
+
+.dmart-live-card{
+  border-radius:18px;
+  border:1px solid rgba(255,107,0,.28);
+  background:linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(255,248,242,.94) 100%);
+  box-shadow:0 2px 10px rgba(255,107,0,.07);
+  padding:14px 14px 12px;
+}
+[data-theme="dark"] .dmart-live-card{
+  background:linear-gradient(180deg, rgba(28,32,36,.96) 0%, rgba(40,28,20,.92) 100%);
+  border-color:rgba(255,107,0,.38);
+}
+.dmart-live-title{
+  font-size:11px;
+  letter-spacing:.1em;
+}
+.dmart-live-value{
+  font-size:16px;
+  letter-spacing:-.01em;
+}
+.dmart-check-btn-inline{
+  border-radius:12px;
+  margin-top:12px;
+  padding:8px 12px;
+  font-size:12.5px;
+}
+
+.state-panel{
+  background:rgba(255,255,255,.78);
+  border:1px solid rgba(150,195,205,.28);
+  border-radius:20px;
+  padding:36px 24px;
+  box-shadow:0 2px 10px rgba(20,40,50,.04);
+  text-align:center;
+}
+[data-theme="dark"] .state-panel{
+  background:rgba(18,28,32,.78);
+  border-color:rgba(60,80,90,.45);
+}
+.state-icon-talabat{
+  width:52px;height:52px;
+  color:#A8B4BC;
+  opacity:.85;
+  margin:0 auto 12px;
+  display:block;
+}
+.state-title{
+  font-size:17px;
+  font-weight:800;
+  letter-spacing:-.01em;
+}
+.state-sub{
+  font-size:13.5px;
+  color:var(--text-muted);
+  margin-top:6px;
+}
+
+.team-rotator{
+  border-radius:16px;
+  border:1px solid rgba(150,195,205,.28);
+  background:rgba(255,255,255,.72);
+  box-shadow:0 1px 4px rgba(20,40,50,.03);
+}
+[data-theme="dark"] .team-rotator{
+  background:rgba(18,28,32,.72);
+  border-color:rgba(60,80,90,.45);
+}
+
+#searchInput{
+  border-radius:16px;
+  font-weight:600;
+}
+
+.app-header{
+  backdrop-filter:none; /* avoid expensive blur lag on mobile */
+}
+
+/* No continuous motion beyond existing intentional ones */
+.performance-mode .product-card,
+.performance-mode .dmart-live-card,
+.performance-mode .info-field,
+.performance-mode .state-panel{
+  box-shadow:none;
+  transition:none;
+}
+.performance-mode .product-image-wrap:hover img{
+  transform:none;
+}
+
+
+/* --- layout tweaks 1.5.2 --- */
+.sku-barcode-row{
+  display:flex;
+  flex-wrap:nowrap;
+  gap:8px;
+  align-items:stretch;
+}
+.info-field{
+  flex:0 1 auto;
+  width:auto;
+  max-width:max-content;
+  min-width:0;
+  min-height:0;
+  padding:7px 10px;
+  border-radius:10px;
+}
+.info-field-barcode{
+  flex:0 1 auto;
+  width:auto;
+  max-width:max-content;
+  padding:5px 6px 5px 0;
+}
+.info-field-copy{
+  padding:6px 8px 6px 10px;
+}
+.info-label{font-size:9px;}
+.info-value{font-size:12.5px;font-weight:600;}
+.info-field-fav{flex:0 0 auto;padding:7px 10px;}
+.info-value-fav svg{width:18px;height:18px;}
+
+.product-name{
+  font-size:17px;
+  font-weight:600;
+  letter-spacing:0;
+  line-height:1.35;
+}
+
+.barcode-number-item{
+  border:1px solid rgba(160,170,180,.35);
+  border-radius:8px;
+  padding:6px 10px;
+  margin:2px 0;
+  background:rgba(186,196,204,.08);
+  gap:10px;
+}
+.barcode-number-item:hover{background:rgba(186,196,204,.14);}
+.barcode-number-label{font-weight:600;color:#8a969e;}
+.barcode-number-value{font-weight:600;text-align:left;}
+
+/* width/padding overridden in 1.5.4 */
+
+.state-icon-talabat-word{
+  width:min(200px, 70%);
+  height:auto;
+  color:#A8B4BC;
+  opacity:.9;
+  margin:0 auto 14px;
+  display:block;
+}
+
+
+/* --- 1.5.3 tweaks --- */
+.state-logo-wrap{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  margin:0 auto 14px;
+  color:#A8B4BC;
+}
+.state-icon-talabat-mark{
+  width:44px;height:44px;
+  color:#A8B4BC;
+  display:block;
+}
+.state-icon-talabat-word{
+  width:min(180px, 65%);
+  height:auto;
+  color:#A8B4BC;
+  display:block;
+}
+.state-title{
+  font-size:16px;
+  font-weight:500;
+  color:#8a969e;
+  letter-spacing:0;
+}
+[data-theme="dark"] .state-title{color:#9aa5ad;}
+.state-sub{font-weight:400;color:var(--text-muted);}
+
+/* Barcode label + number: tighter, aligned under C128 */
+.barcode-numbers-list{
+  width:60%;
+  max-width:60%;
+  margin-top:4px;
+}
+html.large-barcode .barcode-numbers-list{
+  width:92%;
+  max-width:92%;
+}
+.barcode-number-item{
+  display:flex;
+  align-items:baseline;
+  gap:6px;
+  border:1px solid rgba(160,170,180,.35);
+  border-radius:8px;
+  padding:5px 8px;
+  margin:2px 0;
+  background:rgba(186,196,204,.08);
+}
+.barcode-number-label{
+  font-size:11px;
+  font-weight:600;
+  color:#8a969e;
+  flex-shrink:0;
+  min-width:0;
+}
+.barcode-number-value{
+  font-size:12.5px;
+  font-weight:600;
+  text-align:left;
+  flex:1 1 auto;
+}
+
+/* Modest padding for C128 + QR */
+.barcode-128-wrap{
+  padding:6px 8px !important;
+  box-sizing:border-box;
+  background:#fff;
+  border-radius:6px;
+}
+.barcode-128-wrap.is-qr{
+  padding:10px !important;
+}
+
+/* Large barcode works for BOTH Code128 and QR */
+html.large-barcode .barcode-128-wrap{
+  width:92% !important;
+  max-width:92% !important;
+}
+html.large-barcode .barcode-128-wrap.is-qr{
+  width:min(280px, 92%) !important;
+  max-width:min(280px, 92%) !important;
+}
+html.large-barcode.compact-mode .barcode-128-wrap{
+  width:85% !important;
+  max-width:85% !important;
+}
+
+
+/* --- 1.5.4 fix: single logo, barcode align, visible padding --- */
+.state-logo-wrap{display:none;}
+.state-icon-talabat-word{display:none !important;}
+.state-icon-talabat-mark{
+  width:52px;
+  height:52px;
+  color:#A8B4BC;
+  margin:0 auto 14px;
+  display:block;
+}
+
+/* Stack C128 + label in one column, same left edge */
+.barcode-block,
+.barcode-block-128{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:stretch !important;
+  width:100%;
+  gap:6px;
+}
+
+.barcode-128-wrap{
+  width:100% !important;
+  max-width:100% !important;
+  margin:0 !important;
+  padding:12px 14px !important;
+  box-sizing:border-box !important;
+  background:#ffffff !important;
+  border-radius:8px;
+  border:1px solid rgba(160,170,180,.25);
+  display:flex !important;
+  align-items:center;
+  justify-content:center;
+}
+
+.barcode-128-wrap svg{
+  display:block;
+  width:100%;
+  height:auto;
+  max-width:100%;
+}
+
+.barcode-128-wrap.is-qr{
+  width:min(220px, 100%) !important;
+  max-width:min(220px, 100%) !important;
+  aspect-ratio:1 / 1;
+  padding:14px !important;
+  align-self:flex-start;
+}
+
+.barcode-numbers-list{
+  width:100% !important;
+  max-width:100% !important;
+  margin:0 !important;
+  box-sizing:border-box;
+}
+
+.barcode-number-item{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:8px !important;
+  width:100%;
+  box-sizing:border-box;
+  padding:8px 12px !important;
+  margin:0 !important;
+  border:1px solid rgba(160,170,180,.3);
+  border-radius:8px;
+  background:rgba(186,196,204,.1);
+}
+
+.barcode-number-label{
+  flex:0 0 auto;
+  white-space:nowrap;
+}
+.barcode-number-value{
+  flex:1 1 auto;
+  text-align:left !important;
+}
+
+html.large-barcode .barcode-128-wrap{
+  width:100% !important;
+  max-width:100% !important;
+  padding:16px 18px !important;
+}
+html.large-barcode .barcode-128-wrap.is-qr{
+  width:min(280px, 100%) !important;
+  max-width:min(280px, 100%) !important;
+  padding:16px !important;
+}
+
+/* Product name under image, clipped to image width */
+.product-image-col{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+}
+.product-name-under-img{
+  width:100%;
+  max-width:178px;
+  font-size:13.5px;
+  font-weight:600;
+  line-height:1.3;
+  text-align:center;
+  color:var(--text);
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  overflow:hidden;
+  word-break:break-word;
+}
+.product-details-row .product-title-row{display:none;} /* name moved under image */
+
+.sku-barcode-row{margin-top:0;}
+
+/* Barcode number row tracks barcode/QR width */
+.barcode-block-128{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  width:100%;
+}
+.barcode-128-wrap{
+  align-self:flex-start;
+}
+.barcode-numbers-list{
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+}
+.barcode-block-128 .barcode-numbers-list{
+  width:var(--bc-track-width, 100%);
+  max-width:100%;
+  align-self:flex-start;
+}
+.barcode-number-item{
+  justify-content:flex-start !important;
+}
+.barcode-number-value{
+  text-align:right !important;
+  margin-left:auto;
+  font-variant-numeric:tabular-nums;
+}
+
+/* DMart live fonts */
+.dmart-live-value{
+  font-weight:500 !important;
+}
+.dmart-live-available{
+  font-weight:700 !important;
+}
+
+/* Hide DMart live card + reflow */
+html.hide-dmart-live .product-live-col,
+html.hide-dmart-live .dmart-live-card{
+  display:none !important;
+}
+html.hide-dmart-live .product-top-row{
+  gap:16px;
+}
+html.hide-dmart-live .product-image-col{
+  flex:0 0 34%;
+  max-width:34%;
+}
+html.hide-dmart-live .product-barcodes-col{
+  flex:1 1 66%;
+  max-width:66%;
+}
+
+/* Confirm popup tighter without warehouse block */
+.dmart-confirm-box{
+  min-width:220px !important;
+  padding:14px 16px !important;
+}
+.dmart-confirm-body,
+.dmart-confirm-wh-label,
+.dmart-confirm-wh{display:none !important;}
+
+/* Changelog */
+.changelog-latest{
+  padding:10px 12px;
+  border-radius:12px;
+  background:rgba(255,107,0,.08);
+  border:1px solid rgba(255,107,0,.22);
+  margin-bottom:10px;
+}
+.changelog-latest-label{
+  display:block;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:var(--primary);
+  margin-bottom:4px;
+}
+.changelog-latest p{margin:0;font-size:13px;font-weight:600;line-height:1.4;}
+.changelog-history{
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:8px 12px;
+  background:var(--crystal);
+}
+.changelog-history summary{
+  cursor:pointer;
+  font-weight:700;
+  font-size:13px;
+  color:var(--text);
+  list-style:none;
+}
+.changelog-history summary::-webkit-details-marker{display:none;}
+.changelog-history[open] summary{margin-bottom:8px;}
+
+/* Custom barcode card */
+.custom-barcode-card{
+  background:var(--crystal);
+  border:1px solid var(--crystal-border);
+  border-radius:20px;
+  padding:16px;
+  text-align:center;
+  box-shadow:var(--shadow-md);
+}
+.custom-barcode-card h3{
+  margin:0 0 12px;
+  font-size:14px;
+  font-weight:700;
+  color:var(--text-muted);
+}
+.custom-barcode-wrap{
+  display:inline-flex;
+  padding:12px 14px;
+  background:#fff;
+  border-radius:8px;
+  border:1px solid rgba(160,170,180,.25);
+}
+.custom-barcode-value{
+  margin-top:10px;
+  font-size:13px;
+  font-weight:600;
+  font-variant-numeric:tabular-nums;
+}
+
+
+.product-image-col{display:flex;flex-direction:column;align-items:center;gap:8px;}
+.product-name-under-img{
+  width:100%;max-width:178px;font-size:13.5px;font-weight:600;line-height:1.3;text-align:center;color:var(--text);
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;word-break:break-word;
+}
+.product-details-row .product-title-row{display:none;}
+.barcode-block-128 .barcode-numbers-list{width:var(--bc-track-width,100%);max-width:100%;align-self:flex-start;}
+.barcode-number-value{text-align:right !important;margin-left:auto;font-variant-numeric:tabular-nums;}
+.dmart-live-value{font-weight:500 !important;}
+.dmart-live-available{font-weight:700 !important;}
+html.hide-dmart-live .product-live-col,
+html.hide-dmart-live .dmart-live-card{display:none !important;}
+html.hide-dmart-live .product-top-row{gap:16px;}
+html.hide-dmart-live .product-image-col{flex:0 0 34%;max-width:34%;}
+html.hide-dmart-live .product-barcodes-col{flex:1 1 66%;max-width:66%;}
+.dmart-confirm-box{min-width:220px !important;padding:14px 16px !important;}
+.dmart-confirm-body,.dmart-confirm-wh-label,.dmart-confirm-wh{display:none !important;}
+.changelog-latest{padding:10px 12px;border-radius:12px;background:rgba(255,107,0,.08);border:1px solid rgba(255,107,0,.22);margin-bottom:10px;}
+.changelog-latest-label{display:block;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--primary);margin-bottom:4px;}
+.changelog-latest p{margin:0;font-size:13px;font-weight:600;line-height:1.4;}
+.changelog-history{border:1px solid var(--border);border-radius:12px;padding:8px 12px;background:var(--crystal);}
+.changelog-history summary{cursor:pointer;font-weight:700;font-size:13px;color:var(--text);list-style:none;}
+.changelog-history summary::-webkit-details-marker{display:none;}
+.custom-barcode-card{background:var(--crystal);border:1px solid var(--crystal-border);border-radius:20px;padding:16px;text-align:center;box-shadow:var(--shadow-md);}
+.custom-barcode-card h3{margin:0 0 12px;font-size:14px;font-weight:700;color:var(--text-muted);}
+.custom-barcode-wrap{display:inline-flex;padding:12px 14px;background:#fff;border-radius:8px;border:1px solid rgba(160,170,180,.25);}
+.custom-barcode-value{margin-top:10px;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;}
+
+
+/* Barcode 1 width tracks symbol exactly */
+.barcode-block-128{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  width:fit-content;
+  max-width:100%;
+}
+.barcode-block-128 .barcode-128-wrap{
+  width:auto;
+  max-width:100%;
+}
+.barcode-block-128 .barcode-numbers-list{
+  width:100% !important;
+  max-width:100% !important;
+  box-sizing:border-box;
+  margin-top:6px;
+}
+.barcode-block-128 .barcode-number-item{
+  width:100%;
+  box-sizing:border-box;
+  justify-content:space-between !important;
+  gap:8px;
+}
+.barcode-block-128 .barcode-number-value{
+  text-align:right !important;
+  margin-left:auto;
+}
+
+/* Check in Dmart — compact white/orange, expand on hover */
+.dmart-check-btn-inline{
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  width:auto !important;
+  min-width:0;
+  padding:5px 10px !important;
+  font-size:11px !important;
+  font-weight:700;
+  border-radius:10px !important;
+  border:1px solid rgba(255,107,0,.45) !important;
+  background:#fff !important;
+  color:#E85D00 !important;
+  transform:scale(0.7);
+  transform-origin:center center;
+  transition:transform 180ms ease, box-shadow 180ms ease, padding 180ms ease;
+  text-decoration:none;
+  box-sizing:border-box;
+}
+.dmart-check-btn-inline .dmart-check-icon{
+  display:inline-flex !important;
+  width:14px;height:14px;
+  color:#E85D00;
+  border:none !important;
+  background:transparent !important;
+}
+.dmart-check-btn-inline .dmart-check-icon svg{width:100%;height:100%;display:block;}
+@media (hover:hover) and (pointer:fine){
+  .dmart-check-btn-inline:hover{
+    transform:scale(1);
+    box-shadow:0 4px 14px rgba(255,107,0,.18);
+    padding:7px 12px !important;
+  }
+}
+.dmart-check-btn-inline:active{transform:scale(0.95);}
+
+/* Custom barcode clickable */
+.custom-barcode-wrap.is-clickable{
+  cursor:zoom-in;
+  transition:transform 140ms ease, box-shadow 140ms ease;
+}
+.custom-barcode-wrap.is-clickable:hover{
+  transform:scale(1.02);
+  box-shadow:0 4px 14px rgba(20,40,50,.1);
+}
+.custom-barcode-fallback{
+  font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;
+  padding:12px 16px;word-break:break-all;
+}
+
+/* Recent column always visible when enabled */
+html.recent-beside-barcode .product-recent-col{
+  display:flex !important;
+  flex-direction:column;
+  visibility:visible !important;
+}
+
+/* Confirm popup ~20% shorter, compact */
+.dmart-confirm-box{
+  padding:10px 12px !important;
+  min-width:200px !important;
+  max-width:min(260px, 92vw) !important;
+}
+.dmart-confirm-title{
+  font-size:13px !important;
+  margin-bottom:8px !important;
+  padding-bottom:4px !important;
+}
+.dmart-confirm-actions{
+  gap:8px !important;
+  margin-top:4px !important;
+}
+.dmart-confirm-btn{
+  padding:8px 12px !important;
+  font-size:13px !important;
+  min-height:36px !important;
+}
+
+
+/* ========== Barcode 1 width == QR/128 symbol width ========== */
+.barcode-block.barcode-block-128,
+.barcode-block-128{
+  display:inline-flex !important;
+  flex-direction:column !important;
+  align-items:stretch !important;
+  width:max-content !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+  gap:6px !important;
+}
+.barcode-block-128 .barcode-128-wrap{
+  width:auto !important;
+  max-width:100% !important;
+  margin:0 !important;
+  align-self:center !important;
+  box-sizing:border-box !important;
+}
+.barcode-block-128 .barcode-128-wrap.is-qr{
+  width:auto !important;
+  max-width:min(200px, 100%) !important;
+}
+.barcode-block-128 .barcode-128-wrap svg{
+  display:block !important;
+  width:auto !important;
+  max-width:100% !important;
+  height:auto !important;
+  margin:0 auto !important;
+}
+.barcode-block-128 .barcode-numbers-list{
+  display:flex !important;
+  flex-direction:column !important;
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  box-sizing:border-box !important;
+  margin:0 !important;
+  padding:0 !important;
+  align-self:stretch !important;
+}
+.barcode-block-128 .barcode-number-item{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:8px !important;
+  width:100% !important;
+  box-sizing:border-box !important;
+  padding:6px 8px !important;
+  margin:0 !important;
+}
+.barcode-block-128 .barcode-number-label{
+  flex:0 0 auto !important;
+  white-space:nowrap !important;
+}
+.barcode-block-128 .barcode-number-value{
+  flex:1 1 auto !important;
+  text-align:right !important;
+  margin:0 !important;
+  min-width:0 !important;
+  word-break:break-all !important;
+}
+
+
+/* QR must have explicit size — width:auto collapses SVGs without width attr */
+.barcode-block-128 .barcode-128-wrap.is-qr,
+.barcode-128-wrap.is-qr{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:160px !important;
+  height:160px !important;
+  max-width:min(160px, 100%) !important;
+  min-width:120px !important;
+  min-height:120px !important;
+  aspect-ratio:1 / 1 !important;
+  padding:10px !important;
+  box-sizing:border-box !important;
+  background:#fff !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+.barcode-block-128 .barcode-128-wrap.is-qr svg,
+.barcode-128-wrap.is-qr svg,
+.barcode-128-wrap.is-qr #c128-0{
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+html.large-barcode .barcode-128-wrap.is-qr{
+  width:200px !important;
+  height:200px !important;
+  max-width:min(200px, 100%) !important;
+}
+
+
+/* Barcode 1 INSIDE block — same width as QR frame */
+.barcode-block.barcode-block-128{
+  display:inline-flex !important;
+  flex-direction:column !important;
+  align-items:stretch !important;
+  width:max-content !important;
+  max-width:100% !important;
+  gap:6px !important;
+  box-sizing:border-box !important;
+}
+.barcode-block-128 .barcode-128-wrap{
+  flex:0 0 auto !important;
+  box-sizing:border-box !important;
+}
+.barcode-block-128 .barcode-128-wrap.is-qr{
+  width:160px !important;
+  height:160px !important;
+  max-width:100% !important;
+}
+.barcode-block-128 .barcode-numbers-list{
+  display:flex !important;
+  flex-direction:column !important;
+  width:100% !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+.barcode-block-128 .barcode-number-item{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:6px !important;
+  width:100% !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+  padding:6px 8px !important;
+  overflow:hidden !important;
+}
+.barcode-block-128 .barcode-number-label{
+  flex:0 0 auto !important;
+  font-size:10px !important;
+  white-space:nowrap !important;
+}
+.barcode-block-128 .barcode-number-value{
+  flex:1 1 auto !important;
+  min-width:0 !important;
+  text-align:right !important;
+  font-size:11px !important;
+  font-weight:700 !important;
+  font-variant-numeric:tabular-nums !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+@media (min-width:721px){
+  .barcode-block-128 .barcode-number-value{font-size:12px !important;}
+  .barcode-block-128 .barcode-number-label{font-size:11px !important;}
+}
+
+
+/* Final barcode align: block width = QR frame only */
+.product-barcodes-col .barcode-block-128{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:stretch !important;
+  width:160px !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+}
+.product-barcodes-col .barcode-block-128 .barcode-128-wrap.is-qr{
+  width:160px !important;
+  height:160px !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+}
+.product-barcodes-col .barcode-block-128 .barcode-numbers-list{
+  width:160px !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+}
+.product-barcodes-col .barcode-block-128 .barcode-number-item{
+  width:100% !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+  padding:5px 6px !important;
+  gap:4px !important;
+}
+html.large-barcode .product-barcodes-col .barcode-block-128,
+html.large-barcode .product-barcodes-col .barcode-block-128 .barcode-128-wrap.is-qr,
+html.large-barcode .product-barcodes-col .barcode-block-128 .barcode-numbers-list{
+  width:200px !important;
+}
+/* Code128 mode: width follows symbol via JS inline style on block */
+.product-barcodes-col .barcode-block-128:not(:has(.is-qr)){
+  width:max-content !important;
+}
+
+/* Custom barcode QR must have explicit size (prevents black empty box) */
+.custom-barcode-wrap{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:#ffffff !important;
+  min-width:160px;
+  min-height:80px;
+  padding:12px !important;
+  box-sizing:border-box !important;
+}
+.custom-barcode-wrap.is-qr{
+  width:180px !important;
+  height:180px !important;
+  min-width:180px !important;
+  min-height:180px !important;
+  padding:12px !important;
+}
+.custom-barcode-wrap svg,
+.custom-barcode-wrap.is-qr svg{
+  display:block !important;
+  width:100% !important;
+  height:auto !important;
+  max-width:100% !important;
+  background:#fff !important;
+}
+.custom-barcode-wrap.is-qr svg{
+  width:100% !important;
+  height:100% !important;
+}
+.custom-barcode-card{
+  background:var(--card) !important;
+}

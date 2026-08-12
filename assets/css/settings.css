@@ -1,0 +1,234 @@
+/* ============================================================
+   SETTINGS & MAINTENANCE PANELS
+   ------------------------------------------------------------
+   Both are lazy-loaded (assets/js/settings.js, assets/js/maintenance.js)
+   but their CSS lives in the normal stylesheet cascade — a few KB of CSS
+   sitting unused until the panel opens costs nothing worth deferring; only
+   the JS behind them is meaningfully expensive to defer.
+   ============================================================ */
+.settings-fab{
+  position:fixed;right:18px;bottom:18px;z-index:70;
+  width:48px;height:48px;border-radius:50%;
+  background:var(--crystal);border:1px solid var(--crystal-border);box-shadow:var(--shadow-md);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);
+  transition:transform 150ms ease,border-color 150ms ease;
+}
+.settings-fab:hover{border-color:var(--primary);color:var(--primary-dark);}
+.settings-fab:active{transform:scale(.94);}
+.settings-fab svg{width:22px;height:22px;}
+
+.settings-backdrop,.maintenance-backdrop{
+  position:fixed;inset:0;background:rgba(10,10,14,.55);
+  display:flex;justify-content:flex-end;z-index:96;
+  opacity:0;pointer-events:none;transition:opacity 180ms ease;
+}
+.settings-backdrop.open,.maintenance-backdrop.open{opacity:1;pointer-events:auto;}
+.settings-drawer,.maintenance-drawer{
+  width:100%;max-width:380px;height:100%;background:var(--crystal);
+  box-shadow:var(--shadow-lg);overflow-y:auto;
+  transform:translateX(16px);transition:transform 180ms ease;
+  display:flex;flex-direction:column;
+}
+.settings-backdrop.open .settings-drawer,.maintenance-backdrop.open .maintenance-drawer{transform:translateX(0);}
+.settings-drawer-header,.maintenance-drawer-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 20px;border-bottom:1px solid var(--border);
+}
+.settings-drawer-header h3,.maintenance-drawer-header h3{margin:0;font-size:15px;font-weight:800;}
+.settings-panel,.maintenance-panel{padding:12px 14px 24px;}
+
+.settings-section,.maint-section{
+  margin-bottom:10px;
+  padding:10px 12px;
+  background:var(--crystal);
+  border:1px solid var(--crystal-border);
+  border-radius:14px;
+  box-shadow:var(--shadow-sm);
+}
+.settings-section h4,.maint-section h4{
+  margin:0 0 10px;font-size:11px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.05em;color:var(--text-muted);
+}
+.settings-row{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:10px 0;font-size:13.5px;cursor:pointer;
+  border-bottom:1px solid var(--crystal-border);
+  min-height:44px;
+}
+.settings-row:last-of-type{border-bottom:none;}
+.switch{
+  width:38px;height:22px;border-radius:999px;background:var(--aqua-deep);
+  position:relative;flex-shrink:0;transition:background-color 150ms ease;cursor:pointer;
+}
+.switch::after{
+  content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform 150ms ease;
+}
+.switch.on{background:var(--primary);}
+.switch.on::after{transform:translateX(16px);}
+
+.settings-action{width:100%;justify-content:center;margin-bottom:8px;}
+
+.dev-grid{display:flex;flex-direction:column;gap:6px;font-size:12.5px;}
+.dev-grid div{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px dashed var(--border);}
+.dev-grid div:last-child{border-bottom:none;}
+.dev-grid span{color:var(--text-muted);}
+.dev-grid b{font-weight:700;text-align:right;word-break:break-word;}
+
+.changelog-list{margin:0;padding-left:18px;line-height:1.35;font-size:12.5px;}
+
+.settings-empty{font-size:12.5px;color:var(--text-muted);}
+
+/* Maintenance password gate */
+.maint-gate{display:flex;flex-direction:column;gap:10px;padding:20px 0;}
+.maint-gate p{margin:0;font-size:13px;color:var(--text-muted);}
+.maint-gate input{
+  padding:10px 14px;border-radius:10px;border:1px solid var(--crystal-border);
+  background:var(--bg);color:var(--text);font-size:14px;
+}
+.maint-gate-hint{color:var(--danger);font-size:12px;}
+.maint-note{font-size:12px;color:var(--text-muted);line-height:1.6;}
+
+/* ============================================================
+   COMPACT MODE — reduces padding, card height, spacing, button size
+   while keeping every control comfortably tappable.
+   ============================================================ */
+html.compact-mode .product-top-row{padding:8px;gap:8px;}
+html.compact-mode .product-details-row{padding:10px 14px;gap:6px;}
+html.compact-mode .barcodes-section{padding:6px;gap:4px;}
+html.compact-mode .barcode-block{padding:2px;}
+html.compact-mode .info-field{padding:5px 10px;min-width:0;}
+html.compact-mode .btn,html.compact-mode .dmart-check-btn{padding:6px 12px;font-size:13px;}
+html.compact-mode .product-name{font-size:17px;}
+html.compact-mode main{padding-top:14px;}
+html.compact-mode .panel-item{padding:6px 14px;}
+html.compact-mode #searchInput{padding:16px 46px;}
+
+/* ============================================================
+   PERFORMANCE MODE — disables non-essential visual effects entirely for
+   low-end devices. No transitions, no hover preview (enforced in JS via
+   image.js's settings check), no QR rendering (enforced in ui render
+   logic), animations reduced to instant.
+   ============================================================ */
+html.performance-mode *{
+  transition-duration:0ms !important;
+  animation-duration:0ms !important;
+  scroll-behavior:auto !important;
+}
+
+/* ============================================================
+   LARGE BARCODE / LARGE PRODUCT IMAGE — Settings toggles
+   ============================================================ */
+html.large-barcode .barcode-128-wrap{width:92% !important;max-width:92% !important;}
+html.large-barcode.compact-mode .barcode-128-wrap{width:85%;}
+html.large-product-image .product-image-wrap{max-width:260px;}
+
+/* Warehouse Display radio group */
+.settings-wh-display {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+.settings-wh-display-label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.settings-wh-display-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.settings-wh-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 6px 4px;
+  border-radius: 8px;
+}
+.settings-wh-option:hover {
+  background: var(--bg);
+}
+.settings-wh-option input {
+  accent-color: var(--primary);
+  width: 16px;
+  height: 16px;
+}
+
+.settings-token-input{
+  width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--crystal-border);
+  background:var(--bg);color:var(--text);font-size:12.5px;font-family:ui-monospace,monospace;
+}
+.settings-hint{font-size:11px;color:var(--text-muted);line-height:1.4;font-weight:500;}
+
+
+.changelog-versions{
+  display:flex;flex-wrap:wrap;gap:8px;
+}
+.changelog-ver-btn{
+  border:1px solid var(--crystal-border);
+  background:var(--crystal);
+  color:var(--text);
+  border-radius:999px;
+  padding:8px 14px;
+  font-size:13px;font-weight:700;
+  cursor:pointer;
+  box-shadow:var(--shadow-sm);
+}
+.changelog-ver-btn:hover{
+  border-color:var(--primary);
+  color:var(--primary-dark);
+  background:var(--primary-light);
+}
+.changelog-popup-backdrop{
+  position:fixed;inset:0;z-index:120;
+  background:rgba(6,10,14,.45);
+  display:none;align-items:center;justify-content:center;
+  padding:16px;
+}
+.changelog-popup-backdrop.open{display:flex;}
+.changelog-popup-box{
+  width:min(420px, 100%);
+  max-height:min(70vh, 520px);
+  overflow:auto;
+  background:var(--card);
+  border:1px solid var(--crystal-border);
+  border-radius:16px;
+  box-shadow:var(--shadow-lg);
+  padding:14px 16px 16px;
+}
+.changelog-popup-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;gap:12px;
+}
+.changelog-popup-title{font-size:16px;font-weight:800;}
+.changelog-popup-close{
+  border:none;background:transparent;font-size:22px;line-height:1;
+  cursor:pointer;color:var(--text-muted);padding:4px 8px;
+}
+.changelog-popup-list{
+  margin:0;padding-left:18px;
+}
+.changelog-popup-list li{
+  margin:6px 0;font-size:13.5px;line-height:1.4;
+}
+
+.dev-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:8px;
+  font-size:12.5px;
+}
+.dev-grid > div{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  padding:8px 10px;
+  border-radius:10px;
+  background:var(--crystal);
+  border:1px solid var(--border);
+}
+.dev-grid > div span{color:var(--text-muted);font-weight:600;}
+.dev-grid > div b{color:var(--text);font-weight:700;text-align:right;word-break:break-word;}

@@ -1,0 +1,157 @@
+{
+  "version": "1.7.2",
+  "build": 52,
+  "updated": "2026-08-11",
+  "products": 39134,
+  "changelogByVersion": [
+    {
+      "version": "1.7.2",
+      "items": [
+        "Revert suggestions list size change",
+        "Recent Beside Barcode: +30% width & height on PC only",
+        "Keep solid aqua background #DCEEF2"
+      ]
+    },
+    {
+      "version": "1.7.1",
+      "items": [
+        "Background: solid explicit aqua #DCEEF2",
+        "Suggestions list width +30% and max-height +30%"
+      ]
+    },
+    {
+      "version": "1.7.0",
+      "items": [
+        "Custom hero background (text removed, higher quality, static)",
+        "Fix Custom Barcode QR black/empty render",
+        "Slightly translucent UI panels over background"
+      ]
+    },
+    {
+      "version": "1.6.9",
+      "items": [
+        "Removed animated crystal layers and glass blur (performance)",
+        "Simple solid aqua background; opaque UI cards"
+      ]
+    },
+    {
+      "version": "1.6.8",
+      "items": [
+        "Crystal water background: deeper aqua ripples + soft wave motion",
+        "UI panels more translucent with glass blur over the water backdrop",
+        "Barcode/QR stay solid white for reliable scanning"
+      ]
+    },
+    {
+      "version": "1.6.7",
+      "items": [
+        "Fix: scrolling suggestions no longer auto-selects a product (tap detection with move threshold)"
+      ]
+    },
+    {
+      "version": "1.6.6",
+      "items": [
+        "Mobile: search bar sticky so it stays visible when keyboard is open",
+        "Barcode 1 row locked to exact QR/128 frame width"
+      ]
+    },
+    {
+      "version": "1.6.5",
+      "items": [
+        "Fix: Barcode 1 row was outside QR block — now nested so widths match exactly"
+      ]
+    },
+    {
+      "version": "1.6.4",
+      "items": [
+        "QR visible again (fixed collapsed SVG size)",
+        "Search spinner only during load — hidden when ready",
+        "Confirm popup docks to the right of Smouha Team rotator"
+      ]
+    },
+    {
+      "version": "1.6.3",
+      "items": [
+        "Fix Developer panel stuck on Loading (tokenInput ReferenceError)",
+        "Search bar icons: clean flex layout, no overlap",
+        "Barcode 1 row width forced to match QR/128 symbol"
+      ]
+    },
+    {
+      "version": "1.6.2",
+      "items": [
+        "Developer panel diagnostics load correctly (no perpetual Loading)",
+        "ABC icon moved right on mobile; camera/custom barcode spaced from clear",
+        "Barcode 1 row width matches QR/128 symbol",
+        "Custom Barcode clickable zoom; accepts any characters",
+        "Suggestions: reliable first-tap on mobile (pointerdown)",
+        "Check in Dmart: compact white/orange + Talabat icon, expands on hover",
+        "Recent Beside Barcode restores last product on open so column shows with data",
+        "Confirm popup shorter; Ashraf Amin hold 4s with animation only (no color change)"
+      ]
+    },
+    {
+      "version": "1.6.1",
+      "items": [
+        "Fix: search suggestions class restored — products show again while typing",
+        "Changelog: version buttons open a popup with that release's changes"
+      ]
+    },
+    {
+      "version": "1.6.0",
+      "items": [
+        "Compact header (-30%) and search width (-30%) with softer orange frame",
+        "Pelican + Custom Barcode inside search; ABC keyboard toggle on mobile",
+        "Product name under image (2-line clamp); SKU / Barcode / Favorite raised",
+        "QR Code and Recent Beside Barcode enabled by default",
+        "Barcode 1 row tracks QR/128 width; last digits align to symbol edge",
+        "Show DMart Live Card setting hides/shows live card with layout reflow",
+        "Confirm popup without warehouse block; defaults beside Smouha Team",
+        "Hover Preview Off applies immediately; desktop warehouse chevron fixed",
+        "Ashraf Amin rotator premium animation; DMart number weights refined",
+        "Dmart API Token field removed from Settings UI (extension-based auth)"
+      ]
+    },
+    {
+      "version": "1.5.4",
+      "items": [
+        "DMart Live smart polling / retries",
+        "Solid silver empty-state logo; large barcode for Code128 and QR"
+      ]
+    },
+    {
+      "version": "1.5.0",
+      "items": [
+        "Products database 39,134 items",
+        "DMart live card layout and multi-warehouse selector",
+        "Team rotator sequence and UI polish"
+      ]
+    },
+    {
+      "version": "1.4.x",
+      "items": [
+        "Multi-warehouse support",
+        "DMart Bridge Chrome Extension",
+        "Modular architecture and IndexedDB 2.0"
+      ]
+    }
+  ],
+  "changelog": [
+    "v1.7.2 — Recent Beside +30% desktop; revert suggestions size",
+    "v1.7.1 — Aqua solid bg + wider suggestions list",
+    "v1.7.0 — Custom bg + custom QR fix + soft glass panels",
+    "v1.6.9 — Remove heavy background animations; solid simple bg",
+    "v1.6.8 — Crystal water background + translucent glass UI",
+    "v1.6.7 — Suggestions scroll no longer selects product",
+    "v1.6.6 — Sticky search on mobile + barcode width lock",
+    "v1.6.5 — Barcode 1 width matches QR (structure fix)",
+    "v1.6.4 — QR restore + spinner fix + popup right of team",
+    "v1.6.3 — Developer panel fix + search icons + barcode align",
+    "v1.6.2 — Developer panel diagnostics load correctly (no perpetual Loading)",
+    "v1.6.1 — Fix search suggestions + changelog version popups",
+    "v1.6.0 — Header/search compact layout, Pelican in search, Custom Barcode, QR/Recent defaults",
+    "v1.5.4 — DMart Live smart polling",
+    "v1.5.0 — 39k products, multi-warehouse, team rotator",
+    "v1.4.x — DMart Bridge, modular architecture"
+  ]
+}

@@ -1,0 +1,102 @@
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 16px;border-radius:12px;border:1px solid var(--crystal-border);
+  background:var(--crystal);color:var(--text);font-size:13.5px;font-weight:600;
+  cursor:pointer;transition:background-color var(--transition),border-color var(--transition),color var(--transition),box-shadow var(--transition);white-space:nowrap;
+  box-shadow:var(--shadow-sm);
+}
+.btn svg{width:15px;height:15px;}
+.btn:hover{border-color:var(--primary);color:var(--primary-dark);}
+.btn:active{transform:scale(.96);}
+.btn:focus-visible{outline:2px solid var(--primary);outline-offset:2px;}
+.btn-primary{
+  background:var(--card);
+  border-color:var(--primary);color:var(--primary-dark);
+  box-shadow:var(--shadow-sm);
+}
+.btn-primary:hover{background:var(--primary-light);color:var(--primary-dark);}
+.btn.copied{background:var(--success);border-color:var(--success);color:#fff;}
+/* ============================================================
+   SMART SCAN — button + camera modal
+   ============================================================ */
+.search-row-actions{
+  margin-top:12px;
+  display:flex;
+  justify-content:flex-start;
+  width:56%;
+  max-width:56%;
+  margin-left:0;
+  margin-right:auto;
+  padding-left:0;
+}
+@media (max-width:720px){
+  .search-row-actions{width:100%;max-width:100%;}
+}
+
+.btn-scan{
+  background:var(--crystal);
+  border-color:var(--primary);color:var(--primary-dark);padding:9px 20px;font-size:14px;
+  box-shadow:var(--shadow-sm);
+  border-radius:12px;
+}
+.btn-scan:hover{background:var(--primary-light);color:var(--primary-dark);}
+.btn-scan svg{width:17px;height:17px;}
+
+.scan-backdrop{
+  position:fixed;inset:0;background:rgba(6,6,10,.92);
+  display:flex;align-items:center;justify-content:center;z-index:98;padding:16px;
+  opacity:0;pointer-events:none;transition:opacity 200ms ease;
+}
+.scan-backdrop.open{opacity:1;pointer-events:auto;}
+.scan-box{
+  width:100%;max-width:480px;background:#101114;border-radius:var(--radius);
+  overflow:hidden;box-shadow:var(--shadow-lg);
+  transform:scale(.94);transition:transform 220ms cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;
+}
+.scan-backdrop.open .scan-box{transform:scale(1);}
+.scan-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 18px;color:#fff;
+}
+.scan-title{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;}
+.scan-title svg{width:18px;height:18px;color:var(--primary);}
+.scan-close{
+  width:34px;height:34px;border-radius:50%;border:none;background:rgba(255,255,255,.1);
+  color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background var(--transition);
+}
+.scan-close:hover{background:var(--danger);}
+.scan-close svg{width:16px;height:16px;}
+
+.scan-viewport{
+  position:relative;width:100%;aspect-ratio:3/4;background:#000;overflow:hidden;
+}
+.scan-viewport video{width:100%;height:100%;object-fit:cover;display:block;}
+.scan-frame{
+  position:absolute;inset:12% 8%;border:2px solid rgba(255,255,255,.55);
+  border-radius:16px;box-shadow:0 0 0 999px rgba(0,0,0,.35);
+  overflow:hidden;pointer-events:none;
+}
+.scan-line{
+  position:absolute;left:0;right:0;top:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--primary) 20%,var(--primary) 80%,transparent);
+  box-shadow:0 0 8px 2px rgba(255,107,0,.7);
+  animation:scanSweep 1.8s ease-in-out infinite;
+}
+@keyframes scanSweep{
+  0%{top:2%;}
+  50%{top:96%;}
+  100%{top:2%;}
+}
+.scan-status{
+  padding:14px 18px 18px;color:#fff;text-align:center;font-size:13.5px;font-weight:600;
+  min-height:20px;letter-spacing:.01em;
+}
+.scan-status.error{color:#ff8a8a;}
+.scan-status.success{color:#4ade80;}
+
+@media (max-width:600px){
+  .scan-box{max-width:100%;border-radius:16px;}
+}
+
