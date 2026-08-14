@@ -28,19 +28,20 @@ import * as image from './image.js';
 const SETTINGS_KEY = 'smouhaPickSettings';
 const SETTINGS_DEFAULTS = {
   autoCopyBarcode: false,
-  autoCopySku: true,
+  autoCopySku: false,
   hoverPreview: true,
   compactMode: false,
   performanceMode: false,
   largeBarcode: false,
   largeProductImage: false,
   qrCode: true,
-  scanSound: false,
+  scanSound: true,
   showProductCount: true,
   showVersion: true,
   warehouseDisplay: 'original',
   recentBesideBarcode: true,
   dmartPopupEnabled: true,
+  intensiveAutoFocus: false,
 };
 
 function quickGetSettings() {
@@ -52,13 +53,99 @@ function quickGetSettings() {
   }
 }
 
+function isMobileViewport() {
+  try { return window.matchMedia('(max-width:720px)').matches; } catch (e) { return false; }
+}
+
+/** PC default ON, mobile default OFF.
+ *  On mobile, only ON if user explicitly enabled AFTER this version (flag). */
+function suppressGhostImageTap(ms) {
+  try { window.__smouhaIgnoreTapUntil = Date.now() + (ms || 450); } catch (e) { /* ignore */ }
+}
+
+function selectSearchAfterProduct() {
+  // Mobile: do NOT open keyboard after product appears
+  if (isMobileViewport()) {
+    try { els.searchInput.blur(); } catch (e) { /* ignore */ }
+    return;
+  }
+  try {
+    requestAnimationFrame(() => {
+      els.searchInput.focus({ preventScroll: true });
+      els.searchInput.select();
+    });
+  } catch (e) { /* ignore */ }
+}
+
+function effectiveRecentBeside() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    let explicit = null;
+    if (raw) {
+      const p = JSON.parse(raw);
+      if (p && Object.prototype.hasOwnProperty.call(p, 'recentBesideBarcode')) {
+        explicit = !!p.recentBesideBarcode;
+      }
+    }
+    if (isMobileViewport()) {
+      // Mobile default OFF — ignore old saved true unless user re-enabled
+      try {
+        if (localStorage.getItem('smouha_rb_mobile_on') === '1') {
+          return explicit !== false; // user opted in on mobile
+        }
+      } catch (e2) { /* ignore */ }
+      return false;
+    }
+    // PC: ON unless user explicitly disabled
+    return explicit === null ? true : explicit;
+  } catch (e) {
+    return !isMobileViewport();
+  }
+}
+
+function effectiveWarehouseDisplay() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    let explicit = null;
+    if (raw) {
+      const p = JSON.parse(raw);
+      if (p && Object.prototype.hasOwnProperty.call(p, 'warehouseDisplay')) {
+        explicit = p.warehouseDisplay;
+      }
+    }
+    if (isMobileViewport()) {
+      // Mobile default: Friendly Names
+      return explicit == null ? 'friendly' : explicit;
+    }
+    return explicit == null ? 'original' : explicit;
+  } catch (e) {
+    return isMobileViewport() ? 'friendly' : 'original';
+  }
+}
+
+function effectiveDmartPopup() {
+  try {
+    const s = quickGetSettings();
+    if (!isMobileViewport()) return s.dmartPopupEnabled !== false;
+    // Mobile default OFF
+    try {
+      if (localStorage.getItem('smouha_dmart_popup_mobile_on') === '1') {
+        return s.dmartPopupEnabled !== false;
+      }
+    } catch (e2) { /* ignore */ }
+    return false;
+  } catch (e) {
+    return !isMobileViewport();
+  }
+}
+
 function quickApplyGlobalModes() {
   const s = quickGetSettings();
   document.documentElement.classList.toggle('performance-mode', !!s.performanceMode);
   document.documentElement.classList.toggle('compact-mode', !!s.compactMode);
   document.documentElement.classList.toggle('large-barcode', !!s.largeBarcode);
   document.documentElement.classList.toggle('large-product-image', !!s.largeProductImage);
-  document.documentElement.classList.toggle('recent-beside-barcode', !!s.recentBesideBarcode);
+  document.documentElement.classList.toggle('recent-beside-barcode', effectiveRecentBeside());
   document.documentElement.classList.toggle('hide-dmart-live', !s.showProductCount);
 }
 
@@ -328,14 +415,19 @@ const ui = (() => {
   }
   function returnFocusToSearch() {
     if (!els.searchInput || els.searchInput.disabled) return;
-    // Mobile: soft focus attempt without fighting the keyboard
+    const intensive = !!(quickGetSettings().intensiveAutoFocus);
+    // Mobile + Intensive Auto Focus OFF: never steal focus / open keyboard
+    // (e.g. after closing product image or barcode zoom).
+    if (!shouldAutoFocus() && !intensive) {
+      try { els.searchInput.blur(); } catch (e) { /* ignore */ }
+      return;
+    }
+    // Desktop zero-click, or Intensive Auto Focus ON
     try {
       els.searchInput.focus({ preventScroll: true });
     } catch (e) {
       try { els.searchInput.focus(); } catch (e2) { /* ignore */ }
     }
-    // Desktop only: select for quick overwrite after scan. On touch, select()
-    // makes the next tap feel "dead" (needs extra tap to place caret).
     if (shouldAutoFocus()) {
       try { els.searchInput.select(); } catch (e) { /* ignore */ }
     }
@@ -344,8 +436,8 @@ const ui = (() => {
   /* ---------- Theme ---------- */
   function initTheme() {
     const saved = store.getTheme();
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const theme = saved || (prefersDark ? 'dark' : 'light');
+    // Dark mode default OFF on PC and mobile (ignore OS preference)
+    const theme = saved || 'light';
     applyTheme(theme);
     // Dark Mode lives in Settings (Appearance). Same storage API as before.
     window.addEventListener('smouha:toggle-theme', () => {
@@ -433,79 +525,148 @@ const ui = (() => {
     els.searchInput.addEventListener('keydown', onKeydown);
     if (!els.suggestionsBox.dataset.pointerWired) {
       els.suggestionsBox.dataset.pointerWired = '1';
-      // Select only on intentional tap/click — NOT while scrolling.
-      // pointerdown alone would fire when the user starts a scroll gesture.
+      // Intentional tap only (not scroll). Children use pointer-events:none in CSS
+      // so the event target is always the .suggestion-item row (fixes name-tap on mobile).
       let tapState = null;
-      const TAP_SLOP = 10; // px movement allowed before treating as scroll
+      const TAP_SLOP = 14;
 
-      els.suggestionsBox.addEventListener('pointerdown', (e) => {
-        if (e.button != null && e.button !== 0) return;
-        const item = e.target.closest('.suggestion-item');
-        if (!item || !els.suggestionsBox.contains(item)) {
-          tapState = null;
-          return;
-        }
-        tapState = {
-          id: e.pointerId,
-          x: e.clientX,
-          y: e.clientY,
-          item,
-          moved: false
-        };
-      });
+      const itemFromEvent = (e) => {
+        const t = e.target;
+        if (!t) return null;
+        const item = (t.closest && t.closest('.suggestion-item')) || null;
+        if (!item || !els.suggestionsBox.contains(item)) return null;
+        return item;
+      };
 
-      els.suggestionsBox.addEventListener('pointermove', (e) => {
-        if (!tapState || e.pointerId !== tapState.id) return;
-        const dx = Math.abs(e.clientX - tapState.x);
-        const dy = Math.abs(e.clientY - tapState.y);
-        if (dx > TAP_SLOP || dy > TAP_SLOP) tapState.moved = true;
-      }, { passive: true });
-
-      const endTap = (e) => {
-        if (!tapState || e.pointerId !== tapState.id) return;
-        const state = tapState;
-        tapState = null;
-        if (state.moved) return; // was a scroll/drag
-        const item = state.item;
-        if (!item || !els.suggestionsBox.contains(item)) return;
+      const pickFromItem = (item) => {
+        if (!item) return;
         const idx = Number(item.dataset.idx);
         const list = els.suggestionsBox._suggestionProducts || [];
         if (!list[idx]) return;
-        e.preventDefault();
-        e.stopPropagation();
+        suppressGhostImageTap(550);
         selectProduct(list[idx]);
         closeSuggestions();
       };
 
-      els.suggestionsBox.addEventListener('pointerup', endTap);
+      els.suggestionsBox.addEventListener('pointerdown', (e) => {
+        if (e.button != null && e.button !== 0) return;
+        const item = itemFromEvent(e);
+        if (!item) { tapState = null; return; }
+        tapState = { id: e.pointerId, x: e.clientX, y: e.clientY, item, moved: false };
+      }, { passive: true });
+
+      els.suggestionsBox.addEventListener('pointermove', (e) => {
+        if (!tapState || e.pointerId !== tapState.id) return;
+        if (Math.abs(e.clientX - tapState.x) > TAP_SLOP || Math.abs(e.clientY - tapState.y) > TAP_SLOP) {
+          tapState.moved = true;
+        }
+      }, { passive: true });
+
+      els.suggestionsBox.addEventListener('pointerup', (e) => {
+        if (!tapState || e.pointerId !== tapState.id) return;
+        const state = tapState;
+        tapState = null;
+        if (state.moved) return;
+        e.preventDefault();
+        e.stopPropagation();
+        pickFromItem(state.item);
+      });
+
       els.suggestionsBox.addEventListener('pointercancel', () => { tapState = null; });
 
-      // Keyboard / accessibility: Enter/Space on focused option
-      els.suggestionsBox.addEventListener('keydown', (e) => {
-        if (e.key !== 'Enter' && e.key !== ' ') return;
-        const item = e.target.closest('.suggestion-item');
+      // Fallback click for accessibility / desktop
+      els.suggestionsBox.addEventListener('click', (e) => {
+        const item = itemFromEvent(e);
         if (!item) return;
         e.preventDefault();
-        const idx = Number(item.dataset.idx);
-        const list = els.suggestionsBox._suggestionProducts || [];
-        if (list[idx]) {
-          selectProduct(list[idx]);
-          closeSuggestions();
-        }
+        e.stopPropagation();
+        pickFromItem(item);
+      });
+
+      els.suggestionsBox.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const item = itemFromEvent(e);
+        if (!item) return;
+        e.preventDefault();
+        pickFromItem(item);
       });
     }
 
     // ABC keyboard toggle (mobile)
     const abcBtn = document.getElementById('abcToggleBtn');
     if (abcBtn) {
-      abcBtn.hidden = false; // CSS hides on desktop
-      abcBtn.addEventListener('click', () => {
+      // Floating above keyboard on mobile only (Google Sheets style)
+      abcBtn.hidden = true;
+      abcBtn.classList.add('abc-keyboard-float');
+      abcBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         const letters = abcBtn.classList.toggle('is-letters');
         els.searchInput.setAttribute('inputmode', letters ? 'text' : 'numeric');
         abcBtn.textContent = letters ? '123' : 'ABC';
-        try { els.searchInput.focus(); } catch (e) {}
+        try { els.searchInput.focus(); } catch (err) {}
       });
+
+      const positionAbcFloat = () => {
+        if (!abcBtn) return;
+        const mobile = window.matchMedia('(max-width:720px)').matches;
+        if (!mobile) {
+          abcBtn.classList.remove('abc-float-visible');
+          abcBtn.hidden = true;
+          abcBtn.style.bottom = '';
+          abcBtn.style.right = '';
+          return;
+        }
+        const vv = window.visualViewport;
+        const keyboardOpen = !!(vv && (window.innerHeight - vv.height > 100));
+        const searchFocused = document.activeElement === els.searchInput;
+        if (keyboardOpen && searchFocused) {
+          abcBtn.hidden = false;
+          abcBtn.classList.add('abc-float-visible');
+          // Sit just above the keyboard, right side
+          const gap = 10;
+          const bottom = Math.max(gap, (window.innerHeight - vv.offsetTop - vv.height) + gap);
+          abcBtn.style.bottom = bottom + 'px';
+          abcBtn.style.right = '12px';
+        } else {
+          abcBtn.classList.remove('abc-float-visible');
+          abcBtn.hidden = true;
+        }
+      };
+
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', positionAbcFloat);
+        window.visualViewport.addEventListener('scroll', positionAbcFloat);
+      }
+      window.addEventListener('resize', positionAbcFloat);
+      els.searchInput.addEventListener('focus', () => setTimeout(positionAbcFloat, 50));
+      els.searchInput.addEventListener('blur', () => setTimeout(positionAbcFloat, 80));
+      positionAbcFloat();
     }
+
+    // Intensive Auto Focus (settings) — default OFF; only when enabled
+    let intensiveFocusTimer = null;
+    const runIntensiveFocus = () => {
+      try {
+        if (!quickGetSettings().intensiveAutoFocus) return;
+        if (!els.searchInput || els.searchInput.disabled) return;
+        if (document.activeElement === els.searchInput) return;
+        // Don't steal focus from camera / modals / inputs
+        const ae = document.activeElement;
+        if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
+        if (document.getElementById('scanBackdrop')?.classList.contains('open')) return;
+        if (document.getElementById('settingsPanel')?.classList.contains('open')) return;
+        els.searchInput.focus({ preventScroll: true });
+      } catch (e) { /* ignore */ }
+    };
+    const syncIntensiveFocus = () => {
+      if (intensiveFocusTimer) { clearInterval(intensiveFocusTimer); intensiveFocusTimer = null; }
+      if (quickGetSettings().intensiveAutoFocus) {
+        intensiveFocusTimer = setInterval(runIntensiveFocus, 1200);
+      }
+    };
+    syncIntensiveFocus();
+    window.addEventListener('smouha:settings-changed', syncIntensiveFocus);
 
     // Custom Barcode — generate barcode from typed value without product lookup
     const customBcBtn = document.getElementById('customBarcodeBtn');
@@ -525,6 +686,12 @@ const ui = (() => {
     });
 
     // Ensure the field is always reachable (popup/overlays must not steal the first tap)
+    // Auto-select so next typing replaces current value
+    els.searchInput.addEventListener('focus', () => {
+      try {
+        requestAnimationFrame(() => { els.searchInput.select(); });
+      } catch (e) { /* ignore */ }
+    });
     els.searchInput.addEventListener('pointerdown', (e) => {
       e.stopPropagation();
       try { els.searchInput.focus({ preventScroll: true }); } catch (err) { els.searchInput.focus(); }
@@ -620,7 +787,7 @@ const ui = (() => {
   function promptDmartConfirm(sku) {
     if (!sku) return;
     // Settings: optional confirm popup
-    if (!quickGetSettings().dmartPopupEnabled) {
+    if (!effectiveDmartPopup()) {
       returnFocusToSearch();
       return;
     }
@@ -692,6 +859,8 @@ function renderSuggestions(matches, query) {
     recordSearch(product);
     autoCopyAfterSearch(product);
     promptDmartConfirm(product.sku);
+    suppressGhostImageTap(500);
+    selectSearchAfterProduct();
   }
 
   /* ---------- Main search execution ----------
@@ -718,6 +887,8 @@ function renderSuggestions(matches, query) {
         recordSearch(result.results[0]);
         autoCopyAfterSearch(result.results[0]);
         promptDmartConfirm(result.results[0].sku);
+        suppressGhostImageTap(500);
+        selectSearchAfterProduct();
         // A completed camera scan is always a discrete, explicit event —
         // safe to return focus. Manual typing is deliberately excluded so
         // this never fights the user mid-keystroke.
@@ -732,7 +903,8 @@ function renderSuggestions(matches, query) {
   function statsLabel(result) {
     if (result.type === 'empty' || result.type === 'invalid') return '';
     const n = result.results.length;
-    if (n === 0) return 'No results';
+    // Never show "No results" strip under search
+    if (n === 0) return '';
     if (n === 1) return '1 product found';
     return `${n} products found — please choose one`;
   }
@@ -1229,6 +1401,23 @@ function renderSuggestions(matches, query) {
       downloadCode128(e.currentTarget.dataset.c128Idx, e.currentTarget.dataset.barcode, product.sku);
     });
 
+    // Mobile DOM order: image | barcode | live (CSS order can lose to older rules)
+    try {
+      if (window.matchMedia('(max-width:720px)').matches) {
+        const row = els.resultArea.querySelector('.product-top-row');
+        if (row) {
+          const img = row.querySelector('.product-image-col');
+          const bc = row.querySelector('.product-barcodes-col');
+          const live = row.querySelector('.product-live-col');
+          const recent = row.querySelector('.product-recent-col');
+          if (img) row.appendChild(img);
+          if (bc) row.appendChild(bc);
+          if (live) row.appendChild(live);
+          if (recent) row.appendChild(recent);
+        }
+      }
+    } catch (e) { /* ignore */ }
+
     initStickyBarcode();
   }
 
@@ -1239,6 +1428,11 @@ function renderSuggestions(matches, query) {
   let stickyObserver = null;
   function initStickyBarcode() {
     if (stickyObserver) { stickyObserver.disconnect(); stickyObserver = null; }
+    if (els.stickyBar) {
+      els.stickyBar.hidden = true;
+      els.stickyBar.style.display = 'none';
+    }
+    return; // disabled — user does not want sticky barcode strip on scroll
     if (!els.stickyBar) return;
     els.stickyBar.hidden = true;
 
@@ -1327,7 +1521,14 @@ function renderSuggestions(matches, query) {
 
   /* ---------- Image zoom ---------- */
   function initZoom() {
-    image.initZoom({ zoomBackdrop: els.zoomBackdrop, zoomImg: els.zoomImg, zoomClose: els.zoomClose }, returnFocusToSearch);
+    image.initZoom({ zoomBackdrop: els.zoomBackdrop, zoomImg: els.zoomImg, zoomClose: els.zoomClose }, () => {
+      // Closing image/barcode zoom must NOT open the keyboard when Intensive Auto Focus is OFF
+      if (quickGetSettings().intensiveAutoFocus) {
+        returnFocusToSearch();
+      } else {
+        try { els.searchInput && els.searchInput.blur(); } catch (e) { /* ignore */ }
+      }
+    });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { image.closeZoom(); closeChoiceModal(); closeTeamModal(); } });
   }
 
@@ -1355,7 +1556,7 @@ function renderSuggestions(matches, query) {
     const col = document.getElementById('productRecentCol');
     const list = document.getElementById('productRecentList');
     if (!col || !list) return;
-    const enabled = !!quickGetSettings().recentBesideBarcode;
+    const enabled = effectiveRecentBeside();
     document.documentElement.classList.toggle('recent-beside-barcode', enabled);
     if (!enabled) {
       col.hidden = true;
@@ -1383,16 +1584,33 @@ function renderSuggestions(matches, query) {
     }
   }
 
-  /** On startup: if Recent Beside is on and we have history, restore last product so Recent column is visible with data. */
+  /** Persist last viewed product so it reopens after reload (mobile + PC). */
+  function persistLastViewed(product) {
+    if (!product || !product.sku) return;
+    try { localStorage.setItem('smouha_last_sku', String(product.sku)); } catch (e) { /* ignore */ }
+  }
+
+  /** On startup: always restore last scanned/viewed product when data is ready. */
   function restoreLastRecentProduct() {
     try {
-      if (!quickGetSettings().recentBesideBarcode) return;
       if (lastRenderedProduct) return;
-      const skus = store.getRecent();
-      if (!skus || !skus.length) return;
-      const products = search.getBySkuList(skus);
+      let sku = null;
+      try { sku = localStorage.getItem('smouha_last_sku'); } catch (e) { sku = null; }
+      if (!sku) {
+        const skus = store.getRecent();
+        if (skus && skus.length) sku = skus[0];
+      }
+      if (!sku) return;
+      const products = search.getBySkuList([sku]);
       if (products && products[0]) {
         renderProduct(products[0]);
+        return;
+      }
+      // Fallback: first resolvable recent
+      const skus = store.getRecent();
+      if (skus && skus.length) {
+        const list = search.getBySkuList(skus);
+        if (list && list[0]) renderProduct(list[0]);
       }
     } catch (e) { /* ignore */ }
   }
@@ -1565,6 +1783,19 @@ function renderSuggestions(matches, query) {
 
   function init() {
     cacheEls();
+    // Unlock WebAudio after first gesture so scan sound works on mobile
+    const unlockAudio = () => {
+      try {
+        if (!_scanAudioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) _scanAudioCtx = new AC();
+        }
+        if (_scanAudioCtx && _scanAudioCtx.state === 'suspended') _scanAudioCtx.resume();
+      } catch (e) { /* ignore */ }
+      document.removeEventListener('pointerdown', unlockAudio, true);
+    };
+    document.addEventListener('pointerdown', unlockAudio, true);
+
     quickApplyGlobalModes();
     initTheme();
     initSearch();
@@ -1641,18 +1872,36 @@ function renderSuggestions(matches, query) {
   /** Short, synthesized beep (no external audio asset) for the "Play Scan
    *  Sound" setting. Uses WebAudio directly; silently no-ops if the
    *  browser blocks audio before any user gesture has occurred yet. */
+  let _scanAudioCtx = null;
   function playScanBeep() {
     try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!_scanAudioCtx) _scanAudioCtx = new AC();
+      const ctx = _scanAudioCtx;
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.frequency.value = 880;
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+      osc.type = 'sine';
+      osc.frequency.value = 980;
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.14);
       osc.connect(gain).connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.12);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.15);
     } catch (e) { /* audio unavailable — silently skip */ }
+  }
+
+  function playScanFeedback() {
+    try {
+      if (quickGetSettings().scanSound) playScanBeep();
+    } catch (e) { /* ignore */ }
+    try {
+      if (navigator.vibrate) navigator.vibrate([30, 40, 30]);
+    } catch (e) { /* ignore */ }
   }
 
   /** Public entry point used by Pelican Mode (and any future input source)
@@ -1660,7 +1909,7 @@ function renderSuggestions(matches, query) {
    *  priority order (full barcode -> SKU -> last 6 digits) while reusing
    *  the exact same rendering/skeleton/choice-modal code as manual typing. */
   function searchFromExternalInput(code) {
-    if (quickGetSettings().scanSound) playScanBeep();
+    playScanFeedback();
     els.searchInput.value = code;
     els.clearBtn.classList.toggle('visible', code.length > 0);
     closeSuggestions();
@@ -1806,7 +2055,10 @@ function renderSuggestions(matches, query) {
     tick();
   }
 
+  window.addEventListener('resize', () => { try { quickApplyGlobalModes(); } catch (e) {} });
+
   return { init, setLoadingState, onDataReady, toast, renderRecent, renderFavorites, searchFromExternalInput };
+
 })();
 
 
@@ -1889,37 +2141,122 @@ const smartScan = (() => {
     zxingReader = new window.ZXingBrowser.BrowserMultiFormatReader(hints);
 
     try {
-      const devices = await window.ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
-      const rearDevice = pickRearCamera(devices);
-
       setStatus('Searching…');
       scheduleOcrFallback();
 
-      // Continuous-autofocus + HD stream constraints for the rear camera.
-      const constraints = {
-        video: {
-          deviceId: rearDevice ? { exact: rearDevice.deviceId } : undefined,
-          facingMode: rearDevice ? undefined : { ideal: 'environment' },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-          advanced: [{ focusMode: 'continuous' }]
-        },
-        audio: false
+      const baseVideo = {
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+        advanced: [{ focusMode: 'continuous' }]
       };
 
-      // ZXing owns the video element and decodes directly from the live
-      // stream — this is the PRIMARY, continuous scanning engine. It
-      // analyzes the center ROI only via the video's clip region.
-      zxingControls = await zxingReader.decodeFromConstraints(constraints, els.video, (result) => {
-        if (result && running) onCodeDetected(result.getText());
-        // a null result fires on every frame with no barcode found — expected, ignored.
-      });
+      // Acquire REAR-only stream BEFORE attaching to video / ZXing.
+      // Never use facingMode:ideal or unconstrained video — those briefly open the front camera on many phones.
+      const isFrontLabel = (label) => /front|user|face|selfie|أمام|امام/i.test(String(label || ''));
+      const isRearLabel = (label) => /back|rear|environment|world|خلف|خلفية/i.test(String(label || ''));
 
-      stream = els.video.srcObject;
+      async function stopStream(s) {
+        if (!s) return;
+        try { s.getTracks().forEach(t => { try { t.stop(); } catch (e) {} }); } catch (e) {}
+      }
+
+      async function openRearStreamOnly() {
+        // 1) exact environment only (never ideal / never default)
+        const exactTries = [
+          { audio: false, video: { facingMode: { exact: 'environment' }, ...baseVideo } },
+          { audio: false, video: { facingMode: { exact: 'environment' } } },
+        ];
+        for (const c of exactTries) {
+          try {
+            const s = await navigator.mediaDevices.getUserMedia(c);
+            const label = (s.getVideoTracks()[0] && s.getVideoTracks()[0].label) || '';
+            if (isFrontLabel(label)) { await stopStream(s); continue; }
+            return s;
+          } catch (e) { /* try next */ }
+        }
+
+        // 2) Permission granted — labels should exist; pick rear by deviceId
+        let devices = [];
+        try {
+          devices = await navigator.mediaDevices.enumerateDevices();
+        } catch (e) { devices = []; }
+        const cams = devices.filter(d => d.kind === 'videoinput');
+        const rear =
+          cams.find(d => isRearLabel(d.label)) ||
+          cams.find(d => d.label && !isFrontLabel(d.label)) ||
+          null;
+        if (rear && rear.deviceId) {
+          try {
+            const s = await navigator.mediaDevices.getUserMedia({
+              audio: false,
+              video: { deviceId: { exact: rear.deviceId }, ...baseVideo }
+            });
+            const label = (s.getVideoTracks()[0] && s.getVideoTracks()[0].label) || '';
+            if (isFrontLabel(label)) { await stopStream(s); }
+            else return s;
+          } catch (e) { /* fall through */ }
+        }
+
+        // 3) Last resort: any non-front deviceId
+        for (const cam of cams) {
+          if (!cam.deviceId || isFrontLabel(cam.label)) continue;
+          try {
+            const s = await navigator.mediaDevices.getUserMedia({
+              audio: false,
+              video: { deviceId: { exact: cam.deviceId }, ...baseVideo }
+            });
+            const label = (s.getVideoTracks()[0] && s.getVideoTracks()[0].label) || '';
+            if (isFrontLabel(label)) { await stopStream(s); continue; }
+            return s;
+          } catch (e) { /* next */ }
+        }
+        return null;
+      }
+
+      stream = await openRearStreamOnly();
+      if (!stream) {
+        throw Object.assign(new Error('No rear camera available'), { name: 'NotFoundError' });
+      }
+
+      // Final guard: never attach a front track
+      {
+        const label = (stream.getVideoTracks()[0] && stream.getVideoTracks()[0].label) || '';
+        if (isFrontLabel(label)) {
+          await stopStream(stream);
+          stream = null;
+          throw Object.assign(new Error('Front camera blocked'), { name: 'NotFoundError' });
+        }
+      }
+
+      const onDetect = (result) => {
+        if (result && running) onCodeDetected(result.getText());
+      };
+
+      // Prefer decodeFromStream so ZXing does not open its own (possibly front) constraints
+      if (typeof zxingReader.decodeFromStream === 'function') {
+        zxingControls = await zxingReader.decodeFromStream(stream, els.video, onDetect);
+      } else {
+        els.video.srcObject = stream;
+        await els.video.play().catch(() => {});
+        zxingControls = await zxingReader.decodeFromConstraints(
+          { audio: false, video: { facingMode: { exact: 'environment' } } },
+          els.video,
+          onDetect
+        );
+        // If ZXing replaced the stream, re-check
+        stream = els.video.srcObject || stream;
+        const label = (stream.getVideoTracks && stream.getVideoTracks()[0] && stream.getVideoTracks()[0].label) || '';
+        if (isFrontLabel(label)) {
+          if (zxingControls) { try { zxingControls.stop(); } catch (e) {} zxingControls = null; }
+          await stopStream(stream);
+          throw Object.assign(new Error('Front camera blocked'), { name: 'NotFoundError' });
+        }
+      }
     } catch (err) {
       handleCameraError(err);
     }
   }
+
 
   function close() {
     running = false;
@@ -1953,8 +2290,13 @@ const smartScan = (() => {
 
   function pickRearCamera(devices) {
     if (!devices || !devices.length) return null;
-    const rear = devices.find(d => /back|rear|environment/i.test(d.label));
-    return rear || devices[devices.length - 1];
+    // Never guess "last device" when labels are empty — that often picks the front camera.
+    const labeled = devices.filter(d => d && d.label && String(d.label).trim());
+    if (!labeled.length) return null;
+    const rear = labeled.find(d => /back|rear|environment|world|خلف/i.test(d.label));
+    if (rear) return rear;
+    const notFront = labeled.find(d => !/front|user|face|أمام/i.test(d.label));
+    return notFront || null;
   }
 
   /* ---------- Optional secondary check: native BarcodeDetector ----------
@@ -2105,6 +2447,19 @@ const smartScan = (() => {
 
   function init() {
     cacheEls();
+    // Unlock WebAudio after first gesture so scan sound works on mobile
+    const unlockAudio = () => {
+      try {
+        if (!_scanAudioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) _scanAudioCtx = new AC();
+        }
+        if (_scanAudioCtx && _scanAudioCtx.state === 'suspended') _scanAudioCtx.resume();
+      } catch (e) { /* ignore */ }
+      document.removeEventListener('pointerdown', unlockAudio, true);
+    };
+    document.addEventListener('pointerdown', unlockAudio, true);
+
     els.scanBtn.addEventListener('click', open);
     els.closeBtn.addEventListener('click', close);
     els.backdrop.addEventListener('click', (e) => { if (e.target === els.backdrop) close(); });
@@ -2132,7 +2487,7 @@ document.addEventListener('DOMContentLoaded', () => {
   warehouse.init(whMount).then(() => {
     // Sync display mode from settings
     const s = quickGetSettings();
-    warehouse.setDisplayMode(s.warehouseDisplay === 'friendly' ? 'friendly' : 'original');
+    warehouse.setDisplayMode(effectiveWarehouseDisplay() === 'friendly' ? 'friendly' : 'original');
     // When warehouse changes, refresh live Dmart info for the visible product
     warehouse.onChange((wh) => {
       try {

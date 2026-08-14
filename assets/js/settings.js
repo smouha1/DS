@@ -27,19 +27,20 @@ const STORAGE_KEY = 'smouhaPickSettings';
 
 const DEFAULTS = {
   autoCopyBarcode: false,
-  autoCopySku: true,
+  autoCopySku: false,
   hoverPreview: true,
   compactMode: false,
   performanceMode: false,
   largeBarcode: false,
   largeProductImage: false,
   qrCode: true,
-  scanSound: false,
+  scanSound: true,
   showProductCount: true,
   showVersion: true,
-  warehouseDisplay: 'original', // 'original' | 'friendly'
+  warehouseDisplay: 'original', // PC default; mobile uses friendly via effective logic
   recentBesideBarcode: true,
   dmartPopupEnabled: true,
+  intensiveAutoFocus: false,
 };
 
 let current = null;
@@ -100,7 +101,18 @@ export function applyGlobalModes() {
   document.documentElement.classList.toggle('compact-mode', !!s.compactMode);
   document.documentElement.classList.toggle('large-barcode', !!s.largeBarcode);
   document.documentElement.classList.toggle('large-product-image', !!s.largeProductImage);
-  document.documentElement.classList.toggle('recent-beside-barcode', !!s.recentBesideBarcode);
+  try {
+    const mobile = window.matchMedia('(max-width:720px)').matches;
+    let on = !!s.recentBesideBarcode;
+    if (mobile) {
+      on = localStorage.getItem('smouha_rb_mobile_on') === '1' && !!s.recentBesideBarcode;
+    } else if (!Object.prototype.hasOwnProperty.call(s, 'recentBesideBarcode')) {
+      on = true;
+    }
+    document.documentElement.classList.toggle('recent-beside-barcode', on);
+  } catch (e) {
+    document.documentElement.classList.toggle('recent-beside-barcode', !!s.recentBesideBarcode);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -117,6 +129,7 @@ const TOGGLE_DEFS = [
   { key: 'largeProductImage', label: 'Large Product Image' },
   { key: 'qrCode', label: 'QR Code Generator' },
   { key: 'scanSound', label: 'Play Scan Sound' },
+  { key: 'intensiveAutoFocus', label: 'Intensive Auto Focus (Search)' },
   { key: 'showProductCount', label: 'Show DMart Live Card' },
   { key: 'showVersion', label: 'Show Version' },
   { key: 'recentBesideBarcode', label: 'Recent Beside Barcode (Desktop only)' },
@@ -286,7 +299,7 @@ async function renderPanel() {
     </div>
     <div class="settings-section">
       <h4>General</h4>
-      ${rows(['dmartPopupEnabled', 'recentBesideBarcode', 'autoCopySku', 'autoCopyBarcode', 'scanSound', 'hoverPreview'])}
+      ${rows(['dmartPopupEnabled', 'recentBesideBarcode', 'autoCopySku', 'autoCopyBarcode', 'scanSound', 'intensiveAutoFocus', 'hoverPreview'])}
     </div>
     <div class="settings-section">
       <h4>Barcode</h4>
@@ -359,10 +372,18 @@ async function renderPanel() {
       if (key === 'recentBesideBarcode') {
         document.documentElement.classList.toggle('recent-beside-barcode', next);
         try {
-          const col = document.getElementById('productRecentCol');
-          if (col) {
-            // Trigger re-fill via custom event for app.js
-            window.dispatchEvent(new CustomEvent('smouha:recent-layout'));
+          if (window.matchMedia('(max-width:720px)').matches) {
+            localStorage.setItem('smouha_rb_mobile_on', next ? '1' : '0');
+          }
+        } catch (e) { /* ignore */ }
+        try {
+          window.dispatchEvent(new CustomEvent('smouha:recent-layout'));
+        } catch (e) { /* ignore */ }
+      }
+      if (key === 'dmartPopupEnabled') {
+        try {
+          if (window.matchMedia('(max-width:720px)').matches) {
+            localStorage.setItem('smouha_dmart_popup_mobile_on', next ? '1' : '0');
           }
         } catch (e) { /* ignore */ }
       }

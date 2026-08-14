@@ -30,6 +30,10 @@ export function initZoom(elements, onClose) {
 }
 
 export function openZoom(src) {
+  try {
+    if (window.__smouhaIgnoreTapUntil && Date.now() < window.__smouhaIgnoreTapUntil) return;
+  } catch (e) { /* ignore */ }
+
   if (!zoomImgEl) return;
   zoomImgEl.src = src;
   zoomBackdropEl.classList.add('open');
