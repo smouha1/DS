@@ -519,3 +519,34 @@ header.app-header,
 .custom-barcode-wrap{
   background:#ffffff !important;
 }
+
+.search-stats:empty,
+#searchStats:empty{display:none !important;}
+
+/* Transparent search row surfaces */
+header.app-header + main .search-section,
+.search-section,
+.search-main-row,
+.team-rotator,
+.search-input-shell{
+  background:transparent !important;
+}
+.search-input-shell{
+  box-shadow:none !important;
+}
+
+/* Sticky barcode bar fully disabled */
+.sticky-barcode-bar,
+#stickyBarcodeBar{
+  display:none !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+
+@media (max-width:720px){
+  #resultArea,
+  .result-area{
+    position:relative;
+    z-index:1;
+  }
+}

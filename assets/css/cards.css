@@ -386,15 +386,17 @@
 .dmart-live-card.is-loading .dmart-live-title::after{
   content:"";
   display:inline-block;
-  width:7px;
-  height:7px;
-  margin-left:7px;
-  vertical-align:1px;
-  border:1.5px solid currentColor;
-  border-right-color:transparent;
+  width:16px;
+  height:16px;
+  margin-left:10px;
+  vertical-align:-3px;
   border-radius:50%;
-  animation:dmartLiveSpin .75s linear infinite;
-  opacity:.8;
+  border:2.5px solid rgba(255,107,0,.22);
+  border-top-color:#FF6B00;
+  border-right-color:#FFB067;
+  box-shadow:0 0 0 3px rgba(255,107,0,.08);
+  animation:dmartLiveSpin .65s linear infinite;
+  opacity:1;
 }
 @keyframes dmartLiveSpin{to{transform:rotate(360deg)}}
 .dmart-live-card.is-error .dmart-live-value{
@@ -477,11 +479,7 @@ html.recent-beside-barcode .product-image-col{
     grid-template-columns:1fr;
   }
 }
-@media (max-width: 720px) {
-  html.recent-beside-barcode .product-recent-col {
-    display:none !important;
-  }
-}
+/* recent beside mobile: allowed when class is on */
 
 
 /* Tighter barcode frame on mobile */
@@ -499,10 +497,10 @@ html.recent-beside-barcode .product-image-col{
     flex:1 1 100%;
     max-width:100%;
     min-width:0;
-    order:-1;
+    order:3; /* below image + barcode */
   }
-  .product-image-col{flex:1 1 40%;max-width:45%;}
-  .product-barcodes-col{flex:1 1 50%;max-width:55%;}
+  .product-image-col{flex:1 1 46%;max-width:48%;order:1;}
+  .product-barcodes-col{flex:1 1 46%;max-width:48%;order:2;}
 }
 
 
@@ -1468,4 +1466,350 @@ html.large-barcode .product-barcodes-col .barcode-block-128 .barcode-numbers-lis
 }
 .custom-barcode-card{
   background:var(--card) !important;
+}
+
+
+/* Check in Dmart — restore natural size, font +20% */
+.dmart-check-btn-inline,
+a.dmart-check-btn.dmart-check-btn-inline{
+  transform:none !important;
+  scale:none !important;
+  width:100% !important;
+  min-width:0 !important;
+  padding:10px 14px !important;
+  font-size:14.4px !important; /* ~12px * 1.2 */
+  font-weight:700 !important;
+  border-radius:12px !important;
+  gap:8px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+.dmart-check-btn-inline .dmart-check-icon{
+  display:inline-flex !important;
+  width:18px !important;
+  height:18px !important;
+}
+@media (hover:hover) and (pointer:fine){
+  .dmart-check-btn-inline:hover{
+    transform:translateY(-1px) !important;
+    box-shadow:0 4px 14px rgba(255,107,0,.18) !important;
+  }
+}
+
+
+/* ===== Mobile product layout: image+name left, barcode right, live below ===== */
+@media (max-width:720px){
+  .product-top-row{
+    display:flex !important;
+    flex-wrap:wrap !important;
+    align-items:flex-start !important;
+    gap:8px !important;
+  }
+  .product-image-col{
+    order:1 !important;
+    flex:1 1 46% !important;
+    max-width:48% !important;
+    min-width:0 !important;
+  }
+  .product-barcodes-col{
+    order:2 !important;
+    flex:1 1 46% !important;
+    max-width:48% !important;
+    min-width:0 !important;
+  }
+  .product-live-col{
+    order:3 !important;
+    flex:1 1 100% !important;
+    max-width:100% !important;
+    width:100% !important;
+  }
+  .product-recent-col{
+    order:4 !important;
+  }
+  .product-name-under-img{
+    display:block !important;
+    font-size:12px !important;
+    font-weight:600 !important;
+    line-height:1.25 !important;
+    margin-top:6px !important;
+    max-height:2.5em !important;
+    overflow:hidden !important;
+  }
+  /* compact DMart live: 3 numbers only, no Check in Dmart */
+  .dmart-live-card{
+    padding:8px 10px !important;
+    border-radius:12px !important;
+  }
+  .dmart-live-title{
+    font-size:11px !important;
+    margin-bottom:4px !important;
+  }
+  .dmart-live-row{
+    padding:2px 0 !important;
+    font-size:12px !important;
+  }
+  .dmart-live-card .dmart-check-btn,
+  .dmart-live-card .dmart-check-btn-inline,
+  .dmart-live-card a.dmart-check-btn{
+    display:none !important;
+  }
+  /* hide duplicate big title row name on mobile if under-img exists */
+  .product-details-row .product-title-row{
+    display:none !important;
+  }
+}
+
+/* Recent Beside: allow on mobile when class present (user enabled) */
+@media (max-width:720px){
+  html.recent-beside-barcode .product-recent-col{
+    display:flex !important;
+    flex:1 1 100% !important;
+    max-width:100% !important;
+    max-height:200px !important;
+    border-left:none !important;
+    border-top:1px solid var(--border);
+    padding-left:0 !important;
+    padding-top:8px !important;
+  }
+}
+
+
+/* ===== FORCE mobile layout (image left, barcode right, live below) ===== */
+@media (max-width:720px){
+  .product-card .product-top-row{
+    display:flex !important;
+    flex-direction:row !important;
+    flex-wrap:wrap !important;
+  }
+  .product-card .product-image-col{
+    order:1 !important;
+    flex:1 1 47% !important;
+    max-width:48% !important;
+    width:48% !important;
+  }
+  .product-card .product-barcodes-col,
+  .product-card .barcodes-section{
+    order:2 !important;
+    flex:1 1 47% !important;
+    max-width:48% !important;
+    width:48% !important;
+  }
+  .product-card .product-live-col{
+    order:3 !important;
+    flex:1 1 100% !important;
+    max-width:100% !important;
+    width:100% !important;
+  }
+  .product-card .product-recent-col{
+    order:4 !important;
+  }
+  /* Hide Check in Dmart on mobile inside live card */
+  .dmart-live-card .dmart-check-btn,
+  .dmart-live-card a.dmart-check-btn,
+  .dmart-live-card .dmart-check-btn-inline{
+    display:none !important;
+  }
+}
+
+/* Check in Dmart — 2x height, rich hover/touch animation (desktop / when visible) */
+.dmart-check-btn-inline,
+a.dmart-check-btn.dmart-check-btn-inline,
+.dmart-live-card .dmart-check-btn{
+  transform:none !important;
+  min-height:52px !important; /* ~2x previous ~26px */
+  padding:14px 16px !important;
+  font-size:14.4px !important;
+  font-weight:800 !important;
+  border-radius:14px !important;
+  transition:background-color 180ms ease, color 180ms ease, border-color 180ms ease,
+    box-shadow 180ms ease, transform 180ms ease !important;
+}
+@media (hover:hover) and (pointer:fine){
+  .dmart-check-btn-inline:hover,
+  a.dmart-check-btn.dmart-check-btn-inline:hover,
+  .dmart-live-card .dmart-check-btn:hover{
+    background:#FF6B00 !important;
+    color:#fff !important;
+    border-color:#FF6B00 !important;
+    box-shadow:0 8px 22px rgba(255,107,0,.35) !important;
+    transform:translateY(-2px) scale(1.03) !important;
+  }
+  .dmart-check-btn-inline:hover .dmart-check-icon,
+  .dmart-live-card .dmart-check-btn:hover .dmart-check-icon{
+    color:#fff !important;
+  }
+}
+.dmart-check-btn-inline:active,
+a.dmart-check-btn.dmart-check-btn-inline:active{
+  transform:scale(0.97) !important;
+  background:#e35f00 !important;
+  color:#fff !important;
+}
+
+
+/* Mobile: SKU + Barcode + Favorite on one row, no wrap */
+@media (max-width:720px){
+  .product-details-row .sku-barcode-row{
+    display:flex !important;
+    flex-wrap:nowrap !important;
+    align-items:stretch !important;
+    gap:4px !important;
+    width:100% !important;
+  }
+  .product-details-row .sku-barcode-row .info-field,
+  .product-details-row .sku-barcode-row .info-field-barcode,
+  .product-details-row .sku-barcode-row .info-field-fav{
+    flex:1 1 0 !important;
+    min-width:0 !important;
+    max-width:none !important;
+    padding:5px 6px !important;
+    box-sizing:border-box !important;
+  }
+  .product-details-row .sku-barcode-row .info-field-barcode{
+    flex:1.2 1 0 !important;
+    padding:5px 4px !important;
+  }
+  .product-details-row .sku-barcode-row .info-field-fav{
+    flex:0 0 auto !important;
+    padding:5px 8px !important;
+  }
+  .product-details-row .sku-barcode-row .info-label{
+    font-size:9px !important;
+    letter-spacing:.02em !important;
+  }
+  .product-details-row .sku-barcode-row .info-value{
+    font-size:11px !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+  .product-details-row .sku-barcode-row .info-field-copy{
+    min-width:0 !important;
+    flex:1 1 auto !important;
+  }
+  .product-details-row .sku-barcode-row .icon-btn-sm{
+    width:28px !important;
+    height:28px !important;
+    flex-shrink:0 !important;
+  }
+  .product-details-row .sku-barcode-row .info-value-fav svg{
+    width:16px !important;
+    height:16px !important;
+  }
+}
+
+
+/* ===== MOBILE SKU/BARCODE/FAV — one tight row (force) ===== */
+@media (max-width:720px){
+  .product-details-row{
+    padding:10px 10px 8px !important;
+  }
+  .product-details-row .sku-barcode-row{
+    display:flex !important;
+    flex-direction:row !important;
+    flex-wrap:nowrap !important;
+    align-items:stretch !important;
+    justify-content:space-between !important;
+    gap:6px !important;
+    width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+  }
+  .product-details-row .sku-barcode-row > .info-field,
+  .product-details-row .sku-barcode-row > .info-field-barcode,
+  .product-details-row .sku-barcode-row > .info-field-fav{
+    display:flex !important;
+    flex-direction:column !important;
+    justify-content:center !important;
+    flex:1 1 0 !important;
+    width:auto !important;
+    max-width:none !important;
+    min-width:0 !important;
+    min-height:44px !important;
+    padding:6px 8px !important;
+    margin:0 !important;
+    box-sizing:border-box !important;
+  }
+  .product-details-row .sku-barcode-row > .info-field-barcode{
+    flex:1.4 1 0 !important;
+    flex-direction:row !important;
+    align-items:center !important;
+    padding:4px 4px 4px 0 !important;
+  }
+  .product-details-row .sku-barcode-row > .info-field-fav{
+    flex:0 0 52px !important;
+    width:52px !important;
+    max-width:52px !important;
+    align-items:center !important;
+    text-align:center !important;
+    padding:6px 4px !important;
+  }
+  .product-details-row .sku-barcode-row .info-field-copy{
+    display:flex !important;
+    flex-direction:column !important;
+    flex:1 1 auto !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    padding:6px 6px 6px 8px !important;
+  }
+  /* Hide download in the row on mobile — saves width so one line fits */
+  .product-details-row .sku-barcode-row #barcodeFieldDownload,
+  .product-details-row .sku-barcode-row .icon-btn-sm{
+    display:none !important;
+  }
+  .product-details-row .sku-barcode-row .info-label{
+    display:block !important;
+    font-size:9px !important;
+    line-height:1.1 !important;
+    margin:0 !important;
+  }
+  .product-details-row .sku-barcode-row .info-value{
+    display:block !important;
+    font-size:11px !important;
+    font-weight:700 !important;
+    line-height:1.2 !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    word-break:normal !important;
+    max-width:100% !important;
+  }
+  .product-details-row .sku-barcode-row .info-value-fav{
+    display:flex !important;
+    justify-content:center !important;
+    height:auto !important;
+  }
+  .product-details-row .sku-barcode-row .info-field-fav .info-label{
+    font-size:8px !important;
+  }
+}
+
+/* Neutralize older max-content that breaks mobile row */
+@media (max-width:720px){
+  .sku-barcode-row .info-field,
+  .sku-barcode-row .info-field-barcode{
+    max-width:none !important;
+    width:auto !important;
+  }
+}
+
+
+/* Check in Dmart height -35% from previous 2x size */
+.dmart-check-btn-inline,
+a.dmart-check-btn.dmart-check-btn-inline,
+.dmart-live-card .dmart-check-btn{
+  min-height:34px !important;
+  padding:8px 14px !important;
+  font-size:13px !important;
+}
+
+
+/* Check in Dmart height +50% from previous reduced size (~34px → ~51px) */
+.dmart-check-btn-inline,
+a.dmart-check-btn.dmart-check-btn-inline,
+.dmart-live-card .dmart-check-btn{
+  min-height:51px !important;
+  padding:12px 14px !important;
+  font-size:13.5px !important;
 }

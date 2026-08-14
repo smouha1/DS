@@ -639,3 +639,122 @@
 }
 
 
+
+
+/* Hide empty search-stats strip (No results rectangle) */
+.search-stats:empty{display:none !important;}
+#searchStats:empty{display:none !important;}
+.search-stats{min-height:0 !important;}
+
+/* Suggestion row: whole row tappable — children don't steal hit target */
+.suggestion-item{cursor:pointer;touch-action:manipulation;}
+.suggestion-item *{pointer-events:none !important;}
+
+
+/* No white rectangle behind search bar + Smouha Team */
+.search-section,
+.search-main-row,
+.search-box-wrap{
+  background:transparent !important;
+  box-shadow:none !important;
+}
+.search-input-shell{
+  background:transparent !important;
+  box-shadow:none !important;
+  border-color:rgba(255,140,60,.55) !important;
+}
+.team-rotator{
+  background:transparent !important;
+  box-shadow:none !important;
+  border-color:rgba(150,195,205,.35) !important;
+}
+@media (max-width:720px){
+  .search-section{
+    background:transparent !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+  }
+}
+
+
+/* Restore white panel behind search + Smouha Team, rounded bottom only */
+.search-section{
+  background:rgba(255,255,255,.94) !important;
+  border-radius:0 0 20px 20px !important;
+  box-shadow:0 6px 18px rgba(20,40,50,.06) !important;
+  padding:10px 12px 14px !important;
+  margin:0 0 10px !important;
+}
+.search-input-shell{
+  background:rgba(255,255,255,.96) !important;
+  border-radius:14px !important;
+  box-shadow:0 0 0 2px rgba(255,140,60,.10) !important;
+}
+.team-rotator{
+  background:rgba(255,255,255,.9) !important;
+  border-radius:14px !important;
+  box-shadow:none !important;
+}
+@media (max-width:720px){
+  .search-section{
+    background:rgba(255,255,255,.96) !important;
+    border-radius:0 0 18px 18px !important;
+    backdrop-filter:none !important;
+  }
+}
+
+
+/* Mobile: sticky search must not eat product content */
+@media (max-width:720px){
+  .search-section{
+    position:sticky !important;
+    top:0 !important;
+    z-index:40 !important;
+  }
+  /* Reduce sticky block height: tighter padding */
+  .search-section{
+    padding:6px 10px 8px !important;
+  }
+  .team-rotator{
+    min-height:36px !important;
+    padding:6px 10px !important;
+  }
+}
+
+
+/* ABC: hidden in search shell; floating above keyboard on mobile only */
+.search-input-shell .search-abc-btn,
+.search-abc-btn{
+  display:none !important;
+}
+.search-abc-btn.abc-keyboard-float{
+  display:none !important;
+  position:fixed !important;
+  z-index:10050 !important;
+  right:12px !important;
+  left:auto !important;
+  top:auto !important;
+  min-width:52px !important;
+  height:40px !important;
+  padding:0 14px !important;
+  border-radius:12px !important;
+  border:1px solid rgba(255,107,0,.45) !important;
+  background:#fff !important;
+  color:#E85D00 !important;
+  font-size:13px !important;
+  font-weight:800 !important;
+  box-shadow:0 6px 20px rgba(20,40,50,.18) !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+.search-abc-btn.abc-keyboard-float.abc-float-visible{
+  display:inline-flex !important;
+}
+.search-abc-btn.abc-keyboard-float.is-letters{
+  background:#FFF1E6 !important;
+  border-color:#FF6B00 !important;
+  color:#E85D00 !important;
+}
+@media (min-width:721px){
+  .search-abc-btn.abc-keyboard-float{display:none !important;}
+}

@@ -151,11 +151,37 @@ html.large-product-image .product-image-wrap{max-width:260px;}
 .settings-wh-option:hover {
   background: var(--bg);
 }
-.settings-wh-option input {
-  accent-color: var(--primary);
-  width: 16px;
-  height: 16px;
+.settings-wh-option input[type="radio"] {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0 !important;
+  flex-shrink: 0;
+  border-radius: 50% !important;
+  border: 2px solid #ffffff !important;
+  background: rgba(0,0,0,.12) !important;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.08);
+  outline: none !important;
+  cursor: pointer;
 }
+.settings-wh-option input[type="radio"]:checked {
+  background: #FF6B00 !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: 0 0 0 2px #FF6B00;
+}
+.settings-wh-option input[type="radio"]:focus-visible {
+  box-shadow: 0 0 0 2px #FF6B00, 0 0 0 4px rgba(255,107,0,.25);
+}
+[data-theme="dark"] .settings-wh-option input[type="radio"] {
+  border-color: #ffffff !important;
+  background: rgba(255,255,255,.15) !important;
+}
+[data-theme="dark"] .settings-wh-option input[type="radio"]:checked {
+  background: #FF6B00 !important;
+  border-color: #ffffff !important;
+}
+
 
 .settings-token-input{
   width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--crystal-border);
