@@ -9,7 +9,7 @@
    network-first strategy for data files, cache-first for the shell.
    ============================================================================ */
 
-const CACHE_NAME = 'smouha-pick-shell-v10-1760';
+const CACHE_NAME = 'smouha-pick-shell-v23-1773';
 const SHELL_FILES = [
   './',
   './index.html',
