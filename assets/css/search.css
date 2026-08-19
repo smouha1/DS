@@ -758,3 +758,53 @@
 @media (min-width:721px){
   .search-abc-btn.abc-keyboard-float{display:none !important;}
 }
+
+
+/* ===== Dark mode: Smouha Team rotator — high contrast, readable ===== */
+[data-theme="dark"] .team-rotator{
+  background:rgba(28, 36, 42, 0.95) !important;
+  border:1px solid rgba(255, 140, 60, 0.35) !important;
+  box-shadow:0 2px 10px rgba(0,0,0,.35) !important;
+}
+[data-theme="dark"] .team-rotator-kicker{
+  color:#FF9A4D !important;
+  opacity:1 !important;
+  font-weight:800 !important;
+}
+[data-theme="dark"] .team-rotator-text{
+  color:#F2F5F7 !important;
+  opacity:1 !important;
+  font-weight:700 !important;
+  text-shadow:0 1px 0 rgba(0,0,0,.35);
+}
+[data-theme="dark"] .team-rotator-cursor{
+  background:#FF9A4D !important;
+  box-shadow:0 0 8px rgba(255,154,77,.55);
+  opacity:1 !important;
+}
+[data-theme="dark"] .team-rotator.is-ashraf .team-rotator-text{
+  color:#FFB56B !important;
+  background:none !important;
+  -webkit-text-fill-color:#FFB56B !important;
+}
+[data-theme="dark"] .team-rotator.is-ashraf .team-rotator-cursor{
+  background:#FFB56B !important;
+}
+[data-theme="dark"] .search-section{
+  background:rgba(18, 24, 28, 0.92) !important;
+  box-shadow:0 6px 18px rgba(0,0,0,.35) !important;
+}
+[data-theme="dark"] .search-input-shell{
+  background:rgba(28, 36, 42, 0.96) !important;
+  border-color:rgba(255,140,60,.45) !important;
+  box-shadow:0 0 0 2px rgba(255,140,60,.12) !important;
+}
+[data-theme="dark"] #searchInput{
+  color:#F2F5F7 !important;
+  -webkit-text-fill-color:#F2F5F7 !important;
+  caret-color:#FF9A4D !important;
+}
+[data-theme="dark"] #searchInput::placeholder{
+  color:rgba(242,245,247,.45) !important;
+  -webkit-text-fill-color:rgba(242,245,247,.45) !important;
+}
