@@ -89,12 +89,16 @@ export async function loadInitial() {
     if (cachedCount > 0) {
       const storedVersion = await db.getMeta('versionInfo');
       const buildMatches = !remoteVersion || (storedVersion && storedVersion.build === remoteVersion.build);
-      if (buildMatches) {
+      const countMatches = !remoteVersion || !remoteVersion.products || cachedCount === Number(remoteVersion.products);
+      if (buildMatches && countMatches) {
         const records = await db.getAllProducts();
         search.build(records);
         lastLoadSource = 'indexeddb';
         if (!lastVersionInfo) lastVersionInfo = storedVersion;
         return { source: 'indexeddb', count: records.length, updated: false };
+      }
+      if (buildMatches && !countMatches) {
+        console.info('[updater] products count mismatch idb=%s version=%s — re-importing', cachedCount, remoteVersion && remoteVersion.products);
       }
       // Build changed: fall through to re-download products.json below.
     }

@@ -556,9 +556,9 @@ export function liveCardHtml(sku) {
   return `
     <div class="dmart-live-card" id="dmartLiveCard" data-sku="${safe}" aria-live="polite">
       <div class="dmart-live-title">DMart</div>
-      <div class="dmart-live-row"><span class="dmart-live-label">Available</span><span class="dmart-live-value dmart-live-available" data-live="available">…</span></div>
-      <div class="dmart-live-row"><span class="dmart-live-label">Reserved</span><span class="dmart-live-value dmart-live-reserved" data-live="reserved">…</span></div>
-      <div class="dmart-live-row"><span class="dmart-live-label">Price</span><span class="dmart-live-value dmart-live-price" data-live="price">…</span></div>
+      <div class="dmart-live-row dmart-live-available-row"><span class="dmart-live-label">Available</span><span class="dmart-live-value dmart-live-available" data-live="available">…</span></div>
+      <div class="dmart-live-row dmart-live-reserved-row"><span class="dmart-live-label">Reserved</span><span class="dmart-live-value dmart-live-reserved" data-live="reserved">…</span></div>
+      <div class="dmart-live-row dmart-live-price-row"><span class="dmart-live-label">Price</span><span class="dmart-live-value dmart-live-price" data-live="price">…</span></div>
       <a class="dmart-check-btn dmart-check-btn-inline" href="#" data-sku="${safe}" target="_blank" rel="noopener noreferrer">
         <span class="dmart-check-icon" aria-hidden="true">
           <svg viewBox="0 0 100 100"><path d="M 51.28,14.43 L 48.01,15.07 L 44.50,16.59 L 42.58,17.94 L 40.11,20.81 L 38.60,25.36 L 38.52,34.85 L 26.63,34.85 L 26.63,41.71 L 27.67,44.42 L 30.06,46.41 L 32.46,47.05 L 38.60,47.13 L 38.68,67.78 L 40.27,73.60 L 42.66,77.59 L 46.09,81.02 L 50.00,83.33 L 54.47,84.61 L 59.25,84.77 L 64.75,83.49 L 67.70,81.90 L 67.70,70.18 L 64.51,70.97 L 61.80,70.73 L 58.93,69.22 L 57.26,67.15 L 56.14,63.32 L 56.14,47.13 L 69.54,47.05 L 69.54,39.87 L 68.26,37.00 L 65.79,35.25 L 56.14,34.77 L 56.14,14.35 Z" fill="currentColor"/></svg>
@@ -591,3 +591,19 @@ try {
     }
   });
 } catch (e) { /* ignore */ }
+
+
+/** Directional orange fill for Check in Dmart (mouse approach top/bottom). */
+export function wireDmartFillDirection(root) {
+  try {
+    const scope = root || document;
+    scope.querySelectorAll('a.dmart-check-btn, a.dmart-check-btn-inline').forEach((btn) => {
+      if (btn.dataset.fillWired) return;
+      btn.dataset.fillWired = '1';
+      btn.addEventListener('mousemove', (ev) => {
+        const r = btn.getBoundingClientRect();
+        btn.dataset.fillFrom = (ev.clientY - r.top) < r.height / 2 ? 'top' : 'bottom';
+      }, { passive: true });
+    });
+  } catch (e) { /* ignore */ }
+}

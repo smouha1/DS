@@ -1037,12 +1037,20 @@ function renderSuggestions(matches, query) {
   let barcodeRenderGen = 0;
 
   function ensureBarcodeSvg(wrap) {
-    let el = document.getElementById('c128-0');
-    if (el) return el;
     if (!wrap) return null;
-    wrap.classList.remove('is-qr');
-    wrap.innerHTML = '<svg id="c128-0" data-barcode-value=""></svg>';
-    return document.getElementById('c128-0');
+    let el = wrap.querySelector('#c128-0') || document.getElementById('c128-0');
+    if (el && wrap.contains(el)) return el;
+    // Create SVG only — never replace wrap.innerHTML (would destroy siblings)
+    el = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    el.setAttribute('id', 'c128-0');
+    el.setAttribute('data-barcode-value', '');
+    // Remove only previous svg children, keep any non-svg nodes
+    [...wrap.querySelectorAll('svg')].forEach((s) => s.remove());
+    [...wrap.querySelectorAll('span')].forEach((s) => {
+      if (/could not|invalid/i.test(s.textContent || '')) s.remove();
+    });
+    wrap.insertBefore(el, wrap.firstChild);
+    return el;
   }
 
   function wireBarcodeZoom(wrap) {
@@ -1054,6 +1062,171 @@ function renderSuggestions(matches, query) {
     };
   }
 
+
+
+  /** Floating QR/128 switch — fixed, draggable (pointer events), never in layout. */
+  function formatSwitchLabel() {
+    try {
+      if (window.__smouhaFormatOverride === 'qr') return 'QR';
+      if (window.__smouhaFormatOverride === '128') return '128';
+    } catch (e) {}
+    try { return quickGetSettings().qrCode ? 'QR' : '128'; } catch (e) { return 'QR'; }
+  }
+
+  function ensureFloatingFormatSwitch() {
+    let btn = document.getElementById('barcodeFormatSwitch');
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.type = 'button';
+      btn.id = 'barcodeFormatSwitch';
+      btn.className = 'barcode-format-switch is-floating';
+      btn.title = 'Toggle QR / Code128 — drag to move';
+      btn.setAttribute('aria-label', 'Toggle barcode format');
+      btn.innerHTML = '<span class="bfs-label">QR</span>';
+      document.body.appendChild(btn);
+      wireFloatingFormatSwitch(btn);
+    }
+    // Force visible on every call (mobile + PC)
+    btn.hidden = false;
+    btn.style.setProperty('display', 'inline-flex', 'important');
+    btn.style.setProperty('visibility', 'visible', 'important');
+    btn.style.setProperty('opacity', '1', 'important');
+    btn.style.setProperty('pointer-events', 'auto', 'important');
+    btn.style.setProperty('position', 'fixed', 'important');
+    btn.style.setProperty('z-index', '2147483646', 'important');
+    const lab = btn.querySelector('.bfs-label');
+    if (lab) lab.textContent = formatSwitchLabel();
+    return btn;
+  }
+
+  function wireFloatingFormatSwitch(btn) {
+    if (btn.dataset.wired === '1') return;
+    btn.dataset.wired = '1';
+
+    // Default position if none saved
+    const placeDefault = () => {
+      btn.style.setProperty('left', 'auto', 'important');
+      btn.style.setProperty('top', 'auto', 'important');
+      btn.style.setProperty('right', '16px', 'important');
+      btn.style.setProperty('bottom', '100px', 'important');
+    };
+
+    try {
+      const raw = localStorage.getItem('smouha_fmt_switch_pos');
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (typeof p.x === 'number' && typeof p.y === 'number' && isFinite(p.x) && isFinite(p.y)) {
+          const maxX = Math.max(4, window.innerWidth - 56);
+          const maxY = Math.max(4, window.innerHeight - 48);
+          const x = Math.max(4, Math.min(maxX, p.x));
+          const y = Math.max(4, Math.min(maxY, p.y));
+          btn.style.setProperty('left', x + 'px', 'important');
+          btn.style.setProperty('top', y + 'px', 'important');
+          btn.style.setProperty('right', 'auto', 'important');
+          btn.style.setProperty('bottom', 'auto', 'important');
+        } else {
+          placeDefault();
+        }
+      } else {
+        placeDefault();
+      }
+    } catch (e) {
+      placeDefault();
+    }
+
+    let dragging = false;
+    let moved = false;
+    let pid = null;
+    let startX = 0, startY = 0, origL = 0, origT = 0;
+
+    const onPointerDown = (ev) => {
+      // Only primary button / touch
+      if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+      dragging = true;
+      moved = false;
+      pid = ev.pointerId;
+      try { btn.setPointerCapture(ev.pointerId); } catch (e) {}
+      startX = ev.clientX;
+      startY = ev.clientY;
+      const r = btn.getBoundingClientRect();
+      origL = r.left;
+      origT = r.top;
+      btn.classList.add('is-dragging');
+      // Do NOT preventDefault here — would kill click on desktop
+    };
+
+    const onPointerMove = (ev) => {
+      if (!dragging || (pid != null && ev.pointerId !== pid)) return;
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) moved = true;
+      if (!moved) return;
+      // Only lock scroll once user actually drags
+      if (ev.cancelable) ev.preventDefault();
+      let nx = origL + dx;
+      let ny = origT + dy;
+      const maxX = window.innerWidth - btn.offsetWidth - 4;
+      const maxY = window.innerHeight - btn.offsetHeight - 4;
+      nx = Math.max(4, Math.min(maxX, nx));
+      ny = Math.max(4, Math.min(maxY, ny));
+      btn.style.setProperty('left', nx + 'px', 'important');
+      btn.style.setProperty('top', ny + 'px', 'important');
+      btn.style.setProperty('right', 'auto', 'important');
+      btn.style.setProperty('bottom', 'auto', 'important');
+    };
+
+    const onPointerUp = (ev) => {
+      if (!dragging || (pid != null && ev.pointerId !== pid)) return;
+      dragging = false;
+      pid = null;
+      btn.classList.remove('is-dragging');
+      try { btn.releasePointerCapture(ev.pointerId); } catch (e) {}
+      try {
+        const r = btn.getBoundingClientRect();
+        localStorage.setItem('smouha_fmt_switch_pos', JSON.stringify({ x: r.left, y: r.top }));
+      } catch (e) {}
+      if (moved) {
+        btn.dataset.skipClick = '1';
+        setTimeout(() => { try { delete btn.dataset.skipClick; } catch (e) {} }, 80);
+      }
+    };
+
+    btn.addEventListener('pointerdown', onPointerDown);
+    btn.addEventListener('pointermove', onPointerMove);
+    btn.addEventListener('pointerup', onPointerUp);
+    btn.addEventListener('pointercancel', onPointerUp);
+
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (btn.dataset.skipClick === '1') return;
+      try {
+        const currentlyQr = effectiveUseQr();
+        window.__smouhaFormatOverride = currentlyQr ? '128' : 'qr';
+      } catch (err) {
+        window.__smouhaFormatOverride = '128';
+      }
+      const lab = btn.querySelector('.bfs-label');
+      if (lab) lab.textContent = formatSwitchLabel();
+      if (lastRenderedProduct) {
+        try { refreshPrimaryBarcode(lastRenderedProduct); } catch (err) {}
+      }
+    });
+  }
+
+  try { window.__smouhaEnsureFmtSwitch = ensureFloatingFormatSwitch; } catch (e) {}
+
+  function effectiveUseQr() {
+    const s = quickGetSettings();
+    if (s.performanceMode) return false;
+    // Session toggle (switch next to barcode) — one-shot override; settings remain the default
+    try {
+      if (window.__smouhaFormatOverride === 'qr') return true;
+      if (window.__smouhaFormatOverride === '128') return false;
+    } catch (e) { /* ignore */ }
+    return !!s.qrCode;
+  }
+
   function refreshPrimaryBarcode(product) {
     if (!product) return;
     const bc = product.barcodes && product.barcodes[0];
@@ -1061,7 +1234,7 @@ function renderSuggestions(matches, query) {
 
     const gen = ++barcodeRenderGen;
     const s = quickGetSettings();
-    const useQr = s.qrCode && !s.performanceMode;
+    const useQr = effectiveUseQr();
 
     let wrap = document.getElementById('c128-0')?.parentElement
       || document.querySelector('.barcode-128-wrap');
@@ -1098,7 +1271,7 @@ function renderSuggestions(matches, query) {
             } catch (e) {}
           }
           if (ok === false) {
-            wrap.innerHTML = '<span style="color:#9aa0aa;font-size:11px;">Could not render QR code</span>';
+            try { const el = ensureBarcodeSvg(wrap); if (el) el.outerHTML = '<span style="color:#9aa0aa;font-size:11px;">Could not render QR code</span>'; } catch (e) {}
             return;
           }
           wireBarcodeZoom(wrap);
@@ -1106,7 +1279,7 @@ function renderSuggestions(matches, query) {
         .catch(() => {
           if (gen !== barcodeRenderGen) return;
           const w = document.querySelector('.barcode-128-wrap');
-          if (w) w.innerHTML = '<span style="color:#9aa0aa;font-size:11px;">Could not load QR library</span>';
+          if (w) { try { const el = w.querySelector('#c128-0, svg'); if (el) el.outerHTML = '<span style="color:#9aa0aa;font-size:11px;">Could not load QR library</span>'; else w.insertAdjacentHTML('afterbegin', '<span style="color:#9aa0aa;font-size:11px;">Could not load QR library</span>'); } catch (e) {} }
         });
       return;
     }
@@ -1124,9 +1297,11 @@ function renderSuggestions(matches, query) {
           const w = Math.ceil(wrap.getBoundingClientRect().width);
           if (w > 0) block.style.setProperty('--bc-track-width', w + 'px');
         }
+        // Align Br row to exact CODE128 width (same path as QR)
+        syncBarcodeTrackWidth();
       } catch (e) { /* ignore */ }
     } else {
-      wrap.innerHTML = '<span style="color:#9aa0aa;font-size:11px;">Invalid barcode for Code128</span>';
+      try { const el = ensureBarcodeSvg(wrap); if (el) el.outerHTML = '<span style="color:#9aa0aa;font-size:11px;">Invalid barcode for Code128</span>'; } catch (e) {}
     }
   }
 
@@ -1138,29 +1313,44 @@ function renderSuggestions(matches, query) {
       const block = wrap && wrap.closest('.barcode-block-128');
       if (!wrap || !block) return;
       const apply = () => {
-        const isQr = wrap.classList.contains('is-qr');
-        let w = Math.ceil(wrap.getBoundingClientRect().width);
+        // Outer width of the white barcode frame (includes padding)
+        const w = Math.round(wrap.getBoundingClientRect().width);
         if (w < 8) return;
-        // Lock block + numbers to exact wrap width (QR frame or C128 box)
-        block.style.width = w + 'px';
-        block.style.maxWidth = '100%';
-        block.style.boxSizing = 'border-box';
+
+        // Br list exactly same width → left & right edges match barcode
         const list = block.querySelector('.barcode-numbers-list');
         if (list) {
-          list.style.width = w + 'px';
-          list.style.maxWidth = '100%';
           list.style.boxSizing = 'border-box';
+          list.style.width = w + 'px';
+          list.style.minWidth = w + 'px';
+          list.style.maxWidth = w + 'px';
+          list.style.margin = '0';
+          list.style.padding = '0';
+          list.style.alignSelf = 'flex-start';
         }
+        block.querySelectorAll('.barcode-number-item').forEach((item) => {
+          item.style.boxSizing = 'border-box';
+          item.style.width = '100%';
+          item.style.maxWidth = '100%';
+          item.style.margin = '0';
+        });
+
+        // Block shrink-wraps: switch row + barcode + Br (all same left edge)
+        block.style.width = 'max-content';
+        block.style.maxWidth = '100%';
+        block.style.boxSizing = 'border-box';
+        block.style.setProperty('--bc-track-width', w + 'px');
       };
       apply();
       requestAnimationFrame(() => {
         apply();
-        setTimeout(apply, 30);
-        setTimeout(apply, 120);
-        setTimeout(apply, 300);
+        setTimeout(apply, 40);
+        setTimeout(apply, 150);
+        setTimeout(apply, 350);
       });
     } catch (e) { /* ignore */ }
   }
+
 
 
 
@@ -1263,12 +1453,14 @@ function renderSuggestions(matches, query) {
           <svg id="c128-0" data-barcode-value="${escapeAttr(product.barcodes[0] || '')}"></svg>
         </div>
         <div class="barcode-numbers-list">
-          ${product.barcodes.map((bc, i) => `
-            <div class="barcode-number-item" data-copy="${escapeAttr(bc)}" role="button" tabindex="0" aria-label="Copy Barcode ${i + 1}">
-              <span class="barcode-number-label">Barcode ${i + 1}</span>
+          ${product.barcodes.map((bc, i) => {
+            const brLabel = 'Br : ' + (i + 1);
+            return `
+            <div class="barcode-number-item" data-copy="${escapeAttr(bc)}" role="button" tabindex="0" aria-label="Copy ${brLabel}">
+              <span class="barcode-number-label">${brLabel}</span>
               <span class="barcode-number-value">${escapeHtml(bc)}</span>
-            </div>
-          `).join('')}
+            </div>`;
+          }).join('')}
         </div>
       </div>
     `;
@@ -1349,6 +1541,9 @@ function renderSuggestions(matches, query) {
     // without rebuilding the entire product card.
     refreshPrimaryBarcode(product);
 
+    // Floating format switch (draggable, outside layout — never affects Br/barcode)
+    ensureFloatingFormatSwitch();
+
     // Every barcode number in the plain-text list copies on click/tap.
     els.resultArea.querySelectorAll('.barcode-number-item').forEach(item => {
       const doCopy = () => copyText(item.dataset.copy, item, 'Barcode Copied');
@@ -1374,6 +1569,14 @@ function renderSuggestions(matches, query) {
     // Prevents default navigation so warehouse selection is always confirmed.
     const dmartBtn = els.resultArea.querySelector('a.dmart-check-btn');
     if (dmartBtn) {
+      // Directional fill animation based on mouse approach
+      dmartBtn.addEventListener('mousemove', (ev) => {
+        try {
+          const r = dmartBtn.getBoundingClientRect();
+          const fromTop = (ev.clientY - r.top) < r.height / 2;
+          dmartBtn.dataset.fillFrom = fromTop ? 'top' : 'bottom';
+        } catch (e) { /* ignore */ }
+      }, { passive: true });
       dmartBtn.href = dmartLib.buildDmartInventoryUrl(product.sku);
       dmartBtn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -1783,6 +1986,8 @@ function renderSuggestions(matches, query) {
 
   function init() {
     cacheEls();
+    try { ensureFloatingFormatSwitch(); } catch (e) { console.warn("fmt switch", e); }
+
     // Unlock WebAudio after first gesture so scan sound works on mobile
     const unlockAudio = () => {
       try {
@@ -1980,7 +2185,7 @@ function renderSuggestions(matches, query) {
     const DELETE_MS = 32;
     const DELETE_MS_ASHRAF = 48;
     const HOLD_MS = 1600;
-    const HOLD_MS_ASHRAF = 4000;
+    const HOLD_MS_ASHRAF = 9000;
     const GAP_MS = 350;
 
     function isInstantClear(i) {
