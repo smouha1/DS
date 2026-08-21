@@ -2621,3 +2621,33 @@ button#barcodeFormatSwitch.barcode-format-switch.is-floating.is-dragging,
   color: #FF9A4D !important;
   border-color: rgba(255, 154, 77, 0.7) !important;
 }
+
+/* ============================================================
+   Product card enter — light fade + soft rise (CSS only)
+   Runs once when .product-card is inserted into #resultArea.
+   Skipped for reduced-motion and Performance Mode.
+   ============================================================ */
+@keyframes productCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#resultArea > .product-card {
+  animation: productCardIn 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+#resultArea > .product-card@media (prefers-reduced-motion: reduce) {
+  #resultArea > .product-card {
+    animation: none;
+  }
+}
+
+.performance-mode #resultArea > .product-card {
+  animation: none;
+}
