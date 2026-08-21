@@ -1,7 +1,7 @@
 {
   "version": "1.7.8",
-  "build": 70,
-  "updated": "2026-08-19",
+  "build": 74,
+  "updated": "2026-08-20",
   "products": 39461,
   "changelogByVersion": [
     {
@@ -70,7 +70,18 @@
         "Floating switch: fixed scope (created on ui.init for PC+mobile)",
         "Pointer events: click works without preventDefault on mousedown",
         "Forced fixed position + max z-index, visible always",
-        "Service worker cache v23"
+        "Service worker cache v23",
+        "Service Worker cache optimization (v24): network-first HTML, SWR for assets",
+        "SW precache resilient (per-file, missing file does not fail install)",
+        "SW shell includes dmartLive/settings/maintenance modules",
+        "SW never caches products.json/version.json or third-party CDN",
+        "Product card soft enter animation (fade + rise, respects reduced-motion & Performance Mode)",
+        "Supabase cloud mirror: extension writes Available/Reserved/Price after DMart success",
+        "Mobile/site reads dmart_stock via anon when extension bridge unavailable",
+        "Local PC extension path unchanged; cloud is additive",
+        "Live DMart relay: mobile creates request in Supabase, PC extension fulfills from DMart",
+        "Fresh Available/Reserved/Price for remote clients (target under 3s when PC awake)",
+        "Local PC extension path unchanged"
       ]
     },
     {
