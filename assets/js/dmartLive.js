@@ -27,6 +27,11 @@ const LIVE_MAX_WAIT_MS = 60_000;
 const LIVE_RETRY_DELAYS_MS = [0, 900, 1500, 2500, 4000, 6000, 9000, 12000];
 const TOKEN_KEY = 'smouha_dmart_token';
 
+/* Supabase read-only mirror (anon). Written by the PC extension — never holds DMart token. */
+const SB_URL = 'https://kryrvfyzmrydbqkmfubt.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtyeXJ2Znl6bXJ5ZGJxa21mdWJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNDY5MDksImV4cCI6MjEwMjcyMjkwOX0.Zg9mXQ-1f2eRGsx92dy8kYfduDVm-eOpX1wheuhCpcs';
+const SB_MAX_AGE_MS = 15 * 60 * 1000; // ignore rows older than 15 minutes
+
 /** @type {Map<string, { at:number, data:object }>} */
 const cache = new Map();
 
@@ -341,6 +346,87 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+
+
+async function fetchViaLiveRelay(sku, warehouseId) {
+  if (!SB_URL || !SB_ANON || !sku || !warehouseId) {
+    return { ok: false, reason: 'supabase-config', onHand: null, reserved: null, price: null };
+  }
+  try {
+    // 1) Create pending request
+    const createRes = await fetch(SB_URL + '/rest/v1/dmart_live_requests', {
+      method: 'POST',
+      headers: {
+        apikey: SB_ANON,
+        Authorization: 'Bearer ' + SB_ANON,
+        'Content-Type': 'application/json',
+        Prefer: 'return=representation',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({
+        warehouse_id: String(warehouseId),
+        sku: String(sku),
+        status: 'pending',
+      }),
+    });
+    if (!createRes.ok) {
+      return { ok: false, reason: 'relay-create-failed', onHand: null, reserved: null, price: null };
+    }
+    const created = await createRes.json();
+    const row = Array.isArray(created) ? created[0] : created;
+    if (!row || !row.id) {
+      return { ok: false, reason: 'relay-create-failed', onHand: null, reserved: null, price: null };
+    }
+    const id = row.id;
+
+    // 2) Poll for done/error (max ~9s, target <3s when PC extension is awake)
+    const deadline = Date.now() + 9000;
+    while (Date.now() < deadline) {
+      await sleep(350);
+      const q =
+        SB_URL +
+        '/rest/v1/dmart_live_requests?id=eq.' + encodeURIComponent(id) +
+        '&select=status,available,reserved,price,error_code';
+      const res = await fetch(q, {
+        headers: {
+          apikey: SB_ANON,
+          Authorization: 'Bearer ' + SB_ANON,
+          Accept: 'application/json',
+        },
+      });
+      if (!res.ok) continue;
+      const rows = await res.json();
+      if (!rows || !rows.length) continue;
+      const r = rows[0];
+      if (r.status === 'done') {
+        const onHand = r.available != null ? Number(r.available) : null;
+        const reserved = r.reserved != null ? Number(r.reserved) : null;
+        const price = r.price != null ? Number(r.price) : null;
+        return {
+          ok: true,
+          onHand: Number.isFinite(onHand) ? onHand : null,
+          reserved: Number.isFinite(reserved) ? reserved : null,
+          price: Number.isFinite(price) ? price : null,
+          via: 'live-relay',
+        };
+      }
+      if (r.status === 'error') {
+        return {
+          ok: false,
+          reason: r.error_code === 'AUTH_REQUIRED' ? 'auth-required' : 'relay-error',
+          onHand: null,
+          reserved: null,
+          price: null,
+          via: 'live-relay',
+        };
+      }
+    }
+    return { ok: false, reason: 'relay-timeout', onHand: null, reserved: null, price: null };
+  } catch (e) {
+    return { ok: false, reason: 'relay-error', onHand: null, reserved: null, price: null };
+  }
+}
+
 export async function fetchLiveProductInfo(sku, warehouseId) {
   if (!sku || !warehouseId) {
     return { onHand: null, reserved: null, price: null, ok: false, reason: 'missing-ids' };
@@ -352,7 +438,7 @@ export async function fetchLiveProductInfo(sku, warehouseId) {
     return { ...cached.data, ok: true, cached: true };
   }
 
-  // 1) Prefer extension bridge (solves CORS, uses portal session)
+  // 1) Prefer extension bridge (PC — solves CORS, uses portal session)
   const bridge = await requestViaExtension(sku, warehouseId);
   if (bridge.ok) {
     const data = {
@@ -365,6 +451,18 @@ export async function fetchLiveProductInfo(sku, warehouseId) {
       return { ...data, ok: true, via: 'extension' };
     }
     return { ...data, ok: false, reason: 'partial-data', via: 'extension' };
+  }
+
+  // 2) Live relay via Supabase → PC extension → DMart (fresh numbers)
+  const relay = await fetchViaLiveRelay(sku, warehouseId);
+  if (relay.ok) {
+    const data = {
+      onHand: relay.onHand,
+      reserved: relay.reserved,
+      price: relay.price,
+    };
+    cache.set(cacheKey, { at: Date.now(), data });
+    return { ...data, ok: true, via: 'live-relay' };
   }
 
   // Bridge present but auth missing
