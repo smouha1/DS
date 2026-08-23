@@ -271,7 +271,7 @@ function requestViaExtension(sku, warehouseId) {
       const code = (data.error && data.error.code) || 'UNKNOWN_ERROR';
       let reason = 'fetch-failed';
       if (code === 'AUTH_REQUIRED') reason = 'auth-required';
-      else if (code === 'PRODUCT_NOT_FOUND') reason = 'no-fields';
+      else if (code === 'PRODUCT_NOT_FOUND') reason = 'not-found';
       else if (code === 'TIMEOUT') reason = 'fetch-failed';
       resolve({ ok: false, reason, onHand: null, reserved: null, price: null, via: 'extension' });
     }
@@ -556,6 +556,7 @@ export function setLiveValues(root, data) {
         'cors': 'Browser blocked the API (CORS). Install DMart Bridge extension.',
         'fetch-failed': 'Could not reach Dmart API',
         'no-fields': 'API returned no stock/price fields',
+        'not-found': 'Product not found in DMart for this warehouse',
         'partial-data': 'Waiting for complete DMart data…',
         'missing-ids': 'Select a warehouse first',
         'bridge-timeout': 'DMart Bridge timed out — check portal login',
@@ -618,6 +619,16 @@ export function requestLiveForProduct(sku) {
         // is waking up or returning a partial response. Keep polling instead.
         if (hasCompleteLiveData(data)) {
           setLiveValues(root, { ...data, ok: true });
+          return;
+        }
+
+        // Definitive failures — stop spinner (do not wait full LIVE_MAX_WAIT)
+        const stopReasons = new Set([
+          'not-found', 'no-fields', 'auth-required', 'unauthorized',
+          'no-token', 'missing-ids',
+        ]);
+        if (data && stopReasons.has(data.reason)) {
+          setLiveValues(root, { ...data, ok: false });
           return;
         }
 
