@@ -137,22 +137,26 @@ function asList(data) {
 
 function pickMatchingProduct(data, sku) {
   const list = asList(data);
-  const skuStr = String(sku);
+  const skuStr = String(sku).trim();
+  if (!skuStr) return null;
+  // Exact SKU match only — never use list[0] (search often returns many unrelated products)
   const match = list.find((row) => {
     if (!row || typeof row !== 'object') return false;
     const candidates = [
       row.sku, row.SKU, row.product_sku, row.productSku, row.sku_code, row.skuCode,
       row.external_id, row.externalId, row.barcode, row.product_barcode,
-    ].filter((x) => x != null).map((x) => String(x));
+      row.merchant_sku, row.merchantSku, row.item_sku, row.itemSku,
+    ].filter((x) => x != null).map((x) => String(x).trim());
     return candidates.includes(skuStr);
   });
-  if (match) return match;
-  if (list.length === 1) return list[0];
-  return list[0] || data;
+  return match || null;
 }
 
 function extractLiveFields(raw, sku) {
   const node = pickMatchingProduct(raw, sku);
+  if (!node) {
+    return { onHand: null, reserved: null, price: null, productId: null, matched: false };
+  }
   const onHand = findNumericField(node, [
     'on_hand_quantity', 'onHandQuantity', 'on_hand', 'onHand',
   ]);
@@ -178,6 +182,7 @@ function extractLiveFields(raw, sku) {
     reserved: reserved === null ? null : reserved,
     price: price === null ? null : price,
     productId,
+    matched: true,
   };
 }
 
@@ -380,9 +385,9 @@ async function fetchViaLiveRelay(sku, warehouseId) {
     const id = row.id;
 
     // 2) Poll for done/error (max ~9s, target <3s when PC extension is awake)
-    const deadline = Date.now() + 9000;
+    const deadline = Date.now() + 7000;
     while (Date.now() < deadline) {
-      await sleep(350);
+      await sleep(200);
       const q =
         SB_URL +
         '/rest/v1/dmart_live_requests?id=eq.' + encodeURIComponent(id) +
