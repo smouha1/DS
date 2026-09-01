@@ -1,5 +1,5 @@
 /* ============================================================================
-   sw.js — optimized app-shell service worker (v30)
+   sw.js — optimized app-shell service worker (v31)
    ------------------------------------------------------------------------
    Goals:
      • Fast loads from cache for static assets (CSS/JS)
@@ -10,7 +10,7 @@
      • Drop old caches on activate
    ------------------------------------------------------------------------ */
 
-const CACHE_NAME = 'smouha-pick-shell-v30-1780';
+const CACHE_NAME = 'smouha-pick-shell-v31-1781';
 
 /** Core shell — same-origin only. Lazy modules included so first offline
  *  open of Settings/Maintenance/DMart live still works after one online visit. */
