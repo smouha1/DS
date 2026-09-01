@@ -1,12 +1,13 @@
 {
   "version": "1.7.8",
-  "build": 74,
-  "updated": "2026-08-20",
-  "products": 39461,
+  "build": 78,
+  "updated": "2026-09-01",
+  "products": 39994,
   "changelogByVersion": [
     {
       "version": "1.7.8",
       "items": [
+        "Products catalog updated: 39994 items (+533 vs previous 39461)",
         "Warehouse Display radio: custom white ring + orange fill (no black frame)",
         "Fix: tapping suggestion no longer opens product image underneath",
         "Mobile: do not open keyboard after product appears",
@@ -81,7 +82,10 @@
         "Local PC extension path unchanged; cloud is additive",
         "Live DMart relay: mobile creates request in Supabase, PC extension fulfills from DMart",
         "Fresh Available/Reserved/Price for remote clients (target under 3s when PC awake)",
-        "Local PC extension path unchanged"
+        "Local PC extension path unchanged",
+        "Live relay faster client poll (200ms); works with extension 1.8.1 session stability",
+        "Fix wrong DMart numbers: exact SKU match only (no fallback to first search result)",
+        "Stop infinite DMart spinner on PRODUCT_NOT_FOUND; clearer not-found status"
       ]
     },
     {
