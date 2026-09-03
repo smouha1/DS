@@ -2651,3 +2651,122 @@ button#barcodeFormatSwitch.barcode-format-switch.is-floating.is-dragging,
 .performance-mode #resultArea > .product-card {
   animation: none;
 }
+
+/* Bridge connection badge */
+.bridge-status-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:700;
+  border:1px solid var(--border, #dde3e8);
+  background:rgba(0,0,0,.04);
+  color:var(--text-muted, #6b7780);
+  user-select:none;
+  white-space:nowrap;
+}
+.bridge-status-badge .bridge-status-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:#9aa5ae;
+  box-shadow:0 0 0 2px rgba(0,0,0,.06);
+}
+.bridge-status-badge.is-online{
+  border-color:rgba(31,157,85,.35);
+  background:rgba(31,157,85,.10);
+  color:#146c38;
+}
+.bridge-status-badge.is-online .bridge-status-dot{
+  background:#1f9d55;
+  box-shadow:0 0 0 3px rgba(31,157,85,.2);
+}
+.bridge-status-badge.is-offline{
+  border-color:rgba(180,80,80,.3);
+  background:rgba(180,80,80,.08);
+  color:#8a3a3a;
+}
+.bridge-status-badge.is-offline .bridge-status-dot{
+  background:#c45c5c;
+}
+[data-theme="dark"] .bridge-status-badge.is-online{color:#7ddea8;background:rgba(31,157,85,.15);}
+[data-theme="dark"] .bridge-status-badge.is-offline{color:#f0a0a0;background:rgba(180,80,80,.15);}
+
+/* Stock adjust panel (desktop + bridge only) */
+.dmart-adjust-panel{
+  margin:10px 0 8px;
+  padding:10px 10px 8px;
+  border-radius:12px;
+  border:1px dashed rgba(255,107,0,.4);
+  background:rgba(255,107,0,.06);
+}
+[data-theme="dark"] .dmart-adjust-panel{
+  background:rgba(255,107,0,.1);
+  border-color:rgba(255,107,0,.45);
+}
+.dmart-adjust-title{
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:#FF6B00;
+  margin-bottom:8px;
+}
+.dmart-adjust-hint{
+  font-weight:600;
+  text-transform:none;
+  letter-spacing:0;
+  opacity:.75;
+  margin-left:6px;
+  font-size:10px;
+}
+.dmart-adjust-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+.dmart-adjust-btn{
+  width:36px;height:36px;
+  border-radius:10px;
+  border:1.5px solid rgba(255,107,0,.45);
+  background:#fff;
+  color:#FF6B00;
+  font-size:20px;
+  font-weight:700;
+  line-height:1;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  transition:transform .12s ease, background .15s ease, box-shadow .15s ease;
+}
+[data-theme="dark"] .dmart-adjust-btn{background:rgba(20,24,28,.9);color:#ffb067;}
+.dmart-adjust-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(255,107,0,.2);}
+.dmart-adjust-btn:active{transform:scale(.96);}
+.dmart-adjust-plus{background:linear-gradient(180deg,#fff 0%,#fff5eb 100%);border-color:#FF6B00;}
+.dmart-adjust-minus{border-color:rgba(200,80,80,.45);color:#c45c5c;}
+.dmart-adjust-qty{
+  width:52px;
+  text-align:center;
+  font-size:15px;
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+  border:1px solid rgba(255,107,0,.35);
+  border-radius:10px;
+  padding:7px 4px;
+  background:#fff;
+  color:var(--text);
+}
+[data-theme="dark"] .dmart-adjust-qty{background:rgba(20,24,28,.95);color:#f2f5f7;}
+.dmart-adjust-msg{margin-top:8px;font-size:11px;font-weight:600;text-align:center;}
+.dmart-adjust-msg.is-ok{color:#1f9d55;}
+.dmart-adjust-msg.is-err{color:#c45c5c;}
+.dmart-adjust-panel.is-busy{opacity:.7;pointer-events:none;}
+.dmart-live-card.dmart-adjust-flash{
+  box-shadow:0 0 0 2px rgba(31,157,85,.45), 0 4px 18px rgba(255,107,0,.12);
+  transition:box-shadow .25s ease;
+}
+@media (max-width:899px){
+  .dmart-adjust-panel{display:none !important;}
+}
