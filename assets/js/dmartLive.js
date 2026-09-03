@@ -467,7 +467,8 @@ export function updateBridgeStatusUi() {
 }
 
 function markBridgeReady() {
-  markBridgeReady();
+  bridgeReady = true;
+  bridgeReadyKnown = true;
   lastBridgeAt = Date.now();
   updateBridgeStatusUi();
 }
