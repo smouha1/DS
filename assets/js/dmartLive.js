@@ -40,6 +40,8 @@ let activeSku = null;
 let activeWarehouseId = null;
 let bridgeReady = false;
 let bridgeReadyKnown = false;
+let lastBridgeAt = 0;
+const BRIDGE_OFFLINE_MS = 45_000;
 
 export function getStoredBearer() {
   try {
@@ -244,8 +246,7 @@ function requestViaExtension(sku, warehouseId) {
       const data = event.data;
       if (!data || data.source !== 'smouha-dmart-bridge') return;
       if (data.type === 'SMOUHA_PICK_DMART_BRIDGE_READY') {
-        bridgeReady = true;
-        bridgeReadyKnown = true;
+        markBridgeReady();
         return;
       }
       if (data.type !== 'SMOUHA_PICK_DMART_RESPONSE') return;
@@ -254,8 +255,7 @@ function requestViaExtension(sku, warehouseId) {
       settled = true;
       clearTimeout(timer);
       window.removeEventListener('message', onMsg);
-      bridgeReady = true;
-      bridgeReadyKnown = true;
+      markBridgeReady();
 
       if (data.success && data.data) {
         resolve({
@@ -432,6 +432,208 @@ async function fetchViaLiveRelay(sku, warehouseId) {
   }
 }
 
+
+/* ---- Bridge online indicator + stock adjust (desktop, extension executor) ---- */
+
+export function isBridgeOnline() {
+  return !!bridgeReady;
+}
+
+function isDesktopViewport() {
+  try {
+    return window.matchMedia('(min-width: 900px)').matches;
+  } catch (e) {
+    return window.innerWidth >= 900;
+  }
+}
+
+export function updateBridgeStatusUi() {
+  const el = document.getElementById('bridgeStatusBadge');
+  if (!el) return;
+  const online = !!bridgeReady;
+  el.classList.toggle('is-online', online);
+  el.classList.toggle('is-offline', !online);
+  el.setAttribute('data-state', online ? 'online' : 'offline');
+  el.title = online
+    ? 'Connected to DMart Bridge extension'
+    : 'DMart Bridge offline — install/enable extension on this PC';
+  const label = el.querySelector('.bridge-status-label');
+  if (label) label.textContent = online ? 'Bridge Online' : 'Bridge Offline';
+  // Show/hide adjust panels on live cards
+  document.querySelectorAll('.dmart-adjust-panel').forEach((panel) => {
+    const show = online && isDesktopViewport();
+    panel.hidden = !show;
+  });
+}
+
+function markBridgeReady() {
+  markBridgeReady();
+  lastBridgeAt = Date.now();
+  updateBridgeStatusUi();
+}
+
+function markBridgeOffline() {
+  bridgeReady = false;
+  bridgeReadyKnown = true;
+  updateBridgeStatusUi();
+}
+
+function requestStockAdjust({ sku, warehouseId, quantity, direction }) {
+  return new Promise((resolve) => {
+    const requestId = 'adj_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    let done = false;
+    const timer = setTimeout(() => {
+      if (done) return;
+      done = true;
+      window.removeEventListener('message', onMsg);
+      resolve({ success: false, error: { code: 'TIMEOUT', message: 'Bridge timed out' } });
+    }, 20000);
+
+    function onMsg(event) {
+      if (event.source !== window) return;
+      const data = event.data;
+      if (!data || data.source !== 'smouha-dmart-bridge') return;
+      if (data.type !== 'SMOUHA_PICK_DMART_STOCK_ADJUST_RESPONSE') return;
+      if (data.requestId !== requestId) return;
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      window.removeEventListener('message', onMsg);
+      resolve(data);
+    }
+    window.addEventListener('message', onMsg);
+    try {
+      window.postMessage(
+        {
+          type: 'SMOUHA_PICK_DMART_STOCK_ADJUST',
+          requestId,
+          sku: String(sku),
+          warehouseId: String(warehouseId),
+          quantity: Number(quantity) || 1,
+          direction: direction === 'decrease' ? 'decrease' : 'increase',
+        },
+        window.location.origin
+      );
+    } catch (e) {
+      clearTimeout(timer);
+      window.removeEventListener('message', onMsg);
+      resolve({ success: false, error: { code: 'POST_FAILED', message: String(e && e.message || e) } });
+    }
+  });
+}
+
+function buildAdjustPanelHtml(sku) {
+  const safe = String(sku || '').replace(/"/g, '');
+  return `
+    <div class="dmart-adjust-panel" data-adjust-sku="${safe}" hidden>
+      <div class="dmart-adjust-title">Adjust stock <span class="dmart-adjust-hint">PC · Bridge</span></div>
+      <div class="dmart-adjust-row">
+        <button type="button" class="dmart-adjust-btn dmart-adjust-minus" data-adj="minus" aria-label="Decrease">−</button>
+        <input type="number" class="dmart-adjust-qty" min="1" max="15" value="1" inputmode="numeric" aria-label="Quantity" />
+        <button type="button" class="dmart-adjust-btn dmart-adjust-plus" data-adj="plus" aria-label="Increase">+</button>
+      </div>
+      <div class="dmart-adjust-msg" data-adj-msg hidden></div>
+    </div>`;
+}
+
+function bindAdjustPanel(root, sku) {
+  if (!root || !sku) return;
+  const panel = root.querySelector('.dmart-adjust-panel');
+  if (!panel || panel.dataset.bound === '1') return;
+  panel.dataset.bound = '1';
+  const qtyInput = panel.querySelector('.dmart-adjust-qty');
+  const msg = panel.querySelector('[data-adj-msg]');
+
+  function clampQty() {
+    let n = parseInt(qtyInput.value, 10);
+    if (!Number.isFinite(n)) n = 1;
+    n = Math.min(15, Math.max(1, n));
+    qtyInput.value = String(n);
+    return n;
+  }
+
+  async function run(direction) {
+    if (!isBridgeOnline()) {
+      if (msg) {
+        msg.hidden = false;
+        msg.textContent = 'Bridge offline';
+        msg.className = 'dmart-adjust-msg is-err';
+      }
+      return;
+    }
+    if (!isDesktopViewport()) return;
+    const quantity = clampQty();
+    const warehouseId = getSelectedId();
+    if (!warehouseId) {
+      if (msg) {
+        msg.hidden = false;
+        msg.textContent = 'Select a warehouse first';
+        msg.className = 'dmart-adjust-msg is-err';
+      }
+      return;
+    }
+    const sign = direction === 'increase' ? '+' : '−';
+    const ok = window.confirm(
+      'Confirm stock adjust?\n\nSKU: ' + sku + '\n' + sign + quantity + ' (' + direction + ')\n\nUses first Location + Expiry from DMart.'
+    );
+    if (!ok) return;
+
+    panel.classList.add('is-busy');
+    panel.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+    if (msg) {
+      msg.hidden = false;
+      msg.className = 'dmart-adjust-msg';
+      msg.textContent = 'Working…';
+    }
+
+    const res = await requestStockAdjust({ sku, warehouseId, quantity, direction });
+    panel.classList.remove('is-busy');
+    panel.querySelectorAll('button').forEach((b) => { b.disabled = false; });
+
+    if (!res || !res.success) {
+      const err = (res && res.error) || {};
+      if (msg) {
+        msg.hidden = false;
+        msg.className = 'dmart-adjust-msg is-err';
+        msg.textContent = (err.code || 'ERROR') + (err.message ? ': ' + err.message : '');
+      }
+      return;
+    }
+    const d = res.data || {};
+    if (msg) {
+      msg.hidden = false;
+      msg.className = 'dmart-adjust-msg is-ok';
+      msg.textContent =
+        'OK ' +
+        (d.stock_delta > 0 ? '+' : '') +
+        d.stock_delta +
+        (d.location ? ' · ' + d.location : '') +
+        (d.available != null ? ' · on hand ' + d.available : '');
+    }
+    // Update live numbers on card
+    if (d.available != null || d.reserved != null || d.price != null) {
+      setLiveValues(root, {
+        onHand: d.available != null ? d.available : null,
+        reserved: d.reserved != null ? d.reserved : null,
+        price: d.price != null ? d.price : null,
+        ok: true,
+      });
+      root.classList.add('dmart-adjust-flash');
+      setTimeout(() => root.classList.remove('dmart-adjust-flash'), 700);
+      // bust cache for this sku
+      try {
+        const key = String(warehouseId) + '::' + String(sku);
+        cache.delete(key);
+      } catch (e) {}
+    }
+  }
+
+  panel.querySelector('[data-adj="minus"]')?.addEventListener('click', () => run('decrease'));
+  panel.querySelector('[data-adj="plus"]')?.addEventListener('click', () => run('increase'));
+  qtyInput?.addEventListener('change', clampQty);
+}
+
+
 export async function fetchLiveProductInfo(sku, warehouseId) {
   if (!sku || !warehouseId) {
     return { onHand: null, reserved: null, price: null, ok: false, reason: 'missing-ids' };
@@ -576,6 +778,8 @@ export function requestLiveForProduct(sku) {
   const root = document.getElementById('dmartLiveCard');
   if (!root || !sku) return;
 
+  try { bindAdjustPanel(root, sku); updateBridgeStatusUi(); } catch (e) {}
+
   activeToken += 1;
   const token = activeToken;
   activeSku = String(sku);
@@ -673,6 +877,7 @@ export function liveCardHtml(sku) {
       <div class="dmart-live-row dmart-live-available-row"><span class="dmart-live-label">Available</span><span class="dmart-live-value dmart-live-available" data-live="available">…</span></div>
       <div class="dmart-live-row dmart-live-reserved-row"><span class="dmart-live-label">Reserved</span><span class="dmart-live-value dmart-live-reserved" data-live="reserved">…</span></div>
       <div class="dmart-live-row dmart-live-price-row"><span class="dmart-live-label">Price</span><span class="dmart-live-value dmart-live-price" data-live="price">…</span></div>
+      ${buildAdjustPanelHtml(sku)}
       <a class="dmart-check-btn dmart-check-btn-inline" href="#" data-sku="${safe}" target="_blank" rel="noopener noreferrer">
         <span class="dmart-check-icon" aria-hidden="true">
           <svg viewBox="0 0 100 100"><path d="M 51.28,14.43 L 48.01,15.07 L 44.50,16.59 L 42.58,17.94 L 40.11,20.81 L 38.60,25.36 L 38.52,34.85 L 26.63,34.85 L 26.63,41.71 L 27.67,44.42 L 30.06,46.41 L 32.46,47.05 L 38.60,47.13 L 38.68,67.78 L 40.27,73.60 L 42.66,77.59 L 46.09,81.02 L 50.00,83.33 L 54.47,84.61 L 59.25,84.77 L 64.75,83.49 L 67.70,81.90 L 67.70,70.18 L 64.51,70.97 L 61.80,70.73 L 58.93,69.22 L 57.26,67.15 L 56.14,63.32 L 56.14,47.13 L 69.54,47.05 L 69.54,39.87 L 68.26,37.00 L 65.79,35.25 L 56.14,34.77 L 56.14,14.35 Z" fill="currentColor"/></svg>
@@ -700,8 +905,7 @@ try {
   window.addEventListener('message', (event) => {
     if (event.source !== window) return;
     if (event.data && event.data.type === 'SMOUHA_PICK_DMART_BRIDGE_READY' && event.data.source === 'smouha-dmart-bridge') {
-      bridgeReady = true;
-      bridgeReadyKnown = true;
+      markBridgeReady();
     }
   });
 } catch (e) { /* ignore */ }
@@ -720,4 +924,38 @@ export function wireDmartFillDirection(root) {
       }, { passive: true });
     });
   } catch (e) { /* ignore */ }
+}
+
+
+window.addEventListener('message', (event) => {
+  if (event.source !== window) return;
+  if (!event.data || event.data.source !== 'smouha-dmart-bridge') return;
+  if (event.data.type === 'SMOUHA_PICK_DMART_BRIDGE_READY') markBridgeReady();
+  if (event.data.type === 'SMOUHA_PICK_DMART_BRIDGE_OFFLINE') markBridgeOffline();
+});
+
+function watchBridgeHeartbeat() {
+  updateBridgeStatusUi();
+  setInterval(() => {
+    if (bridgeReady && lastBridgeAt && Date.now() - lastBridgeAt > BRIDGE_OFFLINE_MS) {
+      // soft offline if no READY refresh for a while; content script re-announces on load only
+      // keep online if we got READY once in this page life — only offline on explicit OFFLINE
+    }
+    updateBridgeStatusUi();
+  }, 5000);
+  try {
+    window.matchMedia('(min-width: 900px)').addEventListener('change', updateBridgeStatusUi);
+  } catch (e) {}
+  // Assume offline until READY
+  setTimeout(() => {
+    if (!bridgeReadyKnown) {
+      bridgeReadyKnown = true;
+      updateBridgeStatusUi();
+    }
+  }, 2500);
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', watchBridgeHeartbeat);
+} else {
+  watchBridgeHeartbeat();
 }
