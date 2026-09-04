@@ -228,18 +228,25 @@ function newRequestId() {
   return 'req_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
 }
 
-/** Talk to the DMart Bridge extension via window.postMessage. */
-function requestViaExtension(sku, warehouseId) {
+/** Talk to the DMart Bridge extension via window.postMessage (+ CustomEvent backup). */
+function requestViaExtensionOnce(sku, warehouseId, timeoutMs) {
   return new Promise((resolve) => {
     const requestId = newRequestId();
     let settled = false;
-
     const timer = setTimeout(() => {
       if (settled) return;
       settled = true;
       window.removeEventListener('message', onMsg);
       resolve({ ok: false, reason: 'bridge-timeout', onHand: null, reserved: null, price: null });
-    }, BRIDGE_TIMEOUT_MS);
+    }, timeoutMs || BRIDGE_TIMEOUT_MS);
+
+    function finish(result) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      window.removeEventListener('message', onMsg);
+      resolve(result);
+    }
 
     function onMsg(event) {
       if (event.source !== window) return;
@@ -251,14 +258,10 @@ function requestViaExtension(sku, warehouseId) {
       }
       if (data.type !== 'SMOUHA_PICK_DMART_RESPONSE') return;
       if (data.requestId !== requestId) return;
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      window.removeEventListener('message', onMsg);
       markBridgeReady();
 
       if (data.success && data.data) {
-        resolve({
+        finish({
           ok: true,
           onHand: data.data.available != null ? data.data.available : null,
           reserved: data.data.reserved != null ? data.data.reserved : null,
@@ -272,30 +275,46 @@ function requestViaExtension(sku, warehouseId) {
       let reason = 'fetch-failed';
       if (code === 'AUTH_REQUIRED') reason = 'auth-required';
       else if (code === 'PRODUCT_NOT_FOUND') reason = 'not-found';
-      else if (code === 'TIMEOUT') reason = 'fetch-failed';
-      resolve({ ok: false, reason, onHand: null, reserved: null, price: null, via: 'extension' });
+      else if (code === 'TIMEOUT') reason = 'bridge-timeout';
+      finish({ ok: false, reason, onHand: null, reserved: null, price: null, via: 'extension' });
     }
 
     window.addEventListener('message', onMsg);
+    const payload = {
+      type: 'SMOUHA_PICK_DMART_REQUEST',
+      requestId,
+      warehouseId: String(warehouseId),
+      sku: String(sku),
+    };
     try {
-      window.postMessage(
-        {
-          type: 'SMOUHA_PICK_DMART_REQUEST',
-          requestId,
-          warehouseId: String(warehouseId),
-          sku: String(sku),
-        },
-        window.location.origin
-      );
+      window.postMessage(payload, window.location.origin);
     } catch (e) {
-      if (!settled) {
-        settled = true;
-        clearTimeout(timer);
-        window.removeEventListener('message', onMsg);
-        resolve({ ok: false, reason: 'no-bridge', onHand: null, reserved: null, price: null });
-      }
+      finish({ ok: false, reason: 'no-bridge', onHand: null, reserved: null, price: null });
+      return;
     }
+    // Backup channel for content script
+    try {
+      document.dispatchEvent(new CustomEvent('smouha-dmart-bridge-req', { detail: payload }));
+    } catch (e) { /* ignore */ }
   });
+}
+
+async function requestViaExtension(sku, warehouseId) {
+  // Detect attribute set by content script
+  try {
+    if (document.documentElement.getAttribute('data-dmart-bridge') === '1') {
+      markBridgeReady();
+    }
+  } catch (e) {}
+
+  let result = await requestViaExtensionOnce(sku, warehouseId, BRIDGE_TIMEOUT_MS);
+  if (result.ok) return result;
+  // One automatic retry on timeout if we believe the bridge is present
+  if (result.reason === 'bridge-timeout' && (bridgeReady || document.documentElement.getAttribute('data-dmart-bridge') === '1')) {
+    await new Promise((r) => setTimeout(r, 350));
+    result = await requestViaExtensionOnce(sku, warehouseId, Math.min(BRIDGE_TIMEOUT_MS + 4000, 18000));
+  }
+  return result;
 }
 
 async function fetchViaDirect(sku, warehouseId) {
@@ -693,19 +712,25 @@ export async function fetchLiveProductInfo(sku, warehouseId) {
     return { ...data, ok: false, reason: 'partial-data', via: 'direct' };
   }
 
-  // Prefer clearer reason
-  if (bridge.reason === 'bridge-timeout' || bridge.reason === 'no-bridge') {
-    // If direct also failed with no-token/cors, show no-bridge when extension missing
-    if (direct.reason === 'no-token' || direct.reason === 'cors') {
-      return { onHand: null, reserved: null, price: null, ok: false, reason: 'no-bridge' };
-    }
+  // Prefer clearer reason (never show "add token" when bridge path was used)
+  if (bridge.reason === 'bridge-timeout') {
+    return { onHand: null, reserved: null, price: null, ok: false, reason: 'bridge-timeout' };
+  }
+  if (bridge.reason === 'no-bridge' || bridge.reason === 'auth-required') {
+    return { onHand: null, reserved: null, price: null, ok: false, reason: bridge.reason };
+  }
+  if (bridgeReady && (direct.reason === 'no-token' || direct.reason === 'cors')) {
+    return { onHand: null, reserved: null, price: null, ok: false, reason: 'bridge-timeout' };
+  }
+  if (direct.reason === 'no-token' || direct.reason === 'cors') {
+    return { onHand: null, reserved: null, price: null, ok: false, reason: bridgeReady ? 'bridge-timeout' : 'no-bridge' };
   }
   return {
     onHand: null,
     reserved: null,
     price: null,
     ok: false,
-    reason: direct.reason || bridge.reason || 'fetch-failed',
+    reason: bridge.reason || direct.reason || 'fetch-failed',
   };
 }
 
@@ -938,12 +963,13 @@ window.addEventListener('message', (event) => {
 function watchBridgeHeartbeat() {
   updateBridgeStatusUi();
   setInterval(() => {
-    if (bridgeReady && lastBridgeAt && Date.now() - lastBridgeAt > BRIDGE_OFFLINE_MS) {
-      // soft offline if no READY refresh for a while; content script re-announces on load only
-      // keep online if we got READY once in this page life — only offline on explicit OFFLINE
-    }
+    try {
+      if (document.documentElement.getAttribute('data-dmart-bridge') === '1') {
+        markBridgeReady();
+      }
+    } catch (e) {}
     updateBridgeStatusUi();
-  }, 5000);
+  }, 4000);
   try {
     window.matchMedia('(min-width: 900px)').addEventListener('change', updateBridgeStatusUi);
   } catch (e) {}
