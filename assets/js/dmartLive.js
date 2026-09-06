@@ -616,6 +616,9 @@ function bindAdjustPanel(root, sku) {
         msg.hidden = false;
         msg.className = 'dmart-adjust-msg is-err';
         msg.textContent = (err.code || 'ERROR') + (err.message ? ': ' + err.message : '');
+        if (/reload this page|not reachable|invalidated/i.test(String(err.message || ''))) {
+          msg.textContent = 'Refresh this page (F5) after updating the extension, then try again';
+        }
       }
       return;
     }
