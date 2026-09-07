@@ -2653,7 +2653,8 @@ button#barcodeFormatSwitch.barcode-format-switch.is-floating.is-dragging,
 }
 
 /* Bridge connection badge */
-.bridge-status-badge{
+.bridge-status-badge{display:none!important;/* moved into DMart card */
+
   display:inline-flex;
   align-items:center;
   gap:6px;
@@ -2769,4 +2770,80 @@ button#barcodeFormatSwitch.barcode-format-switch.is-floating.is-dragging,
 }
 @media (max-width:899px){
   .dmart-adjust-panel{display:none !important;}
+}
+
+
+/* DMart title row + Online/Offline */
+.dmart-live-title-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+  padding-bottom:8px;
+  border-bottom:1px solid rgba(255,107,0,.2);
+}
+.dmart-live-title-row .dmart-live-title{
+  margin-bottom:0;
+  padding-bottom:0;
+  border-bottom:none;
+}
+.dmart-conn-status{
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  padding:3px 10px;
+  border-radius:999px;
+  border:1px solid rgba(180,80,80,.35);
+  background:rgba(180,80,80,.1);
+  color:#a33;
+  flex-shrink:0;
+}
+.dmart-conn-status.is-online{
+  border-color:rgba(31,157,85,.4);
+  background:rgba(31,157,85,.12);
+  color:#146c38;
+}
+.dmart-conn-status.is-offline{
+  border-color:rgba(180,80,80,.35);
+  background:rgba(180,80,80,.1);
+  color:#a33;
+}
+[data-theme="dark"] .dmart-conn-status.is-online{color:#7ddea8;background:rgba(31,157,85,.18);}
+[data-theme="dark"] .dmart-conn-status.is-offline{color:#f0a0a0;background:rgba(180,80,80,.18);}
+
+/* Success redraw */
+.dmart-live-card.dmart-card-fade-out{
+  animation:dmartFadeOut .28s ease forwards;
+}
+.dmart-live-card.dmart-card-redraw{
+  animation:dmartRedraw .85s ease;
+}
+@keyframes dmartFadeOut{
+  from{opacity:1;transform:scale(1);}
+  to{opacity:0;transform:scale(.97);}
+}
+@keyframes dmartRedraw{
+  0%{opacity:0;transform:scale(.96);box-shadow:0 0 0 0 rgba(255,107,0,0);}
+  35%{opacity:1;transform:scale(1.02);box-shadow:0 0 0 3px rgba(255,107,0,.35);}
+  70%{transform:scale(1);box-shadow:0 0 0 2px rgba(31,157,85,.35);}
+  100%{opacity:1;transform:scale(1);box-shadow:0 4px 18px rgba(255,107,0,.10);}
+}
+
+/* Failure violent shake */
+.dmart-live-card.dmart-card-shake{
+  animation:dmartShake .65s cubic-bezier(.36,.07,.19,.97) both;
+}
+@keyframes dmartShake{
+  0%,100%{transform:translateX(0);}
+  10%{transform:translateX(-12px) rotate(-0.5deg);}
+  20%{transform:translateX(12px) rotate(0.5deg);}
+  30%{transform:translateX(-10px);}
+  40%{transform:translateX(10px);}
+  50%{transform:translateX(-8px);}
+  60%{transform:translateX(8px);}
+  70%{transform:translateX(-5px);}
+  80%{transform:translateX(5px);}
+  90%{transform:translateX(-2px);}
 }
