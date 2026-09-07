@@ -40,6 +40,7 @@ let activeSku = null;
 let activeWarehouseId = null;
 let bridgeReady = false;
 let bridgeReadyKnown = false;
+let bridgeSessionOk = false; // true only when extension session is usable
 let lastBridgeAt = 0;
 const BRIDGE_OFFLINE_MS = 45_000;
 
@@ -455,7 +456,8 @@ async function fetchViaLiveRelay(sku, warehouseId) {
 /* ---- Bridge online indicator + stock adjust (desktop, extension executor) ---- */
 
 export function isBridgeOnline() {
-  return !!bridgeReady;
+  // Online only when content-script is present AND session/API is usable
+  return !!bridgeReady && !!bridgeSessionOk;
 }
 
 function isDesktopViewport() {
@@ -467,17 +469,24 @@ function isDesktopViewport() {
 }
 
 export function updateBridgeStatusUi() {
+  const online = isBridgeOnline();
+  // Header badge (legacy) — hidden via CSS; keep in sync if present
   const el = document.getElementById('bridgeStatusBadge');
-  if (!el) return;
-  const online = !!bridgeReady;
-  el.classList.toggle('is-online', online);
-  el.classList.toggle('is-offline', !online);
-  el.setAttribute('data-state', online ? 'online' : 'offline');
-  el.title = online
-    ? 'Connected to DMart Bridge extension'
-    : 'DMart Bridge offline — install/enable extension on this PC';
-  const label = el.querySelector('.bridge-status-label');
-  if (label) label.textContent = online ? 'Bridge Online' : 'Bridge Offline';
+  if (el) {
+    el.classList.toggle('is-online', online);
+    el.classList.toggle('is-offline', !online);
+    el.setAttribute('data-state', online ? 'online' : 'offline');
+    el.title = online ? 'Extension online' : 'Extension offline';
+    const label = el.querySelector('.bridge-status-label');
+    if (label) label.textContent = online ? 'Online' : 'Offline';
+  }
+  // In-card status next to DMART title
+  document.querySelectorAll('.dmart-conn-status').forEach((node) => {
+    node.classList.toggle('is-online', online);
+    node.classList.toggle('is-offline', !online);
+    node.textContent = online ? 'Online' : 'Offline';
+    node.setAttribute('data-state', online ? 'online' : 'offline');
+  });
   // Show/hide adjust panels on live cards
   document.querySelectorAll('.dmart-adjust-panel').forEach((panel) => {
     const show = online && isDesktopViewport();
@@ -485,16 +494,43 @@ export function updateBridgeStatusUi() {
   });
 }
 
-function markBridgeReady() {
+function markBridgeReady(sessionOk) {
   bridgeReady = true;
   bridgeReadyKnown = true;
   lastBridgeAt = Date.now();
+  // sessionOk === false means extension injected but Talabat session not ready
+  if (typeof sessionOk === 'boolean') bridgeSessionOk = sessionOk;
+  else if (bridgeSessionOk !== true) {
+    // Keep previous true; first READY without status still optimistic until STATUS arrives
+    bridgeSessionOk = true;
+  }
   updateBridgeStatusUi();
 }
 
 function markBridgeOffline() {
   bridgeReady = false;
+  bridgeSessionOk = false;
   bridgeReadyKnown = true;
+  updateBridgeStatusUi();
+}
+
+function applyBridgeStatusPayload(data) {
+  if (!data || typeof data !== 'object') return;
+  // Prefer explicit online flag from content script
+  if (typeof data.online === 'boolean') {
+    bridgeReady = true;
+    bridgeSessionOk = data.online;
+    bridgeReadyKnown = true;
+    lastBridgeAt = Date.now();
+    updateBridgeStatusUi();
+    return;
+  }
+  const st = String(data.sessionStatus || data.status || '');
+  const ok = st === 'CONNECTED' || st === 'SESSION_EXPIRING';
+  bridgeReady = true;
+  bridgeSessionOk = ok;
+  bridgeReadyKnown = true;
+  lastBridgeAt = Date.now();
   updateBridgeStatusUi();
 }
 
@@ -546,7 +582,7 @@ function buildAdjustPanelHtml(sku) {
   const safe = String(sku || '').replace(/"/g, '');
   return `
     <div class="dmart-adjust-panel" data-adjust-sku="${safe}" hidden>
-      <div class="dmart-adjust-title">Adjust stock <span class="dmart-adjust-hint">PC · Bridge</span></div>
+      <div class="dmart-adjust-title">Adjust stock</div>
       <div class="dmart-adjust-row">
         <button type="button" class="dmart-adjust-btn dmart-adjust-minus" data-adj="minus" aria-label="Decrease">−</button>
         <input type="number" class="dmart-adjust-qty" min="1" max="15" value="1" inputmode="numeric" aria-label="Quantity" />
@@ -594,7 +630,7 @@ function bindAdjustPanel(root, sku) {
     }
     const sign = direction === 'increase' ? '+' : '−';
     const ok = window.confirm(
-      'Confirm stock adjust?\n\nSKU: ' + sku + '\n' + sign + quantity + ' (' + direction + ')\n\nUses first Location + Expiry from DMart.'
+      'Confirm stock adjust?\n\nSKU: ' + sku + '\n' + sign + quantity + ' (' + direction + ')\n\nUses first Location + Expiry from DMart.\n\nميزة الحذف والاضافة متاحة حصريا فقط لفرع Smouha DS60 لدواعي الامان'
     );
     if (!ok) return;
 
@@ -620,6 +656,13 @@ function bindAdjustPanel(root, sku) {
           msg.textContent = 'Refresh this page (F5) after updating the extension, then try again';
         }
       }
+      // Violent shake on failure
+      try {
+        root.classList.remove('dmart-card-shake');
+        void root.offsetWidth;
+        root.classList.add('dmart-card-shake');
+        setTimeout(() => root.classList.remove('dmart-card-shake'), 700);
+      } catch (e) {}
       return;
     }
     const d = res.data || {};
@@ -633,21 +676,33 @@ function bindAdjustPanel(root, sku) {
         (d.location ? ' · ' + d.location : '') +
         (d.available != null ? ' · on hand ' + d.available : '');
     }
-    // Update live numbers on card
-    if (d.available != null || d.reserved != null || d.price != null) {
-      setLiveValues(root, {
-        onHand: d.available != null ? d.available : null,
-        reserved: d.reserved != null ? d.reserved : null,
-        price: d.price != null ? d.price : null,
-        ok: true,
-      });
-      root.classList.add('dmart-adjust-flash');
-      setTimeout(() => root.classList.remove('dmart-adjust-flash'), 700);
-      // bust cache for this sku
+    // Success: fade-out → update values → fade-in redraw
+    const applyValues = () => {
+      if (d.available != null || d.reserved != null || d.price != null) {
+        setLiveValues(root, {
+          onHand: d.available != null ? d.available : null,
+          reserved: d.reserved != null ? d.reserved : null,
+          price: d.price != null ? d.price : null,
+          ok: true,
+        });
+      }
       try {
         const key = String(warehouseId) + '::' + String(sku);
         cache.delete(key);
       } catch (e) {}
+    };
+    try {
+      root.classList.remove('dmart-card-shake', 'dmart-card-redraw');
+      root.classList.add('dmart-card-fade-out');
+      setTimeout(() => {
+        applyValues();
+        root.classList.remove('dmart-card-fade-out');
+        void root.offsetWidth;
+        root.classList.add('dmart-card-redraw');
+        setTimeout(() => root.classList.remove('dmart-card-redraw'), 900);
+      }, 280);
+    } catch (e) {
+      applyValues();
     }
   }
 
@@ -902,7 +957,10 @@ export function liveCardHtml(sku) {
   const safe = String(sku).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   return `
     <div class="dmart-live-card" id="dmartLiveCard" data-sku="${safe}" aria-live="polite">
-      <div class="dmart-live-title">DMart</div>
+      <div class="dmart-live-title-row">
+        <div class="dmart-live-title">DMart</div>
+        <span class="dmart-conn-status is-offline" data-state="offline">Offline</span>
+      </div>
       <div class="dmart-live-row dmart-live-available-row"><span class="dmart-live-label">Available</span><span class="dmart-live-value dmart-live-available" data-live="available">…</span></div>
       <div class="dmart-live-row dmart-live-reserved-row"><span class="dmart-live-label">Reserved</span><span class="dmart-live-value dmart-live-reserved" data-live="reserved">…</span></div>
       <div class="dmart-live-row dmart-live-price-row"><span class="dmart-live-label">Price</span><span class="dmart-live-value dmart-live-price" data-live="price">…</span></div>
@@ -934,7 +992,10 @@ try {
   window.addEventListener('message', (event) => {
     if (event.source !== window) return;
     if (event.data && event.data.type === 'SMOUHA_PICK_DMART_BRIDGE_READY' && event.data.source === 'smouha-dmart-bridge') {
-      markBridgeReady();
+      markBridgeReady(event.data.online);
+    }
+    if (event.data && event.data.type === 'SMOUHA_PICK_DMART_BRIDGE_STATUS' && event.data.source === 'smouha-dmart-bridge') {
+      applyBridgeStatusPayload(event.data);
     }
   });
 } catch (e) { /* ignore */ }
@@ -959,7 +1020,8 @@ export function wireDmartFillDirection(root) {
 window.addEventListener('message', (event) => {
   if (event.source !== window) return;
   if (!event.data || event.data.source !== 'smouha-dmart-bridge') return;
-  if (event.data.type === 'SMOUHA_PICK_DMART_BRIDGE_READY') markBridgeReady();
+  if (event.data.type === 'SMOUHA_PICK_DMART_BRIDGE_READY') markBridgeReady(event.data.online);
+  if (event.data.type === 'SMOUHA_PICK_DMART_BRIDGE_STATUS') applyBridgeStatusPayload(event.data);
   if (event.data.type === 'SMOUHA_PICK_DMART_BRIDGE_OFFLINE') markBridgeOffline();
 });
 
