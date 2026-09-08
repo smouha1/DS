@@ -10,7 +10,7 @@
      • Drop old caches on activate
    ------------------------------------------------------------------------ */
 
-const CACHE_NAME = 'smouha-pick-shell-v36-1786';
+const CACHE_NAME = 'smouha-pick-shell-v37-1787';
 
 /** Core shell — same-origin only. Lazy modules included so first offline
  *  open of Settings/Maintenance/DMart live still works after one online visit. */
