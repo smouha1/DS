@@ -2847,3 +2847,177 @@ button#barcodeFormatSwitch.barcode-format-switch.is-floating.is-dragging,
   80%{transform:translateX(5px);}
   90%{transform:translateX(-2px);}
 }
+
+
+/* ========== Stock adjust confirm modal ========== */
+body.dmart-modal-open{overflow:hidden;}
+.dmart-adjust-modal{
+  position:fixed;inset:0;z-index:10050;
+  display:flex;align-items:center;justify-content:center;
+  padding:16px;
+}
+.dmart-adjust-modal[hidden]{display:none!important;}
+.dmart-adjust-modal-backdrop{
+  position:absolute;inset:0;
+  background:rgba(12,16,22,.42);
+}
+.dmart-adjust-modal-card{
+  position:relative;z-index:1;
+  width:min(420px,100%);
+  background:linear-gradient(180deg,#fffefb 0%,#fff8f0 100%);
+  border:1px solid rgba(255,107,0,.35);
+  border-radius:20px;
+  box-shadow:0 18px 50px rgba(0,0,0,.22),0 0 0 1px rgba(255,107,0,.08);
+  padding:22px 22px 18px;
+  animation:dmartModalIn .22s ease;
+}
+@keyframes dmartModalIn{
+  from{opacity:0;transform:translateY(10px) scale(.97);}
+  to{opacity:1;transform:none;}
+}
+[data-theme="dark"] .dmart-adjust-modal-card{
+  background:linear-gradient(180deg,#1c2228 0%,#161b20 100%);
+  border-color:rgba(255,140,50,.35);
+}
+.dmart-adj-icon{
+  width:48px;height:48px;margin:0 auto 10px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,107,0,.12);color:#FF6B00;
+}
+.dmart-adj-title{
+  margin:0 0 14px;text-align:center;
+  font-size:1.15rem;font-weight:800;color:#1a1f24;
+}
+[data-theme="dark"] .dmart-adj-title{color:#f2f5f7;}
+.dmart-adj-product{
+  display:flex;gap:12px;align-items:flex-start;
+  margin-bottom:12px;
+}
+.dmart-adj-img-wrap{
+  width:72px;height:72px;flex-shrink:0;
+  border-radius:12px;overflow:hidden;
+  border:1px solid rgba(0,0,0,.08);
+  background:#f4f6f8;cursor:zoom-in;
+}
+.dmart-adj-img-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+.dmart-adj-product-meta{flex:1;min-width:0;}
+.dmart-adj-name{
+  font-size:13px;font-weight:700;line-height:1.35;
+  margin-bottom:8px;color:#222;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+[data-theme="dark"] .dmart-adj-name{color:#eef2f5;}
+.dmart-adj-rows{display:flex;flex-direction:column;gap:4px;}
+.dmart-adj-row{
+  display:flex;justify-content:space-between;gap:8px;
+  font-size:12px;
+}
+.dmart-adj-k{color:#6b7280;font-weight:600;}
+.dmart-adj-v{font-weight:700;color:#1a1f24;text-align:right;}
+[data-theme="dark"] .dmart-adj-v{color:#eef2f5;}
+.dmart-adj-v.is-inc{color:#1f9d55!important;}
+.dmart-adj-v.is-dec{color:#c43c3c!important;}
+.dmart-adj-warn{
+  margin:10px 0 14px;padding:10px 12px;
+  border-radius:12px;
+  background:rgba(255,170,60,.14);
+  border:1px solid rgba(255,140,0,.28);
+  color:#6b4a12;font-size:12px;line-height:1.45;font-weight:600;
+  text-align:center;
+}
+[data-theme="dark"] .dmart-adj-warn{color:#f0d5a0;background:rgba(255,140,0,.12);}
+.dmart-adj-actions{display:flex;gap:10px;}
+.dmart-adj-btn{
+  flex:1;height:44px;border-radius:12px;font-weight:800;font-size:14px;
+  border:1px solid transparent;cursor:pointer;
+  transition:transform .12s ease,box-shadow .12s ease;
+}
+.dmart-adj-btn:active{transform:scale(.97);}
+.dmart-adj-cancel{
+  background:#fff;border-color:rgba(0,0,0,.12);color:#333;
+}
+[data-theme="dark"] .dmart-adj-cancel{background:#252b31;color:#eef2f5;border-color:rgba(255,255,255,.1);}
+.dmart-adj-confirm{
+  background:linear-gradient(180deg,#ff8533 0%,#FF6B00 100%);
+  color:#fff;box-shadow:0 6px 16px rgba(255,107,0,.28);
+}
+.dmart-adj-confirm:disabled{opacity:.55;cursor:not-allowed;}
+.dmart-adj-hover-preview{
+  position:fixed;z-index:10060;width:240px;height:240px;
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 12px 40px rgba(0,0,0,.28);
+  border:2px solid rgba(255,107,0,.45);
+  pointer-events:none;background:#fff;
+}
+.dmart-adj-hover-preview img{width:100%;height:100%;object-fit:contain;}
+.dmart-adj-img-big{
+  position:fixed;inset:0;z-index:10070;
+  background:rgba(0,0,0,.72);
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;
+}
+.dmart-adj-img-big[hidden]{display:none!important;}
+.dmart-adj-img-big img{max-width:min(420px,92vw);max-height:80vh;border-radius:12px;background:#fff;}
+.dmart-adj-img-big-close{
+  position:absolute;top:16px;right:16px;
+  width:40px;height:40px;border-radius:50%;
+  border:none;background:rgba(255,255,255,.9);font-size:24px;cursor:pointer;
+}
+
+/* Center toast overlays (no full-screen blur) */
+.dmart-center-toast{
+  position:fixed;left:50%;top:42%;
+  transform:translate(-50%,-50%) scale(.92);
+  z-index:10040;
+  text-align:center;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .15s ease,transform .15s ease;
+  padding:14px 22px;
+  border-radius:16px;
+  background:rgba(18,22,28,.12);
+  box-shadow:0 8px 28px rgba(0,0,0,.12);
+}
+.dmart-center-toast.is-visible{
+  opacity:1;
+  transform:translate(-50%,-50%) scale(1);
+}
+.dmart-toast-on{
+  font-size:2.6rem;font-weight:900;color:#1f9d55;
+  letter-spacing:.04em;
+  text-shadow:0 2px 0 rgba(255,255,255,.4);
+}
+.dmart-toast-delta{
+  font-size:3.2rem;font-weight:900;line-height:1;
+  text-shadow:0 2px 8px rgba(0,0,0,.12);
+}
+.dmart-toast-delta.is-inc,.dmart-toast-label.is-inc{color:#1f9d55;}
+.dmart-toast-delta.is-dec,.dmart-toast-label.is-dec{color:#c43c3c;}
+.dmart-toast-label{
+  margin-top:6px;font-size:1rem;font-weight:800;
+}
+.dmart-toast-fail{color:#c43c3c;}
+
+/* Available blink */
+.dmart-avail-blink-off{opacity:0!important;transition:opacity .06s linear;}
+.dmart-live-available-row{transition:opacity .06s linear;}
+
+/* Available pop then whole card drop */
+.dmart-live-card.dmart-card-avail-pop .dmart-live-available-row{
+  animation:dmartAvailPop .22s ease;
+}
+@keyframes dmartAvailPop{
+  0%{transform:scale(.92);opacity:.5;}
+  100%{transform:scale(1);opacity:1;}
+}
+.dmart-live-card.dmart-card-drop{
+  animation:dmartCardDrop .65s cubic-bezier(.2,.8,.2,1);
+  transform-origin:center top;
+}
+@keyframes dmartCardDrop{
+  0%{transform:translateY(-18px) scale(1.02);opacity:.85;}
+  55%{transform:translateY(6px) scale(.99);}
+  75%{transform:translateY(-3px) scale(1.01);}
+  100%{transform:translateY(0) scale(1);opacity:1;}
+}
