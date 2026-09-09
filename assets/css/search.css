@@ -808,3 +808,8 @@
   color:rgba(242,245,247,.45) !important;
   -webkit-text-fill-color:rgba(242,245,247,.45) !important;
 }
+
+/* transparent search chrome over waves */
+.search-wrap,.search-box,.search-section{
+  /* keep readability; slight transparency */
+}

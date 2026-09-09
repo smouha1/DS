@@ -6,8 +6,8 @@
   --primary:#FF6B00;
   --primary-dark:#e35f00;
   --primary-light:#fff1e6;
-  --bg:#DCEEF2;
-  --card:rgba(255,255,255,.74);
+  --bg:#B9DFF0;
+  --card:rgba(255,255,255,.60);
   --text:#1b1d21;
   --text-muted:#5c6b73;
   --border:#D5E4E8;
@@ -21,9 +21,9 @@
   --transition:150ms ease;
   --aqua:#E6F4F6;
   --aqua-deep:#C5E0E6;
-  --crystal:rgba(255,255,255,.72);
+  --crystal:rgba(255,255,255,.58);
   --crystal-border:rgba(150,195,205,.40);
-  --glass-bg:rgba(255,255,255,.70);
+  --glass-bg:rgba(255,255,255,.55);
   --glass-border:var(--crystal-border);
   --top-highlight:0 0 transparent;
   --blue-highlight:#e8f6f8;
@@ -35,7 +35,7 @@
   --primary-dark:#ff8c3d;
   --primary-light:#3a2717;
   --bg:#0E1214;
-  --card:rgba(18,28,32,.74);
+  --card:rgba(18,28,32,.60);
   --text:#eef0f2;
   --text-muted:#8a9aa3;
   --border:#2A3338;
@@ -44,9 +44,9 @@
   --shadow-lg:0 10px 28px rgba(0,0,0,.45);
   --aqua:#132028;
   --aqua-deep:#1a2e36;
-  --crystal:rgba(18,28,32,.72);
+  --crystal:rgba(18,28,32,.58);
   --crystal-border:rgba(60,80,90,.5);
-  --glass-bg:rgba(18,28,32,.70);
+  --glass-bg:rgba(18,28,32,.55);
   --glass-border:var(--crystal-border);
   --top-highlight:0 0 transparent;
   --blue-highlight:#132338;
@@ -58,20 +58,19 @@ html{-webkit-text-size-adjust:100%;}
 body{
   margin:0;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  background-color:#c8dcc8;
-  background-image:url("../img/bg-landscape.webp"),url("../img/bg-landscape.jpg");
-  background-size:cover;
-  background-position:center center;
-  background-repeat:no-repeat;
-  background-attachment:fixed;
+  background-color:#A8D8EC;
+  /* base wash */
+  background-image:linear-gradient(180deg, #C8EAF6 0%, #A8D8EC 50%, #8EC8E0 100%);
+  background-attachment:scroll;
   color:var(--text);
   transition:background-color var(--transition),color var(--transition);
   -webkit-font-smoothing:antialiased;
   min-height:100vh;
   padding-bottom:40px;
   position:relative;
+  overflow-x:hidden;
 }
-/* soft veil so text/cards stay readable on busy photo */
+/* Full-page wave layers (visible, light, no heavy filters) */
 body::before{
   content:"" !important;
   display:block !important;
@@ -79,25 +78,52 @@ body::before{
   inset:0;
   z-index:0;
   pointer-events:none;
-  background:linear-gradient(180deg,rgba(255,255,255,.22) 0%,rgba(220,238,242,.35) 45%,rgba(255,255,255,.18) 100%);
+  background:
+    /* soft highlights */
+    radial-gradient(ellipse 90% 55% at 15% 20%, rgba(255,255,255,.55) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 50% at 90% 10%, rgba(255,255,255,.4) 0%, transparent 50%),
+    /* wave crests — multiple stacked ellipses across the viewport */
+    radial-gradient(ellipse 130% 28% at 50% 28%, rgba(255,255,255,.38) 0%, transparent 70%),
+    radial-gradient(ellipse 140% 30% at 30% 48%, rgba(70,160,200,.28) 0%, transparent 72%),
+    radial-gradient(ellipse 150% 32% at 70% 58%, rgba(255,255,255,.32) 0%, transparent 70%),
+    radial-gradient(ellipse 160% 34% at 40% 72%, rgba(60,150,195,.30) 0%, transparent 72%),
+    radial-gradient(ellipse 170% 36% at 60% 88%, rgba(255,255,255,.36) 0%, transparent 70%),
+    radial-gradient(ellipse 120% 40% at 10% 95%, rgba(80,165,205,.25) 0%, transparent 65%);
   animation:none !important;
 }
-body::after{content:none !important;display:none !important;animation:none !important;}
-body > *{position:relative;z-index:1;}
-[data-theme="dark"] body{
-  background-color:#0a1210;
-  background-image:url("../img/bg-landscape.webp"),url("../img/bg-landscape.jpg");
-  background-size:cover;
-  background-position:center center;
-  background-repeat:no-repeat;
-  background-attachment:fixed;
-}
-[data-theme="dark"] body::before{
+body::after{
   content:"" !important;
   display:block !important;
-  background:linear-gradient(180deg,rgba(8,14,16,.55) 0%,rgba(10,18,20,.62) 50%,rgba(8,14,16,.5) 100%);
+  position:fixed;
+  left:-10%;
+  right:-10%;
+  bottom:-8%;
+  height:55%;
+  z-index:0;
+  pointer-events:none;
+  opacity:.9;
+  background:
+    radial-gradient(ellipse 50% 40% at 10% 80%, rgba(255,255,255,.45) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 42% at 35% 70%, rgba(100,175,215,.35) 0%, transparent 62%),
+    radial-gradient(ellipse 55% 42% at 65% 75%, rgba(255,255,255,.40) 0%, transparent 62%),
+    radial-gradient(ellipse 50% 40% at 90% 85%, rgba(90,168,208,.33) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 50% at 50% 100%, rgba(70,155,200,.28) 0%, transparent 55%);
+  animation:none !important;
 }
-[data-theme="dark"] body::after{content:none !important;display:none !important;}
+body > *{position:relative;z-index:1;}
+[data-theme="dark"] body{
+  background-color:#0E1417;
+  background-image:linear-gradient(165deg, #121a1e 0%, #0E1417 50%, #0c1215 100%);
+}
+[data-theme="dark"] body::before{
+  opacity:.25 !important;
+  background:
+    radial-gradient(ellipse 130% 28% at 50% 30%, rgba(80,140,170,.2) 0%, transparent 70%),
+    radial-gradient(ellipse 140% 30% at 40% 70%, rgba(60,120,150,.18) 0%, transparent 70%) !important;
+}
+[data-theme="dark"] body::after{
+  opacity:.2 !important;
+}
 
 header.app-header,main,.toast-container,.modal-backdrop,.store-header{position:relative;z-index:1;}
 
