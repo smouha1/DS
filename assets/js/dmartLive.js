@@ -45,7 +45,8 @@ let lastBridgeAt = 0;
 const BRIDGE_OFFLINE_MS = 45_000;
 const ADJUST_MAX_DEFAULT = 5;
 const ADJUST_MAX_BOOST = 20;
-let boostMaxOnce = false; // Ctrl+Y one-shot up to 20; clears after successful adjust
+let boostMaxOnce = false; // Ctrl+Y boost up to 20; auto-off after 30s
+let boostMaxTimer = null;
 
 
 export function getStoredBearer() {
@@ -619,14 +620,21 @@ function showCenterToast(html, className, ms) {
 function enableBoostMaxOnce() {
   boostMaxOnce = true;
   showCenterToast('<span class="dmart-toast-on">On</span>', 'is-boost', 1100);
-  // refresh qty inputs max
   document.querySelectorAll('.dmart-adjust-qty').forEach((inp) => {
     inp.max = String(ADJUST_MAX_BOOST);
   });
+  if (boostMaxTimer) clearTimeout(boostMaxTimer);
+  boostMaxTimer = setTimeout(() => {
+    clearBoostMaxOnce();
+  }, 30000);
 }
 
 function clearBoostMaxOnce() {
   boostMaxOnce = false;
+  if (boostMaxTimer) {
+    clearTimeout(boostMaxTimer);
+    boostMaxTimer = null;
+  }
   document.querySelectorAll('.dmart-adjust-qty').forEach((inp) => {
     inp.max = String(ADJUST_MAX_DEFAULT);
     const n = parseInt(inp.value, 10);
@@ -827,27 +835,31 @@ function blinkAvailable(root, times) {
   if (!row) return;
   let n = 0;
   const max = times || 4;
+  // 4× longer than original (~90/70ms → ~360/280ms)
   function tick() {
     row.classList.add('dmart-avail-blink-off');
     setTimeout(() => {
       row.classList.remove('dmart-avail-blink-off');
       n += 1;
-      if (n < max) setTimeout(tick, 70);
-    }, 90);
+      if (n < max) setTimeout(tick, 280);
+    }, 360);
   }
   tick();
 }
 
 function playCardDrop(root) {
   try {
-    root.classList.remove('dmart-card-shake', 'dmart-card-drop', 'dmart-card-avail-pop');
+    root.classList.remove('dmart-card-shake', 'dmart-card-drop', 'dmart-card-avail-pop', 'dmart-card-type');
     void root.offsetWidth;
-    root.classList.add('dmart-card-avail-pop');
+    // 1) typewriter / draw reveal of whole card
+    root.classList.add('dmart-card-type');
     setTimeout(() => {
-      root.classList.remove('dmart-card-avail-pop');
+      root.classList.remove('dmart-card-type');
+      // 2) strong drop impact
+      void root.offsetWidth;
       root.classList.add('dmart-card-drop');
-      setTimeout(() => root.classList.remove('dmart-card-drop'), 700);
-    }, 220);
+      setTimeout(() => root.classList.remove('dmart-card-drop'), 750);
+    }, 760);
   } catch (e) {}
 }
 
@@ -873,13 +885,30 @@ function bindAdjustPanel(root, sku) {
   const qtyInput = panel.querySelector('.dmart-adjust-qty');
   const msg = panel.querySelector('[data-adj-msg]');
 
-  function clampQty() {
+  function clampQty(fromInput) {
     const max = getAdjustMax();
     qtyInput.max = String(max);
-    let n = parseInt(qtyInput.value, 10);
-    if (!Number.isFinite(n)) n = 1;
+    let raw = qtyInput.value;
+    let n = parseInt(raw, 10);
+    let invalid = false;
+    if (!Number.isFinite(n)) {
+      n = 1;
+      invalid = !!String(raw).trim();
+    }
+    if (n > max || n < 1) invalid = true;
     n = Math.min(max, Math.max(1, n));
     qtyInput.value = String(n);
+    if (invalid && fromInput) {
+      qtyInput.classList.remove('is-shake');
+      void qtyInput.offsetWidth;
+      qtyInput.classList.add('is-shake');
+      setTimeout(() => qtyInput.classList.remove('is-shake'), 450);
+      if (msg) {
+        msg.hidden = false;
+        msg.className = 'dmart-adjust-msg is-err';
+        msg.textContent = 'Allowed: 1–' + max;
+      }
+    }
     return n;
   }
 
@@ -947,9 +976,6 @@ function bindAdjustPanel(root, sku) {
       return;
     }
 
-    // Success → clear boost only after success
-    if (boostMaxOnce) clearBoostMaxOnce();
-
     const d = res.data || {};
     if (msg) {
       msg.hidden = false;
@@ -990,7 +1016,12 @@ function bindAdjustPanel(root, sku) {
 
   panel.querySelector('[data-adj="minus"]')?.addEventListener('click', () => run('decrease'));
   panel.querySelector('[data-adj="plus"]')?.addEventListener('click', () => run('increase'));
-  qtyInput?.addEventListener('change', clampQty);
+  qtyInput?.addEventListener('change', () => clampQty(true));
+  qtyInput?.addEventListener('input', () => {
+    const max = getAdjustMax();
+    const n = parseInt(qtyInput.value, 10);
+    if (Number.isFinite(n) && (n > max || n < 1)) clampQty(true);
+  });
 }
 
 export async function fetchLiveProductInfo(sku, warehouseId) {

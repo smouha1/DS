@@ -237,9 +237,39 @@ function getChangelogByVersion() {
 function changelogHtml() {
   const groups = getChangelogByVersion();
   if (!groups.length) return '<p class="settings-empty">No changelog available.</p>';
-  return '<div class="changelog-versions">' + groups.map((g, i) =>
-    `<button type="button" class="changelog-ver-btn" data-cl-idx="${i}">v${escapeHtmlLocal(g.version)}</button>`
-  ).join('') + '</div>';
+  const latest = groups[0] || { version: '—', items: [] };
+  const latestItems = (latest.items || []).slice(0, 12);
+  const latestBlock =
+    '<div class="changelog-latest">' +
+    '<div class="changelog-latest-head">v' + escapeHtmlLocal(latest.version) + ' — latest</div>' +
+    '<ul class="changelog-latest-list">' +
+    (latestItems.length
+      ? latestItems.map((it) => '<li>' + escapeHtmlLocal(it) + '</li>').join('')
+      : '<li>No details</li>') +
+    '</ul>' +
+    ((latest.items || []).length > 12
+      ? '<button type="button" class="changelog-ver-btn changelog-latest-more" data-cl-idx="0">Show all v' +
+        escapeHtmlLocal(latest.version) + '…</button>'
+      : '') +
+    '</div>';
+  const older = groups.slice(1);
+  const buttons =
+    older.length
+      ? '<div class="changelog-versions-label">Previous versions</div>' +
+        '<div class="changelog-versions">' +
+        older
+          .map(
+            (g, i) =>
+              '<button type="button" class="changelog-ver-btn" data-cl-idx="' +
+              (i + 1) +
+              '">v' +
+              escapeHtmlLocal(g.version) +
+              '</button>'
+          )
+          .join('') +
+        '</div>'
+      : '';
+  return latestBlock + buttons;
 }
 
 function openChangelogPopup(version, items) {
