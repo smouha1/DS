@@ -339,12 +339,12 @@
   padding:14px 14px 12px;
   border-radius:16px;
   border:1.5px solid rgba(255,107,0,.35);
-  background:linear-gradient(165deg, rgba(255,255,255,.95) 0%, rgba(255,248,242,.92) 100%);
+  background:linear-gradient(165deg, rgba(255,255,255,.78) 0%, rgba(255,248,242,.72) 100%);
   box-shadow:0 4px 18px rgba(255,107,0,.10), var(--shadow-sm);
   align-self:stretch;
 }
 [data-theme="dark"] .dmart-live-card{
-  background:linear-gradient(165deg, rgba(28,32,36,.95) 0%, rgba(40,28,20,.9) 100%);
+  background:linear-gradient(165deg, rgba(28,32,36,.78) 0%, rgba(40,28,20,.72) 100%);
   border-color:rgba(255,107,0,.45);
 }
 .dmart-live-title{
@@ -2859,21 +2859,26 @@ body.dmart-modal-open{overflow:hidden;}
 .dmart-adjust-modal[hidden]{display:none!important;}
 .dmart-adjust-modal-backdrop{
   position:absolute;inset:0;
-  background:rgba(12,16,22,.42);
+  background:rgba(12,16,22,.28);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
 }
 .dmart-adjust-modal-card{
   position:relative;z-index:1;
   width:min(420px,100%);
-  background:linear-gradient(180deg,#fffefb 0%,#fff8f0 100%);
+  background:linear-gradient(180deg,rgba(255,254,251,.94) 0%,rgba(255,248,240,.92) 100%);
   border:1px solid rgba(255,107,0,.35);
   border-radius:20px;
-  box-shadow:0 18px 50px rgba(0,0,0,.22),0 0 0 1px rgba(255,107,0,.08);
+  box-shadow:0 24px 60px rgba(0,0,0,.28),0 0 0 1px rgba(255,107,0,.1);
   padding:22px 22px 18px;
-  animation:dmartModalIn .22s ease;
+  animation:dmartModalIn .42s cubic-bezier(.16,1,.3,1);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
 }
 @keyframes dmartModalIn{
-  from{opacity:0;transform:translateY(10px) scale(.97);}
-  to{opacity:1;transform:none;}
+  0%{opacity:0;transform:translateY(28px) scale(.9);filter:blur(6px);}
+  60%{opacity:1;filter:blur(0);}
+  100%{opacity:1;transform:none;filter:blur(0);}
 }
 [data-theme="dark"] .dmart-adjust-modal-card{
   background:linear-gradient(180deg,#1c2228 0%,#161b20 100%);
@@ -2974,10 +2979,17 @@ body.dmart-modal-open{overflow:hidden;}
   pointer-events:none;
   opacity:0;
   transition:opacity .15s ease,transform .15s ease;
-  padding:14px 22px;
-  border-radius:16px;
-  background:rgba(18,22,28,.12);
-  box-shadow:0 8px 28px rgba(0,0,0,.12);
+  padding:18px 28px;
+  border-radius:18px;
+  background:rgba(255,255,255,.78);
+  border:1px solid rgba(0,0,0,.08);
+  box-shadow:0 12px 36px rgba(0,0,0,.18);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+}
+[data-theme="dark"] .dmart-center-toast{
+  background:rgba(18,24,28,.82);
+  border-color:rgba(255,255,255,.1);
 }
 .dmart-center-toast.is-visible{
   opacity:1;
@@ -3000,8 +3012,8 @@ body.dmart-modal-open{overflow:hidden;}
 .dmart-toast-fail{color:#c43c3c;}
 
 /* Available blink */
-.dmart-avail-blink-off{opacity:0!important;transition:opacity .06s linear;}
-.dmart-live-available-row{transition:opacity .06s linear;}
+.dmart-avail-blink-off{opacity:0!important;transition:opacity .2s linear;}
+.dmart-live-available-row{transition:opacity .2s linear;}
 
 /* Available pop then whole card drop */
 .dmart-live-card.dmart-card-avail-pop .dmart-live-available-row{
@@ -3016,8 +3028,77 @@ body.dmart-modal-open{overflow:hidden;}
   transform-origin:center top;
 }
 @keyframes dmartCardDrop{
-  0%{transform:translateY(-18px) scale(1.02);opacity:.85;}
+  0%{transform:translateY(-42px) scale(1.06) rotate(-1.2deg);opacity:.7;filter:brightness(1.08);}
+  40%{transform:translateY(14px) scale(.96) rotate(.6deg);opacity:1;}
+  58%{transform:translateY(-10px) scale(1.03) rotate(-.4deg);}
+  72%{transform:translateY(6px) scale(.98);}
+  85%{transform:translateY(-3px) scale(1.01);}
+  100%{transform:translateY(0) scale(1) rotate(0);opacity:1;filter:none;}
+}
   55%{transform:translateY(6px) scale(.99);}
   75%{transform:translateY(-3px) scale(1.01);}
   100%{transform:translateY(0) scale(1);opacity:1;}
+}
+
+/* Typewriter / stroke-draw card reveal */
+.dmart-live-card.dmart-card-type{
+  animation:dmartCardType .75s cubic-bezier(.2,.7,.2,1) both;
+}
+@keyframes dmartCardType{
+  0%{
+    clip-path:inset(0 100% 0 0);
+    opacity:.35;
+    filter:saturate(.8);
+    box-shadow:0 0 0 0 rgba(255,107,0,0);
+  }
+  35%{
+    clip-path:inset(0 40% 0 0);
+    opacity:.85;
+  }
+  70%{
+    clip-path:inset(0 0 0 0);
+    box-shadow:0 0 0 3px rgba(255,107,0,.35);
+  }
+  100%{
+    clip-path:inset(0 0 0 0);
+    opacity:1;
+    filter:none;
+    box-shadow:0 4px 18px rgba(255,107,0,.12);
+  }
+}
+.dmart-adjust-qty.is-shake{
+  animation:dmartQtyShake .45s ease;
+}
+@keyframes dmartQtyShake{
+  0%,100%{transform:translateX(0);}
+  20%{transform:translateX(-6px);}
+  40%{transform:translateX(6px);}
+  60%{transform:translateX(-4px);}
+  80%{transform:translateX(4px);}
+}
+
+/* Glass over landscape background */
+.product-card{
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+.dmart-live-card{
+  background:linear-gradient(165deg, rgba(255,255,255,.80) 0%, rgba(255,248,242,.74) 100%) !important;
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+}
+[data-theme="dark"] .dmart-live-card{
+  background:linear-gradient(165deg, rgba(28,32,36,.80) 0%, rgba(40,28,20,.74) 100%) !important;
+}
+.app-header, .search-section, .panel, .settings-panel, .warehouse-bar{
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+}
+@media (max-width:899px){
+  /* iOS: fixed bg can lag — use scroll */
+  body{background-attachment:scroll !important;}
+  .product-card,.dmart-live-card,.app-header{
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
+  }
 }

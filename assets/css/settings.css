@@ -258,3 +258,32 @@ html.large-product-image .product-image-wrap{max-width:260px;}
 }
 .dev-grid > div span{color:var(--text-muted);font-weight:600;}
 .dev-grid > div b{color:var(--text);font-weight:700;text-align:right;word-break:break-word;}
+
+/* Changelog: latest visible as text */
+.changelog-latest{
+  margin:8px 0 14px;
+  padding:12px 14px;
+  border-radius:12px;
+  background:var(--crystal);
+  border:1px solid var(--crystal-border);
+}
+.changelog-latest-head{
+  font-size:13px;font-weight:800;color:var(--primary);margin-bottom:8px;
+}
+.changelog-latest-list{
+  margin:0;padding-left:18px;
+  font-size:12.5px;line-height:1.45;color:var(--text);
+}
+.changelog-latest-list li{margin:4px 0;}
+.changelog-latest-more{margin-top:10px;}
+.changelog-versions-label{
+  font-size:11px;font-weight:700;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:.04em;margin:10px 0 6px;
+}
+.changelog-versions{display:flex;flex-wrap:wrap;gap:8px;}
+.changelog-ver-btn{
+  font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px;
+  border:1px solid var(--crystal-border);background:var(--crystal);
+  color:var(--text);cursor:pointer;
+}
+.changelog-ver-btn:hover{border-color:var(--primary);color:var(--primary);}
