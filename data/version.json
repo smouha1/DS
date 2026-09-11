@@ -1,12 +1,14 @@
 {
   "version": "1.8.0",
-  "build": 93,
+  "build": 94,
   "updated": "2026-09-11",
   "products": 39994,
   "changelogByVersion": [
     {
       "version": "1.8.0",
       "items": [
+        "DMart badge on lookup products; Clear DMart Cache in Settings",
+        "Product images from DMart only (image.url); browser image cache",
         "Recent includes DMart-cached products; image URL from BFF saved in browser cache",
         "DMart lookup only after 6+ chars; search generation guards race (no flash disappear)",
         "Fix DMart catalog lookup auth (sessionManager); min query length 5 for remote lookup",
