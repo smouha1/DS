@@ -1,0 +1,19 @@
+{
+  "name": "Smouha Pick",
+  "short_name": "Smouha Pick",
+  "description": "Talabat Mart Smouha internal barcode lookup and product management tool",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F7F7F8",
+  "theme_color": "#FF6B00",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2220%22%20fill%3D%22%23FF6B00%22/%3E%3Cg%20transform%3D%22translate%2810%2C10%29%20scale%280.8%29%22%3E%3Cpath%20d%3D%22M%2051.28%2C14.43%20L%2048.01%2C15.07%20L%2044.50%2C16.59%20L%2042.58%2C17.94%20L%2040.11%2C20.81%20L%2038.60%2C25.36%20L%2038.52%2C34.85%20L%2026.63%2C34.85%20L%2026.63%2C41.71%20L%2027.67%2C44.42%20L%2030.06%2C46.41%20L%2032.46%2C47.05%20L%2038.60%2C47.13%20L%2038.68%2C67.78%20L%2040.27%2C73.60%20L%2042.66%2C77.59%20L%2046.09%2C81.02%20L%2050.00%2C83.33%20L%2054.47%2C84.61%20L%2059.25%2C84.77%20L%2064.75%2C83.49%20L%2067.70%2C81.90%20L%2067.70%2C70.18%20L%2064.51%2C70.97%20L%2061.80%2C70.73%20L%2058.93%2C69.22%20L%2057.26%2C67.15%20L%2056.14%2C63.32%20L%2056.14%2C47.13%20L%2069.54%2C47.05%20L%2069.54%2C39.87%20L%2068.26%2C37.00%20L%2065.79%2C35.25%20L%2056.14%2C34.77%20L%2056.14%2C14.35%20Z%22%20fill%3D%22%23ffffff%22/%3E%3C/g%3E%3C/svg%3E",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
