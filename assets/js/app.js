@@ -867,28 +867,32 @@ function renderSuggestions(matches, query) {
      searchFn defaults to the manual search strategy (SKU -> last 6 digits).
      Pelican Mode passes search.queryPelican instead (full barcode ->
      SKU -> last 6 digits), reusing this exact same rendering pipeline. */
+  let searchGen = 0;
   function runSearch(query, searchFn) {
     const fn = searchFn || search.query;
     const isPelicanScan = fn === search.queryPelican;
     dismissAutoCopyToast(); // reset copy state before every new search
     showSkeleton();
-    // Deliberate minimum skeleton duration (120-180ms) for a smoother perceived
-    // transition, even though the underlying Map lookup itself is near-instant.
+    const myGen = ++searchGen;
+    // Deliberate minimum skeleton duration for smoother perceived transition.
     setTimeout(async () => {
+      if (myGen !== searchGen) return;
       let result = fn(query);
-      // Local miss → DMart lookup via extension (SKU / code only), then browser cache
+      // Local miss → DMart lookup only when query has at least 6 chars (SKU-like)
       if (result.type === 'none') {
         const q = String(query || '').trim();
-        if (/^[0-9A-Za-z]+$/.test(q) && q.length >= 5) {
+        if (/^[0-9A-Za-z]+$/.test(q) && q.length >= 6) {
           try {
             const wid = warehouse.getSelectedId && warehouse.getSelectedId();
             if (wid && dmartLive.lookupProductViaBridge) {
               const look = await dmartLive.lookupProductViaBridge(q, wid, 15000);
+              if (myGen !== searchGen) return;
               if (look && look.ok && look.product) {
+                const bcs = Array.isArray(look.product.barcodes) ? look.product.barcodes.filter(Boolean) : [];
                 const rec = {
                   sku: String(look.product.sku || q),
                   name: look.product.name || q,
-                  barcodes: look.product.barcodes || [],
+                  barcodes: bcs.length ? bcs : [String(look.product.sku || q)],
                   image: look.product.image || '',
                   productId: look.product.productId || null,
                 };
@@ -911,6 +915,7 @@ function renderSuggestions(matches, query) {
         }
       }
 
+      if (myGen !== searchGen) return;
       els.searchStats.textContent = statsLabel(result);
 
       if (result.type === 'invalid') {

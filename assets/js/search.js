@@ -156,7 +156,7 @@ export function findBySuffix(suffix) {
   if (d && !list.some((x) => x.sku === d.sku)) list.push(d);
   return list;
 }
-export function getBySkuList(skus) { return skus.map(s => bySku.get(s)).filter(Boolean); }
+export function getBySkuList(skus) { return skus.map(s => findBySku(String(s))).filter(Boolean); }
 export function count() { return products.length; }
 export function getMapsCount() { return { bySku: bySku.size, byBarcode: byBarcode.size, bySuffix6: bySuffix6.size }; }
 
