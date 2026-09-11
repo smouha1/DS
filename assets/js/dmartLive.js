@@ -285,19 +285,7 @@ function requestViaExtensionOnce(sku, warehouseId, timeoutMs) {
       finish({ ok: false, reason, onHand: null, reserved: null, price: null, via: 'extension' });
     }
 
-    
-window.addEventListener('keydown', (e) => {
-  if (!(e.ctrlKey || e.metaKey)) return;
-  if (e.code !== 'KeyY' && e.key !== 'y' && e.key !== 'Y') return;
-  // desktop only boost
-  try {
-    if (!window.matchMedia('(min-width: 900px)').matches) return;
-  } catch (err) {}
-  e.preventDefault();
-  enableBoostMaxOnce();
-}, true);
-
-window.addEventListener('message', onMsg);
+    window.addEventListener('message', onMsg);
     const payload = {
       type: 'SMOUHA_PICK_DMART_REQUEST',
       requestId,
@@ -1024,6 +1012,59 @@ function bindAdjustPanel(root, sku) {
   });
 }
 
+
+/** Lookup product catalog fields from DMart when local search misses. */
+export function lookupProductViaBridge(sku, warehouseId, timeoutMs) {
+  const requestId =
+    'lookup_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+  return new Promise((resolve) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      finish({ ok: false, reason: 'bridge-timeout' });
+    }, timeoutMs || 15000);
+
+    function finish(result) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      window.removeEventListener('message', onMsg);
+      resolve(result);
+    }
+
+    function onMsg(event) {
+      if (event.source !== window) return;
+      const data = event.data;
+      if (!data || data.source !== 'smouha-dmart-bridge') return;
+      if (data.type !== 'SMOUHA_PICK_DMART_LOOKUP_RESPONSE') return;
+      if (data.requestId != null && data.requestId !== requestId) return;
+      markBridgeReady();
+      if (data.success && data.data) {
+        finish({ ok: true, product: data.data });
+      } else {
+        const code = (data.error && data.error.code) || 'NOT_FOUND';
+        finish({ ok: false, reason: code });
+      }
+    }
+
+    window.addEventListener('message', onMsg);
+    const payload = {
+      type: 'SMOUHA_PICK_DMART_LOOKUP',
+      requestId,
+      warehouseId: String(warehouseId),
+      sku: String(sku),
+    };
+    try {
+      window.postMessage(payload, window.location.origin);
+    } catch (e) {
+      finish({ ok: false, reason: 'no-bridge' });
+      return;
+    }
+    try {
+      document.dispatchEvent(new CustomEvent('smouha-dmart-bridge-req', { detail: payload }));
+    } catch (e) {}
+  });
+}
+
 export async function fetchLiveProductInfo(sku, warehouseId) {
   if (!sku || !warehouseId) {
     return { onHand: null, reserved: null, price: null, ok: false, reason: 'missing-ids' };
@@ -1363,3 +1404,14 @@ if (document.readyState === 'loading') {
 } else {
   watchBridgeHeartbeat();
 }
+
+
+window.addEventListener('keydown', (e) => {
+  if (!(e.ctrlKey || e.metaKey)) return;
+  if (e.code !== 'KeyY' && e.key !== 'y' && e.key !== 'Y') return;
+  try {
+    if (!window.matchMedia('(min-width: 900px)').matches) return;
+  } catch (err) {}
+  e.preventDefault();
+  enableBoostMaxOnce();
+}, true);

@@ -29,6 +29,83 @@ const bySuffix6 = new Map();
 let nameSearchCache = [];
 let barcodeFlatCache = [];
 
+/* DMart live-miss cache (browser only, until site data cleared) */
+const DMART_CACHE_KEY = 'smouha_dmart_product_cache_v1';
+const dmartBySku = new Map();
+const dmartByBarcode = new Map();
+const dmartBySuffix6 = new Map();
+let dmartCacheLoaded = false;
+
+function loadDmartCache() {
+  if (dmartCacheLoaded) return;
+  dmartCacheLoaded = true;
+  try {
+    const raw = localStorage.getItem(DMART_CACHE_KEY);
+    if (!raw) return;
+    const obj = JSON.parse(raw);
+    if (!obj || typeof obj !== 'object') return;
+    Object.values(obj).forEach((rec) => {
+      if (rec && rec.sku) indexDmartRecord(rec, false);
+    });
+  } catch (e) {}
+}
+
+function persistDmartCache() {
+  try {
+    const obj = {};
+    dmartBySku.forEach((p, sku) => {
+      obj[sku] = {
+        sku: p.sku,
+        name: p.name,
+        barcodes: p.barcodes || [],
+        image: p.image || '',
+        productId: p.productId || null,
+      };
+    });
+    localStorage.setItem(DMART_CACHE_KEY, JSON.stringify(obj));
+  } catch (e) {}
+}
+
+function indexDmartRecord(rec, save) {
+  if (!rec || !rec.sku) return null;
+  const p = {
+    id: 'dmart:' + rec.sku,
+    sku: String(rec.sku),
+    name: rec.name || String(rec.sku),
+    barcodes: Array.isArray(rec.barcodes) ? rec.barcodes.map(String) : [],
+    image: rec.image || '',
+    productId: rec.productId || null,
+    fromDmart: true,
+  };
+  dmartBySku.set(p.sku, p);
+  p.barcodes.forEach((bc) => {
+    if (!bc) return;
+    dmartByBarcode.set(bc, p);
+    if (bc.length >= 6) dmartBySuffix6.set(bc.slice(-6), p);
+  });
+  if (p.sku.length >= 6) dmartBySuffix6.set(p.sku.slice(-6), p);
+  if (save !== false) persistDmartCache();
+  return p;
+}
+
+export function registerDmartProduct(rec) {
+  loadDmartCache();
+  return indexDmartRecord(rec, true);
+}
+
+function findDmartBySku(sku) {
+  loadDmartCache();
+  return dmartBySku.get(String(sku)) || null;
+}
+function findDmartByBarcode(bc) {
+  loadDmartCache();
+  return dmartByBarcode.get(String(bc)) || null;
+}
+function findDmartBySuffix(suf) {
+  loadDmartCache();
+  return dmartBySuffix6.get(String(suf)) || null;
+}
+
 export function build(records) {
   products = records.map((r, i) => ({
     id: i,
@@ -61,9 +138,24 @@ export function build(records) {
   }
 }
 
-export function findBySku(sku) { return bySku.get(sku) || null; }
-export function findByBarcode(barcode) { return byBarcode.get(barcode) || []; }
-export function findBySuffix(suffix) { return bySuffix6.get(suffix) || []; }
+export function findBySku(sku) {
+  const local = bySku.get(sku);
+  if (local) return local;
+  return findDmartBySku(sku);
+}
+export function findByBarcode(code) {
+  const local = byBarcode.get(code);
+  if (local) return Array.isArray(local) ? local : [local];
+  const d = findDmartByBarcode(code);
+  return d ? [d] : [];
+}
+export function findBySuffix(suffix) {
+  const local = bySuffix6.get(suffix) || [];
+  const list = Array.isArray(local) ? local.slice() : (local ? [local] : []);
+  const d = findDmartBySuffix(suffix);
+  if (d && !list.some((x) => x.sku === d.sku)) list.push(d);
+  return list;
+}
 export function getBySkuList(skus) { return skus.map(s => bySku.get(s)).filter(Boolean); }
 export function count() { return products.length; }
 export function getMapsCount() { return { bySku: bySku.size, byBarcode: byBarcode.size, bySuffix6: bySuffix6.size }; }

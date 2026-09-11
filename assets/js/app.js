@@ -874,8 +874,43 @@ function renderSuggestions(matches, query) {
     showSkeleton();
     // Deliberate minimum skeleton duration (120-180ms) for a smoother perceived
     // transition, even though the underlying Map lookup itself is near-instant.
-    setTimeout(() => {
-      const result = fn(query);
+    setTimeout(async () => {
+      let result = fn(query);
+      // Local miss → DMart lookup via extension (SKU / code only), then browser cache
+      if (result.type === 'none') {
+        const q = String(query || '').trim();
+        if (/^[0-9A-Za-z]+$/.test(q) && q.length >= 3) {
+          try {
+            const wid = warehouse.getSelectedId && warehouse.getSelectedId();
+            if (wid && dmartLive.lookupProductViaBridge) {
+              const look = await dmartLive.lookupProductViaBridge(q, wid, 15000);
+              if (look && look.ok && look.product) {
+                const rec = {
+                  sku: String(look.product.sku || q),
+                  name: look.product.name || q,
+                  barcodes: look.product.barcodes || [],
+                  image: look.product.image || '',
+                  productId: look.product.productId || null,
+                };
+                const product = search.registerDmartProduct
+                  ? search.registerDmartProduct(rec)
+                  : {
+                      id: 'dmart:' + rec.sku,
+                      sku: rec.sku,
+                      name: rec.name,
+                      barcodes: rec.barcodes,
+                      image: rec.image,
+                      fromDmart: true,
+                    };
+                result = { type: 'dmart', results: [product] };
+              }
+            }
+          } catch (e) {
+            /* keep none */
+          }
+        }
+      }
+
       els.searchStats.textContent = statsLabel(result);
 
       if (result.type === 'invalid') {
@@ -889,9 +924,6 @@ function renderSuggestions(matches, query) {
         promptDmartConfirm(result.results[0].sku);
         suppressGhostImageTap(500);
         selectSearchAfterProduct();
-        // A completed camera scan is always a discrete, explicit event —
-        // safe to return focus. Manual typing is deliberately excluded so
-        // this never fights the user mid-keystroke.
         if (isPelicanScan) returnFocusToSearch();
       } else if (result.results.length > 1) {
         renderState('duplicate', query, result.results.length);
