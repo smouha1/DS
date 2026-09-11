@@ -1,12 +1,13 @@
 {
   "version": "1.8.0",
-  "build": 90,
-  "updated": "2026-09-09",
+  "build": 91,
+  "updated": "2026-09-10",
   "products": 39994,
   "changelogByVersion": [
     {
       "version": "1.8.0",
       "items": [
+        "DMart live catalog lookup on local miss (SKU first, last-6); browser cache until cleared",
         "Full-page aqua wave background layers; more transparent cards over waves",
         "Background option 1 aqua waves with slightly deeper light-blue",
         "Solid light-blue background; Recent +15% width +20% height; less modal blur; larger ±N toast box",
