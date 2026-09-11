@@ -355,6 +355,7 @@ async function renderPanel() {
       <h4>Database</h4>
       <button class="btn settings-action" id="settingsForceUpdate">Force Update Database</button>
       <button class="btn settings-action" id="settingsClearDb">Clear IndexedDB</button>
+      <button class="btn settings-action" id="settingsClearDmartCache">Clear DMart Cache</button>
       <button class="btn settings-action" id="settingsRunImageCheck">Run Image Check</button>
       <button class="btn settings-action" id="settingsReset">Reset Settings</button>
     </div>
@@ -439,6 +440,13 @@ async function renderPanel() {
     }
     btn.disabled = false; btn.textContent = 'Force Update Database';
     renderPanel();
+  });
+
+    panelEl.querySelector('#settingsClearDmartCache')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    try {
+      window.dispatchEvent(new CustomEvent('smouha:clear-dmart-cache'));
+    } catch (err) {}
   });
 
   panelEl.querySelector('#settingsClearDb')?.addEventListener('click', async (e) => {

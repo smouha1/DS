@@ -84,6 +84,14 @@ function indexDmartRecord(rec, save) {
     if (bc.length >= 6) dmartBySuffix6.set(bc.slice(-6), p);
   });
   if (p.sku.length >= 6) dmartBySuffix6.set(p.sku.slice(-6), p);
+  if (p.image && /^https?:\/\//i.test(p.image)) {
+    try {
+      const map = loadImageCache();
+      map[p.sku] = p.image;
+      imageCache = map;
+      if (save !== false) persistImageCache();
+    } catch (e) {}
+  }
   if (save !== false) persistDmartCache();
   return p;
 }
@@ -91,6 +99,61 @@ function indexDmartRecord(rec, save) {
 export function registerDmartProduct(rec) {
   loadDmartCache();
   return indexDmartRecord(rec, true);
+}
+
+/** Image-only cache (SKU → https URL from DMart). Survives until cleared. */
+const DMART_IMAGE_KEY = 'smouha_dmart_image_cache_v1';
+let imageCache = null;
+function loadImageCache() {
+  if (imageCache) return imageCache;
+  imageCache = {};
+  try {
+    const raw = localStorage.getItem(DMART_IMAGE_KEY);
+    if (raw) {
+      const o = JSON.parse(raw);
+      if (o && typeof o === 'object') imageCache = o;
+    }
+  } catch (e) {}
+  return imageCache;
+}
+function persistImageCache() {
+  try {
+    localStorage.setItem(DMART_IMAGE_KEY, JSON.stringify(imageCache || {}));
+  } catch (e) {}
+}
+export function getDmartImage(sku) {
+  if (!sku) return '';
+  const map = loadImageCache();
+  const u = map[String(sku)];
+  return u && /^https?:\/\//i.test(u) ? u : '';
+}
+export function setDmartImage(sku, url) {
+  if (!sku || !url || !/^https?:\/\//i.test(String(url))) return;
+  const map = loadImageCache();
+  map[String(sku)] = String(url).trim();
+  imageCache = map;
+  persistImageCache();
+  // also refresh product cache image if present
+  const p = findDmartBySku(String(sku));
+  if (p) {
+    p.image = String(url).trim();
+    persistDmartCache();
+  }
+}
+export function clearDmartCache() {
+  try { localStorage.removeItem(DMART_CACHE_KEY); } catch (e) {}
+  try { localStorage.removeItem(DMART_IMAGE_KEY); } catch (e) {}
+  dmartBySku.clear();
+  dmartByBarcode.clear();
+  dmartBySuffix6.clear();
+  dmartCacheLoaded = false;
+  imageCache = {};
+  return true;
+}
+export function dmartCacheStats() {
+  loadDmartCache();
+  const imgs = loadImageCache();
+  return { products: dmartBySku.size, images: Object.keys(imgs).length };
 }
 
 function findDmartBySku(sku) {

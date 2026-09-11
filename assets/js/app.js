@@ -1474,7 +1474,64 @@ function renderSuggestions(matches, query) {
     }
   }
 
-  function renderProduct(product) {
+  function applyProductImageSrc(url) {
+    const img = document.getElementById('prodImg');
+    const wrap = document.getElementById('prodImgWrap');
+    if (!img) return;
+    const u = (url || '').trim();
+    if (!u) {
+      img.removeAttribute('src');
+      img.alt = img.alt || '';
+      if (wrap) wrap.classList.remove('loading');
+      return;
+    }
+    if (wrap) wrap.classList.add('loading');
+    img.onload = () => { if (wrap) wrap.classList.remove('loading'); };
+    img.onerror = () => {
+      img.removeAttribute('src');
+      if (wrap) wrap.classList.remove('loading');
+    };
+    img.src = u;
+  }
+
+  async function enrichProductImageFromDmart(product) {
+    if (!product || !product.sku) return;
+    const sku = String(product.sku);
+    // 1) cached DMart image only (never products.json)
+    try {
+      const cached = search.getDmartImage && search.getDmartImage(sku);
+      if (cached) applyProductImageSrc(cached);
+    } catch (e) {}
+    // 2) live fetch via extension
+    try {
+      const wid = warehouse.getSelectedId && warehouse.getSelectedId();
+      if (!wid || !dmartLive.lookupProductViaBridge) return;
+      if (lastRenderedProduct && lastRenderedProduct.sku !== sku) return;
+      const look = await dmartLive.lookupProductViaBridge(sku, wid, 15000);
+      if (lastRenderedProduct && lastRenderedProduct.sku !== sku) return;
+      if (look && look.ok && look.product && look.product.image) {
+        const url = String(look.product.image).trim();
+        if (/^https?:\/\//i.test(url)) {
+          if (search.setDmartImage) search.setDmartImage(sku, url);
+          // If this was a full miss product, keep full record; else image-only
+          if (product.fromDmart && search.registerDmartProduct) {
+            search.registerDmartProduct({
+              sku,
+              name: look.product.name || product.name,
+              barcodes: (look.product.barcodes && look.product.barcodes.length)
+                ? look.product.barcodes
+                : (product.barcodes || [sku]),
+              image: url,
+              productId: look.product.productId || null,
+            });
+          }
+          applyProductImageSrc(url);
+        }
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+    function renderProduct(product) {
     lastRenderedProduct = product;
     const isFav = store.isFav(product.sku);
     const downloadIconPath = '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>';
@@ -1510,7 +1567,8 @@ function renderSuggestions(matches, query) {
           </div>
           <div class="product-image-col">
             <div class="product-image-wrap loading" id="prodImgWrap">
-              <img id="prodImg" alt="${escapeAttr(product.name)}" loading="lazy" decoding="async" src="${escapeAttr(product.image)}">
+              ${product.fromDmart ? '<span class="dmart-source-badge" title="Loaded from DMart">DMart</span>' : ''}
+              <img id="prodImg" alt="${escapeAttr(product.name)}" loading="lazy" decoding="async" src="">
               <span class="image-zoom-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg> Zoom</span>
             </div>
             <div class="product-name-under-img" title="${escapeAttr(product.name)}">${escapeHtml(product.name)}</div>
@@ -1624,6 +1682,9 @@ function renderSuggestions(matches, query) {
 
     // Live Dmart stock + price (async, non-blocking, race-safe)
     try { dmartLive.requestLiveForProduct(product.sku); } catch (e) { /* never break product card */ }
+
+    // Product image: DMart only (cached first, then live lookup) — never products.json
+    try { enrichProductImageFromDmart(product); } catch (e) { /* ignore */ }
 
     // Optional: Recent list beside barcode (settings)
     try { fillInlineRecent(); } catch (e) { /* ignore */ }
@@ -2756,4 +2817,14 @@ document.addEventListener('DOMContentLoaded', () => {
       versionEl.textContent = (v.version ? 'v' + v.version : '') + (v.build != null ? ' (build ' + v.build + ')' : '') + countText;
     }
   });
+});
+
+
+window.addEventListener('smouha:clear-dmart-cache', () => {
+  try {
+    if (search.clearDmartCache) search.clearDmartCache();
+    alert('DMart cache cleared.');
+  } catch (e) {
+    alert('Could not clear DMart cache.');
+  }
 });
