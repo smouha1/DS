@@ -879,7 +879,7 @@ function renderSuggestions(matches, query) {
       // Local miss → DMart lookup via extension (SKU / code only), then browser cache
       if (result.type === 'none') {
         const q = String(query || '').trim();
-        if (/^[0-9A-Za-z]+$/.test(q) && q.length >= 3) {
+        if (/^[0-9A-Za-z]+$/.test(q) && q.length >= 5) {
           try {
             const wid = warehouse.getSelectedId && warehouse.getSelectedId();
             if (wid && dmartLive.lookupProductViaBridge) {
