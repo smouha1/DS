@@ -440,11 +440,26 @@ const ui = (() => {
     const theme = saved || 'light';
     applyTheme(theme);
     // Dark Mode lives in Settings (Appearance). Same storage API as before.
-    window.addEventListener('smouha:toggle-theme', () => {
-      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      applyTheme(next);
-      store.setTheme(next);
-      window.dispatchEvent(new CustomEvent('smouha:theme-changed', { detail: { theme: next } }));
+        window.addEventListener('smouha:toggle-theme', () => {
+      const root = document.documentElement;
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      // Wipe overlay top → bottom
+      let ov = document.getElementById('themeWipeOverlay');
+      if (!ov) {
+        ov = document.createElement('div');
+        ov.id = 'themeWipeOverlay';
+        ov.className = 'theme-wipe-overlay';
+        document.body.appendChild(ov);
+      }
+      ov.classList.remove('run');
+      void ov.offsetWidth;
+      ov.classList.add('run');
+      setTimeout(() => {
+        applyTheme(next);
+        store.setTheme(next);
+        try { window.dispatchEvent(new CustomEvent('smouha:theme-changed', { detail: { theme: next } })); } catch (e) {}
+      }, 120);
+      setTimeout(() => { ov.classList.remove('run'); }, 300);
     });
   }
 
@@ -1066,6 +1081,7 @@ function renderSuggestions(matches, query) {
   }
 
   let lastRenderedProduct = null;
+  let imageLoadToken = 0;
 
   /** Draw Code128 or QR into #c128-0 for the given product. Safe to call
    *  repeatedly (settings toggle / re-search). Never rebuilds the card.
@@ -1497,39 +1513,64 @@ function renderSuggestions(matches, query) {
   async function enrichProductImageFromDmart(product) {
     if (!product || !product.sku) return;
     const sku = String(product.sku);
-    // 1) cached DMart image only (never products.json)
-    try {
-      const cached = search.getDmartImage && search.getDmartImage(sku);
-      if (cached) applyProductImageSrc(cached);
-    } catch (e) {}
-    // 2) live fetch via extension
-    try {
-      const wid = warehouse.getSelectedId && warehouse.getSelectedId();
-      if (!wid || !dmartLive.lookupProductViaBridge) return;
-      if (lastRenderedProduct && lastRenderedProduct.sku !== sku) return;
-      const look = await dmartLive.lookupProductViaBridge(sku, wid, 15000);
-      if (lastRenderedProduct && lastRenderedProduct.sku !== sku) return;
-      if (look && look.ok && look.product && look.product.image) {
-        const url = String(look.product.image).trim();
-        if (/^https?:\/\//i.test(url)) {
-          if (search.setDmartImage) search.setDmartImage(sku, url);
-          // If this was a full miss product, keep full record; else image-only
-          if (product.fromDmart && search.registerDmartProduct) {
-            search.registerDmartProduct({
-              sku,
-              name: look.product.name || product.name,
-              barcodes: (look.product.barcodes && look.product.barcodes.length)
-                ? look.product.barcodes
-                : (product.barcodes || [sku]),
-              image: url,
-              productId: look.product.productId || null,
-            });
+    const token = ++imageLoadToken;
+    // Always clear previous image immediately to avoid flash of old product
+    applyProductImageSrc('');
+    const fileUrl = (product.image && /^https?:\/\//i.test(String(product.image).trim()))
+      ? String(product.image).trim() : '';
+    const cached = (search.getDmartImage && search.getDmartImage(sku)) || '';
+
+    const stillSame = () =>
+      imageLoadToken === token &&
+      lastRenderedProduct && String(lastRenderedProduct.sku) === sku;
+
+    const tryUrl = (url, onFail) => {
+      if (!stillSame() || !url) { if (onFail) onFail(); return; }
+      const img = document.getElementById('prodImg');
+      const wrap = document.getElementById('prodImgWrap');
+      if (!img) return;
+      if (wrap) wrap.classList.add('loading');
+      const done = () => { if (wrap) wrap.classList.remove('loading'); };
+      img.onload = () => { if (!stillSame()) return; done(); };
+      img.onerror = () => {
+        if (!stillSame()) return;
+        img.removeAttribute('src');
+        done();
+        if (onFail) onFail();
+      };
+      img.src = url;
+    };
+
+    const fetchDmart = async () => {
+      if (!stillSame()) return;
+      try {
+        const wid = warehouse.getSelectedId && warehouse.getSelectedId();
+        if (!wid || !dmartLive.lookupProductViaBridge) return;
+        const look = await dmartLive.lookupProductViaBridge(sku, wid, 15000);
+        if (!stillSame()) return;
+        if (look && look.ok && look.product && look.product.image) {
+          const url = String(look.product.image).trim();
+          if (/^https?:\/\//i.test(url)) {
+            if (search.setDmartImage) search.setDmartImage(sku, url);
+            tryUrl(url);
           }
-          applyProductImageSrc(url);
         }
-      }
-    } catch (e) { /* ignore */ }
+      } catch (e) {}
+    };
+
+    // Policy: working file URL first → else cache → else DMart
+    if (fileUrl) {
+      tryUrl(fileUrl, () => {
+        if (cached) tryUrl(cached, () => { fetchDmart(); });
+        else fetchDmart();
+      });
+    } else if (cached) {
+      tryUrl(cached, () => { fetchDmart(); });
+    } else {
+      fetchDmart();
+    }
   }
+
 
     function renderProduct(product) {
     lastRenderedProduct = product;
@@ -1877,6 +1918,7 @@ function renderSuggestions(matches, query) {
     if (clearBtn && !clearBtn.dataset.wired) {
       clearBtn.dataset.wired = '1';
       clearBtn.addEventListener('click', () => {
+        if (!confirm('Clear all Recent items? This cannot be undone.')) return;
         store.clearRecent();
         renderRecent();
         fillInlineRecent();
@@ -1983,8 +2025,10 @@ function renderSuggestions(matches, query) {
     renderFavorites();
     renderQuickAccess();
     preloadRecentImages();
-    els.clearRecent.addEventListener('click', () => { store.clearRecent(); renderRecent(); toast('Recent searches cleared'); });
-    els.clearFavs.addEventListener('click', () => { store.clearFavs(); renderFavorites(); toast('Favorites cleared'); });
+    els.clearRecent.addEventListener('click', () => {
+      if (!confirm('Clear all Recent items? This cannot be undone.')) return; store.clearRecent(); renderRecent(); toast('Recent searches cleared'); });
+    els.clearFavs.addEventListener('click', () => {
+      if (!confirm('Clear all Favorites? This cannot be undone.')) return; store.clearFavs(); renderFavorites(); toast('Favorites cleared'); });
   }
 
   /** Warms the browser's image cache for the first 20 recent products, so
@@ -2109,6 +2153,30 @@ function renderSuggestions(matches, query) {
     els.choiceModalClose.addEventListener('click', closeChoiceModal);
     els.choiceModal.addEventListener('click', (e) => { if (e.target === els.choiceModal) closeChoiceModal(); });
     els.teamLinkBtn.addEventListener('click', openTeamModal);
+
+  // Smouha Team rotator → same team list modal as footer link
+  (function wireTeamRotatorOpen() {
+    const rot = document.querySelector('.team-rotator') || document.getElementById('teamRotator');
+    if (!rot) return;
+    rot.style.cursor = 'pointer';
+    rot.setAttribute('role', 'button');
+    rot.setAttribute('tabindex', '0');
+    rot.setAttribute('title', 'Open team list');
+    const open = () => {
+      try {
+        if (els.teamLinkBtn) els.teamLinkBtn.click();
+        else if (els.teamModal) {
+          els.teamModal.classList.add('open');
+          els.teamModal.removeAttribute('hidden');
+        }
+      } catch (e) {}
+    };
+    rot.addEventListener('click', open);
+    rot.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+    });
+  })();
+
     els.teamModalClose.addEventListener('click', closeTeamModal);
     els.teamModal.addEventListener('click', (e) => { if (e.target === els.teamModal) closeTeamModal(); });
     renderEmptyState();
