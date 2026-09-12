@@ -1,12 +1,21 @@
 {
   "version": "1.8.0",
-  "build": 94,
+  "build": 98,
   "updated": "2026-09-11",
   "products": 39994,
   "changelogByVersion": [
     {
       "version": "1.8.0",
       "items": [
+        "Live boxes ~20% lighter aqua; DMart glow right+bottom only (no top/left)",
+        "Live stat boxes: softer aqua fill (lighter), borders restored to normal weight",
+        "Live Price/Available/Reserved keep borders, fill = page aqua",
+        "Inline Recent clear confirm; lighter aqua bg for less lag",
+        "Dark mode wipe animation top→bottom",
+        "Deeper aqua background waves; transparent live stats; DMart glow BR only",
+        "Premium recent UI; faster adjust modal; clear Recent/Favs confirm",
+        "Hybrid product images (file then DMart) + no image flash race",
+        "Smouha Team rotator opens team list; leadership roster update",
         "DMart badge on lookup products; Clear DMart Cache in Settings",
         "Product images from DMart only (image.url); browser image cache",
         "Recent includes DMart-cached products; image URL from BFF saved in browser cache",
