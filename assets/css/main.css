@@ -591,3 +591,55 @@ header.app-header + main .search-section,
     z-index:1;
   }
 }
+
+
+/* Dark mode wipe: top → bottom */
+.theme-wipe-overlay{
+  pointer-events:none;position:fixed;inset:0;z-index:99999;
+  background:var(--bg, #0b1220);
+  transform:scaleY(0);transform-origin:top center;
+  opacity:0;
+}
+.theme-wipe-overlay.run{
+  animation:themeWipeDown .28s cubic-bezier(.22,.8,.28,1) forwards;
+}
+@keyframes themeWipeDown{
+  0%{transform:scaleY(0);opacity:.4}
+  50%{transform:scaleY(1);opacity:.22}
+  100%{transform:scaleY(1);opacity:0}
+}
+
+
+/* Aqua canvas — lighter layers for performance */
+:root{
+  --smouha-aqua:#6a9eb8;
+  --smouha-aqua-deep:#4f7f9a;
+}
+html,body{
+  background-color:var(--smouha-aqua)!important;
+  background-image:
+    radial-gradient(ellipse 100% 70% at 50% -10%, rgba(255,255,255,.22), transparent 60%),
+    linear-gradient(180deg, rgba(255,255,255,.08), transparent 45%)!important;
+  background-attachment:scroll;
+}
+body::after{
+  content:"";
+  pointer-events:none;
+  position:fixed;
+  left:0;right:0;bottom:0;height:42vh;
+  z-index:0;
+  background:
+    repeating-linear-gradient(120deg, transparent 0 22px, rgba(255,255,255,.04) 22px 23px),
+    radial-gradient(circle at 25% 75%, rgba(255,255,255,.08) 0 14px, transparent 15px),
+    radial-gradient(circle at 75% 88%, rgba(20,50,80,.06) 0 18px, transparent 19px);
+  opacity:.85;
+  will-change:auto;
+}
+#app, main, .app-shell, .page-wrap{position:relative;z-index:1}
+[data-theme="dark"] html,
+[data-theme="dark"] body{
+  background-color:#1a2836!important;
+  background-image:none!important;
+}
+[data-theme="dark"] body::after{opacity:.25}
+

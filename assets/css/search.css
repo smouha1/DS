@@ -813,3 +813,9 @@
 .search-wrap,.search-box,.search-section{
   /* keep readability; slight transparency */
 }
+
+/* Premium recent scrollbar fallback */
+.suggestions, .recent-dropdown{
+  scrollbar-width:thin;
+  scrollbar-color:rgba(80,120,150,.45) transparent;
+}
