@@ -593,3 +593,40 @@
   padding:10px 12px !important;
 }
 .dmart-confirm-title{font-size:13.5px !important;line-height:1.25 !important;}
+
+
+/* Stacking fix: warehouse menu always above page content */
+html.wh-dropdown-open header.app-header {
+  z-index: 9000 !important;
+}
+html.wh-dropdown-open main {
+  pointer-events: none;
+}
+html.wh-dropdown-open main .wh-dropdown,
+html.wh-dropdown-open .wh-dropdown {
+  pointer-events: auto !important;
+}
+.wh-dropdown {
+  z-index: 10000 !important;
+  background: #fff !important;
+  box-shadow: 0 12px 40px rgba(15,40,60,.22) !important;
+}
+[data-theme="dark"] .wh-dropdown {
+  background: #1a222c !important;
+}
+.wh-item {
+  pointer-events: auto !important;
+  min-height: 44px;
+}
+header.app-header,
+header.app-header .header-inner,
+header.app-header .header-actions {
+  overflow: visible !important;
+}
+.wh-selector {
+  position: relative;
+  z-index: 1;
+}
+.wh-selector.open {
+  z-index: 10001;
+}

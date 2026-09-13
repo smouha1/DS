@@ -125,7 +125,8 @@ body > *{position:relative;z-index:1;}
   opacity:.2 !important;
 }
 
-header.app-header,main,.toast-container,.modal-backdrop,.store-header{position:relative;z-index:1;}
+header.app-header{position:relative;z-index:40;}
+main,.toast-container,.modal-backdrop,.store-header{position:relative;z-index:1;}
 
 
 
@@ -610,36 +611,476 @@ header.app-header + main .search-section,
 }
 
 
-/* Aqua canvas — lighter layers for performance */
+
+/* ============================================================
+   UI POLISH v2 — tokens, empty state, panels, header, surfaces
+   ============================================================ */
 :root{
-  --smouha-aqua:#6a9eb8;
-  --smouha-aqua-deep:#4f7f9a;
+  --smouha-aqua:#A8D8EC;
+  --smouha-aqua-bright:#C8EAF6;
+  --smouha-aqua-deep:#8EC8E0;
+  --surface-1:rgba(255,255,255,.72);
+  --surface-2:rgba(255,255,255,.58);
+  --stroke:rgba(150,195,205,.42);
+  --shadow-card:0 4px 18px rgba(20,60,80,.07);
+  --icon-stroke:1.75;
 }
+/* Vibrant light-blue canvas (restored) */
 html,body{
-  background-color:var(--smouha-aqua)!important;
+  background-color:#A8D8EC!important;
   background-image:
-    radial-gradient(ellipse 100% 70% at 50% -10%, rgba(255,255,255,.22), transparent 60%),
-    linear-gradient(180deg, rgba(255,255,255,.08), transparent 45%)!important;
+    linear-gradient(180deg, #C8EAF6 0%, #A8D8EC 48%, #8EC8E0 100%),
+    radial-gradient(ellipse 90% 55% at 15% 18%, rgba(255,255,255,.5) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 50% at 88% 12%, rgba(255,255,255,.35) 0%, transparent 50%)!important;
   background-attachment:scroll;
 }
-body::after{
-  content:"";
-  pointer-events:none;
-  position:fixed;
-  left:0;right:0;bottom:0;height:42vh;
-  z-index:0;
-  background:
-    repeating-linear-gradient(120deg, transparent 0 22px, rgba(255,255,255,.04) 22px 23px),
-    radial-gradient(circle at 25% 75%, rgba(255,255,255,.08) 0 14px, transparent 15px),
-    radial-gradient(circle at 75% 88%, rgba(20,50,80,.06) 0 18px, transparent 19px);
-  opacity:.85;
-  will-change:auto;
+body::before{
+  opacity:.85!important;
 }
-#app, main, .app-shell, .page-wrap{position:relative;z-index:1}
+body::after{
+  /* soft bottom wash only — no heavy line noise */
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 100%, rgba(255,255,255,.28) 0%, transparent 70%)!important;
+  opacity:.9!important;
+  height:40vh!important;
+}
+#app, main, .app-shell, .page-wrap, header.app-header{position:relative;z-index:1}
 [data-theme="dark"] html,
 [data-theme="dark"] body{
-  background-color:#1a2836!important;
+  background-color:#0E1214!important;
   background-image:none!important;
 }
-[data-theme="dark"] body::after{opacity:.25}
+[data-theme="dark"] body::before,
+[data-theme="dark"] body::after{opacity:.2!important}
 
+/* Unified glass surfaces */
+.panel,
+.state-panel,
+.product-card,
+.dmart-live-card,
+.team-rotator,
+.suggestions.open{
+  border:1px solid var(--stroke)!important;
+  border-radius:var(--radius)!important;
+  box-shadow:var(--shadow-card)!important;
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+.panel,
+.state-panel{
+  background:var(--surface-1)!important;
+}
+.product-card{
+  background:var(--surface-1)!important;
+}
+.dmart-live-card{
+  background:linear-gradient(165deg, rgba(255,255,255,.78) 0%, rgba(255,248,242,.7) 100%)!important;
+}
+
+/* Header cluster: warehouse + settings */
+.header-actions{
+  display:flex!important;
+  align-items:center!important;
+  gap:6px!important;
+  padding:4px!important;
+  border-radius:999px!important;
+  background:rgba(255,255,255,.45)!important;
+  border:1px solid rgba(150,195,205,.35)!important;
+  overflow:visible!important;
+  position:relative;
+  z-index:5;
+}
+[data-theme="dark"] .header-actions{
+  background:rgba(18,28,32,.55)!important;
+  border-color:rgba(60,80,90,.45)!important;
+}
+.header-actions .icon-btn,
+.header-actions .wh-selector-btn,
+.header-actions button{
+  border:none!important;
+  box-shadow:none!important;
+  background:transparent!important;
+}
+header.app-header{
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+@media (max-width:720px){
+  .header-logo svg{height:28px!important;}
+  .header-logo{transform:scale(.92);transform-origin:left center;}
+}
+
+/* Empty state premium */
+.state-panel-premium{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:36px 20px 32px!important;
+  min-height:180px;
+  gap:8px;
+}
+.state-icon-wrap{
+  width:64px;height:64px;border-radius:18px;
+  display:grid;place-items:center;
+  background:rgba(255,107,0,.1);
+  border:1px solid rgba(255,107,0,.22);
+  color:var(--primary);
+  margin-bottom:6px;
+}
+.state-icon-scan{width:36px;height:36px}
+.state-panel-premium .state-title{
+  font-size:17px;font-weight:650;color:var(--text);letter-spacing:-.01em;
+}
+.state-panel-premium .state-sub{
+  font-size:13px;color:var(--text-muted);max-width:280px;line-height:1.45;
+}
+.state-tips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px}
+.state-tip{
+  font-size:11.5px;font-weight:600;color:var(--primary-dark);
+  background:rgba(255,107,0,.1);
+  border:1px solid rgba(255,107,0,.2);
+  padding:5px 10px;border-radius:999px;
+}
+[data-theme="dark"] .state-icon-wrap{
+  background:rgba(255,122,26,.12);
+  border-color:rgba(255,122,26,.28);
+}
+[data-theme="dark"] .state-tip{
+  color:var(--primary);
+  background:rgba(255,122,26,.12);
+  border-color:rgba(255,122,26,.25);
+}
+
+/* Search focus: soft border by default, stronger on focus */
+.search-input-shell,
+.search-box,
+.input-shell{
+  border-color:rgba(255,107,0,.28)!important;
+  transition:border-color .15s ease, box-shadow .15s ease!important;
+}
+.search-input-shell:focus-within,
+.search-box:focus-within,
+.input-shell:focus-within{
+  border-color:rgba(255,107,0,.55)!important;
+  box-shadow:0 0 0 3px rgba(255,107,0,.12)!important;
+}
+
+/* Panel headers: icon in soft circle */
+.panel-header h3{
+  display:flex;align-items:center;gap:8px;
+  font-weight:650!important;
+}
+.panel-header h3 svg{
+  width:18px;height:18px;
+  padding:5px;
+  box-sizing:content-box;
+  border-radius:8px;
+  background:rgba(255,107,0,.1);
+  color:var(--primary);
+  stroke-width:1.75;
+}
+.panel-header{
+  border-bottom:1px solid rgba(150,195,205,.28)!important;
+}
+.panel-empty,
+.panel-list .panel-empty{
+  color:var(--text-muted);
+  font-size:13px;
+}
+
+/* Mobile accordion for Recent / Favorites */
+@media (max-width:720px){
+  .panels-row .panel .panel-list{
+    max-height:0;
+    overflow:hidden;
+    opacity:0;
+    transition:max-height .28s ease, opacity .2s ease, padding .2s ease;
+    padding-top:0!important;
+    padding-bottom:0!important;
+  }
+  .panels-row .panel.is-open .panel-list{
+    max-height:min(70vh, 560px);
+    opacity:1;
+    overflow:auto;
+    padding-top:8px!important;
+    padding-bottom:8px!important;
+  }
+  /* Safety: if accordion class missing, still show lists */
+  .panels-row .panel:not(.is-open) .panel-list:empty,
+  .panels-row .panel.is-open .panel-list{
+    pointer-events:auto;
+  }
+  .panels-row .panel .panel-header::after{
+    content:"";
+    width:7px;height:7px;
+    border-right:2px solid var(--text-muted);
+    border-bottom:2px solid var(--text-muted);
+    transform:rotate(45deg);
+    margin-left:auto;
+    transition:transform .2s ease;
+    opacity:.7;
+  }
+  .panels-row .panel.is-open .panel-header::after{
+    transform:rotate(-135deg);
+    margin-top:4px;
+  }
+}
+
+/* QR FAB softer */
+.qr-fab, #qrFab, button.qr-fab, .fab-qr{
+  box-shadow:0 6px 18px rgba(255,107,0,.25)!important;
+}
+.qr-fab:hover, #qrFab:hover{
+  box-shadow:0 8px 22px rgba(255,107,0,.32)!important;
+}
+
+/* Team rotator: readable on dark */
+[data-theme="dark"] .team-rotator,
+[data-theme="dark"] .team-rotator-text{
+  color:var(--text)!important;
+}
+[data-theme="dark"] .team-rotator-kicker{
+  color:var(--primary)!important;
+  opacity:1!important;
+}
+
+/* Tabular numbers for prices / qty */
+.dmart-live-value,
+.barcode-number-value,
+.info-field-value{
+  font-variant-numeric:tabular-nums;
+}
+
+/* Icon stroke consistency */
+.icon-btn svg,
+.search-action-btn svg,
+.panel-header svg,
+.header-actions svg{
+  stroke-width:1.75;
+}
+
+
+
+/* polish remainder */
+.state-tip{
+  appearance:none;border:1px solid rgba(255,107,0,.2);
+  cursor:pointer;font:inherit;
+}
+.state-tip:active{transform:scale(.97)}
+.panel-item, .suggestion-item, .wh-item{
+  transition:transform .12s ease, background .12s ease;
+}
+.panel-item:active, .suggestion-item:active, .wh-item:active{
+  transform:scale(.98);
+}
+.suggestion-item, .panel-item{
+  border-radius:10px;
+}
+
+
+/* ============================================================
+   UI FINAL PASS — tokens, mesh, toast, icons, product hierarchy
+   (QR FAB kept separate — not merged into search)
+   ============================================================ */
+:root{
+  --primary:#FF6B00;
+  --primary-dark:#e35f00;
+  --primary-soft:rgba(255,107,0,.12);
+  --bg-aqua:#A8D8EC;
+  --bg-aqua-top:#C8EAF6;
+  --bg-aqua-bot:#8EC8E0;
+  --surface:rgba(255,255,255,.78);
+  --surface-2:rgba(255,255,255,.62);
+  --stroke:rgba(120,175,195,.38);
+  --text:#1b1d21;
+  --text-muted:#5c6b73;
+  --radius:16px;
+  --radius-sm:12px;
+  --shadow-1:0 2px 8px rgba(20,50,70,.06);
+  --shadow-2:0 8px 24px rgba(20,50,70,.10);
+  --icon-sw:1.75;
+}
+[data-theme="dark"]{
+  --surface:rgba(22,30,36,.82);
+  --surface-2:rgba(18,26,32,.72);
+  --stroke:rgba(70,95,110,.45);
+  --text:#eef0f2;
+  --text-muted:#9aabB4;
+  --primary-soft:rgba(255,122,26,.14);
+}
+
+/* Vibrant aqua + soft mesh (light, no lag) */
+html, body{
+  background-color:var(--bg-aqua)!important;
+  background-image:
+    linear-gradient(180deg, var(--bg-aqua-top) 0%, var(--bg-aqua) 45%, var(--bg-aqua-bot) 100%),
+    radial-gradient(ellipse 70% 45% at 12% 20%, rgba(255,255,255,.55), transparent 60%),
+    radial-gradient(ellipse 55% 40% at 88% 12%, rgba(255,200,160,.18), transparent 55%),
+    radial-gradient(ellipse 60% 35% at 70% 78%, rgba(255,255,255,.28), transparent 60%)!important;
+}
+body::before{
+  background:
+    radial-gradient(ellipse 100% 40% at 50% 0%, rgba(255,255,255,.35), transparent 70%),
+    radial-gradient(circle at 20% 60%, rgba(255,255,255,.12) 0 18px, transparent 19px),
+    radial-gradient(circle at 80% 85%, rgba(40,120,160,.08) 0 22px, transparent 23px)!important;
+  opacity:.9!important;
+}
+body::after{
+  background:
+    radial-gradient(ellipse 90% 50% at 50% 100%, rgba(255,255,255,.3), transparent 65%)!important;
+  opacity:.85!important;
+}
+
+/* Unified surfaces */
+.panel, .state-panel, .product-card, .team-rotator, .suggestions.open, .quick-access-card{
+  background:var(--surface)!important;
+  border:1px solid var(--stroke)!important;
+  border-radius:var(--radius)!important;
+  box-shadow:var(--shadow-1)!important;
+}
+.dmart-live-card{
+  background:linear-gradient(165deg, rgba(255,255,255,.88), rgba(255,248,242,.8))!important;
+  border:1px solid rgba(255,107,0,.35)!important;
+  box-shadow:10px 10px 22px -8px rgba(255,90,31,.32)!important; /* right+bottom */
+}
+
+/* Icon family: one stroke weight */
+.search-input-shell svg,
+.search-inline-btn svg,
+.icon-btn svg,
+.panel-header svg,
+.header-actions svg,
+.search-icon svg,
+.clear-btn svg,
+.state-icon-scan,
+.toast svg{
+  stroke-width:var(--icon-sw)!important;
+}
+.search-inline-btn, .icon-btn, .search-clear-btn{
+  width:36px;height:36px;
+  display:inline-flex;align-items:center;justify-content:center;
+  border-radius:10px;
+  color:var(--text-muted);
+}
+.search-inline-btn:hover, .icon-btn:hover{
+  color:var(--primary);
+  background:var(--primary-soft);
+}
+
+/* Product card hierarchy */
+.product-card{
+  padding:14px!important;
+  gap:10px;
+}
+.product-name, .product-title, #prodName, .product-card h2, .product-card .name{
+  font-weight:600!important;
+  font-size:15px!important;
+  line-height:1.35!important;
+  letter-spacing:-.01em;
+  color:var(--text)!important;
+}
+.product-image-wrap{
+  border-radius:14px!important;
+  overflow:hidden;
+  border:1px solid var(--stroke);
+}
+.info-field, .sku-barcode-row .info-field{
+  border-radius:10px!important;
+  background:rgba(255,255,255,.55)!important;
+  border:1px solid rgba(150,195,205,.3)!important;
+  font-size:12px!important;
+}
+.dmart-live-title{
+  font-size:10px!important;
+  letter-spacing:.12em!important;
+  opacity:.85;
+}
+.dmart-live-available, .dmart-live-available-row .dmart-live-value{
+  font-size:15px!important;
+  font-weight:750!important;
+}
+
+/* Premium toast */
+.toast-container{
+  z-index:12000!important;
+  bottom:28px!important;
+  gap:10px!important;
+}
+.toast{
+  background:rgba(20,28,34,.92)!important;
+  color:#fff!important;
+  border:1px solid rgba(255,255,255,.1)!important;
+  border-radius:14px!important;
+  padding:12px 16px!important;
+  font-size:13.5px!important;
+  font-weight:600!important;
+  box-shadow:0 10px 32px rgba(0,0,0,.22)!important;
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  min-width:min(320px, 92vw);
+  justify-content:flex-start;
+  animation:toastInFinal .28s cubic-bezier(.22,1,.36,1)!important;
+}
+.toast.toast-leave{
+  animation:toastOutFinal .2s ease forwards!important;
+}
+.toast-success{border-color:rgba(61,214,140,.35)!important;}
+.toast-error{border-color:rgba(243,18,96,.4)!important;}
+.toast-info{border-color:rgba(255,107,0,.35)!important;}
+.toast-icon{
+  width:28px;height:28px;border-radius:8px;
+  display:grid;place-items:center;flex-shrink:0;
+  background:rgba(255,255,255,.1);
+}
+.toast-success .toast-icon{background:rgba(61,214,140,.2);color:#3dd68c;}
+.toast-error .toast-icon{background:rgba(243,18,96,.2);color:#f31260;}
+.toast-info .toast-icon{background:rgba(255,107,0,.2);color:#ff9a4c;}
+.toast svg{width:16px;height:16px;}
+@keyframes toastInFinal{
+  from{opacity:0;transform:translateY(14px) scale(.96)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes toastOutFinal{
+  to{opacity:0;transform:translateY(-8px) scale(.98)}
+}
+[data-theme="dark"] .toast{
+  background:rgba(12,16,20,.94)!important;
+  color:#f2f5f7!important;
+}
+
+/* Available success pulse boost */
+.dmart-live-card.dmart-card-avail-pop .dmart-live-available-row,
+.dmart-live-card.dmart-card-avail-pop .dmart-live-available{
+  animation:availPulse .5s ease!important;
+}
+@keyframes availPulse{
+  0%{transform:scale(1);filter:brightness(1)}
+  30%{transform:scale(1.08);filter:brightness(1.15)}
+  100%{transform:scale(1);filter:brightness(1)}
+}
+
+/* Dark surfaces readable */
+[data-theme="dark"] .panel,
+[data-theme="dark"] .state-panel,
+[data-theme="dark"] .product-card,
+[data-theme="dark"] .team-rotator{
+  background:var(--surface)!important;
+  border-color:var(--stroke)!important;
+}
+[data-theme="dark"] .info-field{
+  background:rgba(30,40,48,.7)!important;
+}
+
+.product-image-wrap.img-fetching-dmart{
+  background:#EEF6FA;
+  border:1px dashed rgba(255,107,0,.35);
+}
+.product-image-wrap.img-fetching-dmart img{
+  object-fit:contain;
+}
+.panel-thumb{
+  background:#E8F3F8;
+  object-fit:cover;
+}

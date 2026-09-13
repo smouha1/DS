@@ -3128,7 +3128,7 @@ body.dmart-modal-open{overflow:hidden;}
 .dmart-live-row.dmart-live-available-row,
 .dmart-live-reserved-row,
 .dmart-live-price-row{
-  background:#b8d4e0!important;
+  background:#D2EEF7!important;
   box-shadow:0 1px 3px rgba(0,0,0,.04)!important;
 }
 .dmart-live-row:has(.dmart-live-available),
@@ -3214,4 +3214,21 @@ body.dmart-modal-open{overflow:hidden;}
 #recentList::-webkit-scrollbar-track,
 .recent-list::-webkit-scrollbar-track{
   background:transparent;
+}
+
+/* UI polish product name + live hierarchy */
+.product-name, .product-title, #prodName{
+  font-weight:600!important;
+  letter-spacing:-.01em;
+  line-height:1.35;
+}
+.dmart-live-title{
+  font-size:10px!important;
+  letter-spacing:.1em!important;
+  opacity:.9;
+}
+.dmart-live-row:has(.dmart-live-available) .dmart-live-available,
+.dmart-live-available-row .dmart-live-available{
+  font-size:15px!important;
+  font-weight:750!important;
 }

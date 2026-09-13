@@ -819,3 +819,7 @@
   scrollbar-width:thin;
   scrollbar-color:rgba(80,120,150,.45) transparent;
 }
+
+/* icon family final */
+.search-input-shell svg{stroke-width:1.75!important;}
+.search-inline-btn svg{width:18px;height:18px;}
