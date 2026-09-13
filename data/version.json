@@ -1,12 +1,52 @@
 {
-  "version": "1.8.0",
-  "build": 98,
-  "updated": "2026-09-11",
+  "version": "1.9.1",
+  "build": 102,
+  "updated": "2026-09-12",
   "products": 39994,
   "changelogByVersion": [
     {
+      "version": "1.9.1",
+      "date": "2026-09-12",
+      "items": [
+        "Fix mobile Recent/Favorites visibility (accordion init + taller open panel)",
+        "DMart image loading placeholder instead of broken image",
+        "Recent/Favorites thumbs use DMart image cache; refresh when image arrives"
+      ]
+    },
+    {
+      "version": "1.9.0",
+      "date": "2026-09-12",
+      "items": [
+        "Full UI final pass: design tokens, soft mesh aqua, unified icon stroke",
+        "Premium toast redesign; product card hierarchy polish",
+        "Available success pulse on stock adjust; surfaces/dark polish",
+        "QR FAB kept separate (not merged into search bar)"
+      ]
+    },
+    {
+      "version": "1.8.2",
+      "date": "2026-09-12",
+      "items": [
+        "Fix warehouse dropdown stacking (fixed position + z-index) so branches are selectable on mobile",
+        "Empty-state tips are tappable (focus search / camera)",
+        "UI polish remainder: press feedback on list items; header overflow visible"
+      ]
+    },
+    {
+      "version": "1.8.1",
+      "date": "2026-09-12",
+      "items": [
+        "UI polish pass: empty state, tokens/surfaces, header cluster",
+        "Default warehouse label: Friendly Names (Settings can switch to Official)",
+        "Mobile accordion for Recent & Favorites; brighter aqua background restored"
+      ]
+    },
+    {
       "version": "1.8.0",
       "items": [
+        "Mobile Recent/Favorites accordion; header action cluster; softer QR FAB",
+        "Warehouse display default Friendly (Original still in Settings)",
+        "UI polish: vibrant aqua bg, unified surfaces, premium empty state",
         "Live boxes ~20% lighter aqua; DMart glow right+bottom only (no top/left)",
         "Live stat boxes: softer aqua fill (lighter), borders restored to normal weight",
         "Live Price/Available/Reserved keep borders, fill = page aqua",
