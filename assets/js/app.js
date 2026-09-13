@@ -38,7 +38,7 @@ const SETTINGS_DEFAULTS = {
   scanSound: true,
   showProductCount: true,
   showVersion: true,
-  warehouseDisplay: 'original',
+  warehouseDisplay: 'friendly',
   recentBesideBarcode: true,
   dmartPopupEnabled: true,
   intensiveAutoFocus: false,
@@ -113,13 +113,10 @@ function effectiveWarehouseDisplay() {
         explicit = p.warehouseDisplay;
       }
     }
-    if (isMobileViewport()) {
-      // Mobile default: Friendly Names
-      return explicit == null ? 'friendly' : explicit;
-    }
-    return explicit == null ? 'original' : explicit;
+    // Default Friendly on mobile + desktop; Settings can still force Original names
+    return explicit == null ? 'friendly' : explicit;
   } catch (e) {
-    return isMobileViewport() ? 'friendly' : 'original';
+    return 'friendly';
   }
 }
 
@@ -476,13 +473,18 @@ const ui = (() => {
     const icons = {
       success: '<path d="M20 6 9 17l-5-5"/>',
       error: '<path d="M18 6 6 18M6 6l12 12"/>',
+      info: '<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>',
     };
     const div = document.createElement('div');
-    div.className = 'toast';
-    div.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${icons[type] || icons.success}</svg><span></span>`;
-    div.querySelector('span').textContent = message;
+    const t = type === 'error' ? 'error' : type === 'info' ? 'info' : 'success';
+    div.className = 'toast toast-' + t;
+    div.innerHTML = `<span class="toast-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icons[t] || icons.success}</svg></span><span class="toast-msg"></span>`;
+    div.querySelector('.toast-msg').textContent = message;
     els.toastContainer.appendChild(div);
-    setTimeout(() => div.remove(), 2600);
+    setTimeout(() => {
+      div.classList.add('toast-leave');
+      setTimeout(() => div.remove(), 220);
+    }, 2400);
   }
 
   /* ---------- Automatic SKU copy (centralized single-toast state) ----------
@@ -500,7 +502,7 @@ const ui = (() => {
   function showAutoCopyToast(label) {
     dismissAutoCopyToast();
     const div = document.createElement('div');
-    div.className = 'toast toast-auto-copy';
+    div.className = 'toast toast-success toast-auto-copy';
     div.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>' + (label || 'SKU') + ' Copied Successfully</span>';
     els.toastContainer.appendChild(div);
     autoCopyToastEl = div;
@@ -747,6 +749,8 @@ const ui = (() => {
     if (!val) {
       closeSuggestions();
       renderEmptyState();
+
+
       els.searchStats.textContent = '';
       return;
     }
@@ -1000,11 +1004,38 @@ function renderSuggestions(matches, query) {
   /* ---------- States ---------- */
   function renderEmptyState() {
     els.resultArea.innerHTML = `
-      <div class="state-panel">
-        <svg class="state-icon-talabat-mark" viewBox="0 0 100 100" aria-hidden="true"><path d="M 51.28,14.43 L 48.01,15.07 L 44.50,16.59 L 42.58,17.94 L 40.11,20.81 L 38.60,25.36 L 38.52,34.85 L 26.63,34.85 L 26.63,41.71 L 27.67,44.42 L 30.06,46.41 L 32.46,47.05 L 38.60,47.13 L 38.68,67.78 L 40.27,73.60 L 42.66,77.59 L 46.09,81.02 L 50.00,83.33 L 54.47,84.61 L 59.25,84.77 L 64.75,83.49 L 67.70,81.90 L 67.70,70.18 L 64.51,70.97 L 61.80,70.73 L 58.93,69.22 L 57.26,67.15 L 56.14,63.32 L 56.14,47.13 L 69.54,47.05 L 69.54,39.87 L 68.26,37.00 L 65.79,35.25 L 56.14,34.77 L 56.14,14.35 Z" fill="currentColor"/></svg>
+      <div class="state-panel state-panel-premium">
+        <div class="state-icon-wrap" aria-hidden="true">
+          <svg class="state-icon-scan" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 16V12a4 4 0 0 1 4-4h4M32 8h4a4 4 0 0 1 4 4v4M40 32v4a4 4 0 0 1-4 4h-4M16 40h-4a4 4 0 0 1-4-4v-4"/>
+            <rect x="14" y="18" width="20" height="12" rx="2"/>
+            <path d="M18 24h12M18 28h8"/>
+          </svg>
+        </div>
         <div class="state-title">Start scanning or typing</div>
-        <div class="state-sub">Search by SKU or last 6 digits of a barcode.</div>
+        <div class="state-sub">Search by SKU or the last 6 digits of a barcode.</div>
+        <div class="state-tips">
+          <button type="button" class="state-tip" data-tip="focus-search">Type SKU</button>
+          <button type="button" class="state-tip" data-tip="focus-search">Last 6 digits</button>
+          <button type="button" class="state-tip" data-tip="open-camera">Camera scan</button>
+        </div>
       </div>`;
+    const tips = els.resultArea.querySelectorAll('.state-tip[data-tip]');
+    tips.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const tip = btn.getAttribute('data-tip');
+        if (tip === 'open-camera') {
+          const cam = document.getElementById('cameraBtn') || document.querySelector('[data-action="camera"], #btnCamera, .search-cam-btn');
+          if (cam) cam.click();
+          else if (els.searchInput) els.searchInput.focus();
+          return;
+        }
+        if (els.searchInput) {
+          els.searchInput.focus();
+          try { els.searchInput.select(); } catch (e) {}
+        }
+      });
+    });
   }
 
   function showSkeleton() {
@@ -1514,60 +1545,130 @@ function renderSuggestions(matches, query) {
     if (!product || !product.sku) return;
     const sku = String(product.sku);
     const token = ++imageLoadToken;
-    // Always clear previous image immediately to avoid flash of old product
-    applyProductImageSrc('');
-    const fileUrl = (product.image && /^https?:\/\//i.test(String(product.image).trim()))
-      ? String(product.image).trim() : '';
-    const cached = (search.getDmartImage && search.getDmartImage(sku)) || '';
 
     const stillSame = () =>
       imageLoadToken === token &&
       lastRenderedProduct && String(lastRenderedProduct.sku) === sku;
 
-    const tryUrl = (url, onFail) => {
-      if (!stillSame() || !url) { if (onFail) onFail(); return; }
+    const showLoading = () => {
       const img = document.getElementById('prodImg');
       const wrap = document.getElementById('prodImgWrap');
       if (!img) return;
+      img.alt = '';
+      img.removeAttribute('src');
+      img.src = loadingImagePlaceholder();
+      if (wrap) {
+        wrap.classList.add('loading');
+        wrap.classList.add('img-fetching-dmart');
+      }
+    };
+    const showFinal = (url) => {
+      if (!stillSame()) return;
+      const img = document.getElementById('prodImg');
+      const wrap = document.getElementById('prodImgWrap');
+      if (!img || !url) return;
       if (wrap) wrap.classList.add('loading');
-      const done = () => { if (wrap) wrap.classList.remove('loading'); };
-      img.onload = () => { if (!stillSame()) return; done(); };
+      img.alt = '';
+      img.onload = () => {
+        if (!stillSame()) return;
+        if (wrap) {
+          wrap.classList.remove('loading');
+          wrap.classList.remove('img-fetching-dmart');
+        }
+      };
       img.onerror = () => {
         if (!stillSame()) return;
-        img.removeAttribute('src');
-        done();
-        if (onFail) onFail();
+        img.src = placeholderImg();
+        if (wrap) {
+          wrap.classList.remove('loading');
+          wrap.classList.remove('img-fetching-dmart');
+        }
       };
       img.src = url;
     };
+    const onGotDmartUrl = (url) => {
+      if (!url || !/^https?:\/\//i.test(url)) return;
+      if (search.setDmartImage) search.setDmartImage(sku, url);
+      try { product.image = url; } catch (e) {}
+      refreshPanelThumbsForSku(sku, url);
+      try { renderRecent(); } catch (e) {}
+      try { renderFavorites(); } catch (e) {}
+      showFinal(url);
+    };
 
-    const fetchDmart = async () => {
+    const fileUrl = (product.image && /^https?:\/\//i.test(String(product.image).trim()))
+      ? String(product.image).trim() : '';
+    const cached = (search.getDmartImage && search.getDmartImage(sku)) || '';
+
+    if (fileUrl) {
+      const img = document.getElementById('prodImg');
+      const wrap = document.getElementById('prodImgWrap');
+      if (img) {
+        if (wrap) wrap.classList.add('loading');
+        img.alt = '';
+        img.onload = () => {
+          if (!stillSame()) return;
+          if (wrap) {
+            wrap.classList.remove('loading');
+            wrap.classList.remove('img-fetching-dmart');
+          }
+        };
+        img.onerror = () => {
+          if (!stillSame()) return;
+          showLoading();
+          fetchDmart();
+        };
+        img.src = fileUrl;
+      }
+      return;
+    }
+    if (cached) {
+      onGotDmartUrl(cached);
+      return;
+    }
+    showLoading();
+    fetchDmart();
+
+    async function fetchDmart() {
       if (!stillSame()) return;
       try {
         const wid = warehouse.getSelectedId && warehouse.getSelectedId();
-        if (!wid || !dmartLive.lookupProductViaBridge) return;
+        if (!wid || !dmartLive.lookupProductViaBridge) {
+          if (stillSame()) {
+            const img = document.getElementById('prodImg');
+            if (img) img.src = placeholderImg();
+            const wrap = document.getElementById('prodImgWrap');
+            if (wrap) {
+              wrap.classList.remove('loading');
+              wrap.classList.remove('img-fetching-dmart');
+            }
+          }
+          return;
+        }
         const look = await dmartLive.lookupProductViaBridge(sku, wid, 15000);
         if (!stillSame()) return;
         if (look && look.ok && look.product && look.product.image) {
           const url = String(look.product.image).trim();
-          if (/^https?:\/\//i.test(url)) {
-            if (search.setDmartImage) search.setDmartImage(sku, url);
-            tryUrl(url);
+          onGotDmartUrl(url);
+        } else {
+          const img = document.getElementById('prodImg');
+          if (img) img.src = placeholderImg();
+          const wrap = document.getElementById('prodImgWrap');
+          if (wrap) {
+            wrap.classList.remove('loading');
+            wrap.classList.remove('img-fetching-dmart');
           }
         }
-      } catch (e) {}
-    };
-
-    // Policy: working file URL first → else cache → else DMart
-    if (fileUrl) {
-      tryUrl(fileUrl, () => {
-        if (cached) tryUrl(cached, () => { fetchDmart(); });
-        else fetchDmart();
-      });
-    } else if (cached) {
-      tryUrl(cached, () => { fetchDmart(); });
-    } else {
-      fetchDmart();
+      } catch (e) {
+        if (!stillSame()) return;
+        const img = document.getElementById('prodImg');
+        if (img) img.src = placeholderImg();
+        const wrap = document.getElementById('prodImgWrap');
+        if (wrap) {
+          wrap.classList.remove('loading');
+          wrap.classList.remove('img-fetching-dmart');
+        }
+      }
     }
   }
 
@@ -1891,6 +1992,7 @@ function renderSuggestions(matches, query) {
       wirePanelItems(els.recentList, products);
     }
     fillInlineRecent();
+    try { wirePanelAccordion(); } catch (e) {}
   }
 
   /** When setting is on, mirror Recent into the product card column beside barcodes. */
@@ -1970,9 +2072,10 @@ function renderSuggestions(matches, query) {
   }
 
   function panelItemHtml(p) {
+    const thumb = resolveProductThumb(p);
     return `
       <div class="panel-item" data-sku="${escapeAttr(p.sku)}">
-        <img class="panel-thumb" src="${escapeAttr(p.image)}" alt="" loading="lazy" decoding="async" onerror="this.src='${placeholderImg()}'">
+        <img class="panel-thumb" src="${escapeAttr(thumb)}" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${placeholderImg()}'">
         <div class="panel-text">
           <div class="panel-name">${escapeHtml(p.name)}</div>
           <div class="panel-sub">SKU ${escapeHtml(p.sku)}</div>
@@ -2020,7 +2123,33 @@ function renderSuggestions(matches, query) {
     if (section) section.hidden = QUICK_ACCESS_LINKS.length === 0;
   }
 
+  function wirePanelAccordion() {
+    const row = document.querySelector('.panels-row');
+    if (!row) return;
+    const panels = [...row.querySelectorAll('.panel')];
+    if (!panels.length) return;
+    // Always ensure Recent is open on mobile so items are visible
+    panels.forEach((p, i) => {
+      if (i === 0) p.classList.add('is-open');
+    });
+    if (row.dataset.accordionWired) return;
+    row.dataset.accordionWired = '1';
+    panels.forEach((p, i) => {
+      const head = p.querySelector('.panel-header');
+      if (!head) return;
+      head.style.cursor = 'pointer';
+      head.addEventListener('click', (e) => {
+        if (e.target.closest('.panel-clear')) return;
+        if (!window.matchMedia('(max-width: 720px)').matches) return;
+        const open = p.classList.contains('is-open');
+        if (open) p.classList.remove('is-open');
+        else p.classList.add('is-open');
+      });
+    });
+  }
+
   function initPanels() {
+    wirePanelAccordion();
     renderRecent();
     renderFavorites();
     renderQuickAccess();
@@ -2048,8 +2177,31 @@ function renderSuggestions(matches, query) {
   function escapeAttr(str) { return escapeHtml(str); }
   function placeholderImg() {
     return 'data:image/svg+xml;utf8,' + encodeURIComponent(
-      `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="#e9ebee"/><text x="50%" y="50%" font-family="sans-serif" font-size="14" fill="#9aa0aa" text-anchor="middle" dy=".3em">No Image</text></svg>`
+      `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" rx="16" fill="#E8F3F8"/><rect x="70" y="58" width="60" height="48" rx="6" fill="none" stroke="#8AAEBC" stroke-width="3"/><circle cx="88" cy="76" r="5" fill="#8AAEBC"/><path d="M78 98l16-14 14 12 18-16 16 18" fill="none" stroke="#8AAEBC" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><text x="50%" y="168" font-family="system-ui,sans-serif" font-size="13" fill="#6A8694" text-anchor="middle">No image</text></svg>`
     );
+  }
+  function loadingImagePlaceholder() {
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" rx="16" fill="#EEF6FA"/><circle cx="100" cy="78" r="22" fill="none" stroke="#FF6B00" stroke-width="3" stroke-dasharray="28 40" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 100 78" to="360 100 78" dur="0.9s" repeatCount="indefinite"/></circle><text x="50%" y="130" font-family="system-ui,sans-serif" font-size="12" font-weight="600" fill="#FF6B00" text-anchor="middle">Fetching from DMart</text><text x="50%" y="150" font-family="system-ui,sans-serif" font-size="11" fill="#7A929E" text-anchor="middle">Loading image…</text></svg>`
+    );
+  }
+  function resolveProductThumb(p) {
+    if (!p) return placeholderImg();
+    const file = String(p.image || '').trim();
+    if (/^https?:\/\//i.test(file)) return file;
+    const d = (search.getDmartImage && search.getDmartImage(p.sku)) || '';
+    if (d) return d;
+    return placeholderImg();
+  }
+  function refreshPanelThumbsForSku(sku, url) {
+    if (!sku || !url) return;
+    const safe = String(sku).replace(/"/g, '');
+    document.querySelectorAll('.panel-item[data-sku="' + safe + '"] .panel-thumb').forEach((img) => {
+      img.src = url;
+    });
+    document.querySelectorAll('#productRecentList .panel-item[data-sku="' + safe + '"] .panel-thumb').forEach((img) => {
+      img.src = url;
+    });
   }
 
   // Both panels are genuinely lazy: their modules are only fetched the

@@ -996,6 +996,12 @@ function bindAdjustPanel(root, sku) {
     try {
       applyValues();
       blinkAvailable(root, 4);
+      try {
+        root.classList.remove('dmart-card-avail-pop');
+        void root.offsetWidth;
+        root.classList.add('dmart-card-avail-pop');
+        setTimeout(() => root.classList.remove('dmart-card-avail-pop'), 500);
+      } catch (e) {}
       playCardDrop(root);
     } catch (e) {
       applyValues();

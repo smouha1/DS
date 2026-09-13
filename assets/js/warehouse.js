@@ -26,7 +26,7 @@ let warehouses = [];
 /** @type {{name:string, id:string}|null} */
 let selected = null;
 /** @type {'original'|'friendly'} */
-let displayMode = 'original';
+let displayMode = 'friendly';
 
 const changeListeners = new Set();
 
@@ -157,26 +157,70 @@ function closeDropdown() {
   if (!selectorRoot) return;
   dropdownOpen = false;
   selectorRoot.classList.remove('open');
+  document.documentElement.classList.remove('wh-dropdown-open');
   const panel = selectorRoot.querySelector('.wh-dropdown');
-  if (panel) panel.setAttribute('hidden', '');
+  if (panel) {
+    panel.setAttribute('hidden', '');
+    panel.style.position = '';
+    panel.style.top = '';
+    panel.style.left = '';
+    panel.style.right = '';
+    panel.style.width = '';
+    panel.style.maxHeight = '';
+    panel.style.zIndex = '';
+  }
   const btn = selectorRoot.querySelector('.wh-selector-btn');
   if (btn) btn.setAttribute('aria-expanded', 'false');
+}
+
+function positionDropdownPanel(panel, btn) {
+  if (!panel || !btn) return;
+  try {
+    const rect = btn.getBoundingClientRect();
+    const gap = 8;
+    const maxW = Math.min(360, Math.max(260, window.innerWidth - 16));
+    let left = rect.right - maxW;
+    if (left < 8) left = 8;
+    if (left + maxW > window.innerWidth - 8) left = Math.max(8, window.innerWidth - 8 - maxW);
+    let top = rect.bottom + gap;
+    const maxH = Math.min(420, window.innerHeight - top - 12);
+    // If not enough space below, open upward
+    if (maxH < 180 && rect.top > 220) {
+      const h = Math.min(420, rect.top - 16);
+      top = Math.max(8, rect.top - gap - h);
+      panel.style.maxHeight = h + 'px';
+    } else {
+      panel.style.maxHeight = maxH + 'px';
+    }
+    panel.style.position = 'fixed';
+    panel.style.top = top + 'px';
+    panel.style.left = left + 'px';
+    panel.style.right = 'auto';
+    panel.style.width = maxW + 'px';
+    panel.style.zIndex = '10000';
+  } catch (e) { /* keep CSS fallback */ }
 }
 
 function openDropdown() {
   if (!selectorRoot) return;
   dropdownOpen = true;
   selectorRoot.classList.add('open');
+  document.documentElement.classList.add('wh-dropdown-open');
   const panel = selectorRoot.querySelector('.wh-dropdown');
-  if (panel) panel.removeAttribute('hidden');
   const btn = selectorRoot.querySelector('.wh-selector-btn');
+  if (panel) {
+    panel.removeAttribute('hidden');
+    positionDropdownPanel(panel, btn);
+  }
   if (btn) btn.setAttribute('aria-expanded', 'true');
   const input = selectorRoot.querySelector('.wh-search-input');
   if (input) {
     input.value = '';
     renderWarehouseList('');
-    // Focus after paint so mobile keyboards open reliably
-    requestAnimationFrame(() => input.focus());
+    requestAnimationFrame(() => {
+      positionDropdownPanel(panel, btn);
+      try { input.focus(); } catch (e) {}
+    });
   }
 }
 
@@ -232,6 +276,18 @@ function buildSelectorHtml() {
 
 function wireSelector() {
   if (!selectorRoot) return;
+  if (!window.__whDropRepoWired) {
+    window.__whDropRepoWired = true;
+    const repo = () => {
+      if (!dropdownOpen || !selectorRoot) return;
+      const panel = selectorRoot.querySelector('.wh-dropdown');
+      const btn = selectorRoot.querySelector('.wh-selector-btn');
+      positionDropdownPanel(panel, btn);
+    };
+    window.addEventListener('resize', repo, { passive: true });
+    window.addEventListener('scroll', repo, { passive: true, capture: true });
+  }
+
   const btn = selectorRoot.querySelector('.wh-selector-btn');
   const input = selectorRoot.querySelector('.wh-search-input');
   const list = selectorRoot.querySelector('.wh-list');
@@ -559,7 +615,8 @@ export async function init(container) {
     const raw = localStorage.getItem('smouhaPickSettings');
     if (raw) {
       const s = JSON.parse(raw);
-      if (s.warehouseDisplay === 'friendly') displayMode = 'friendly';
+      if (s.warehouseDisplay === 'original') displayMode = 'original';
+      else displayMode = 'friendly';
     }
   } catch (e) { /* ignore */ }
 

@@ -129,16 +129,21 @@ export function getDmartImage(sku) {
 }
 export function setDmartImage(sku, url) {
   if (!sku || !url || !/^https?:\/\//i.test(String(url))) return;
+  const u = String(url).trim();
+  const key = String(sku);
   const map = loadImageCache();
-  map[String(sku)] = String(url).trim();
+  map[key] = u;
   imageCache = map;
   persistImageCache();
-  // also refresh product cache image if present
-  const p = findDmartBySku(String(sku));
+  // Refresh DMart product cache
+  const p = findDmartBySku(key);
   if (p) {
-    p.image = String(url).trim();
+    p.image = u;
     persistDmartCache();
   }
+  // Refresh local catalog product so Recent/Favorites thumbs resolve
+  const local = bySku.get(key);
+  if (local) local.image = u;
 }
 export function clearDmartCache() {
   try { localStorage.removeItem(DMART_CACHE_KEY); } catch (e) {}
