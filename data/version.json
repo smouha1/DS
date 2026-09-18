@@ -1,9 +1,97 @@
 {
-  "version": "1.9.1",
-  "build": 102,
-  "updated": "2026-09-12",
+  "version": "1.9.5",
+  "build": 118,
+  "updated": "2026-09-17",
   "products": 39994,
   "changelogByVersion": [
+    {
+      "version": "1.9.5",
+      "date": "2026-09-17",
+      "items": [
+        "Slim search index: Worker builds without image URLs; images merged after on main thread (faster index + less memory)",
+        "Catalog image map (getCatalogImage); DMart image updates fill the map",
+        "Live Relay (Supabase): AbortController + abort when SKU/warehouse changes mid-poll",
+        "CSS cleanup layer: unified product/DMart surfaces, button, and list containment",
+        "Restore original Talabat header logo",
+        "IndexedDB-first load: serve cache immediately, background refresh when build/count differs",
+        "Developer panel: recent 20 logs, index build ms, last Live fetch ms",
+        "Settings → Run Smoke Test (products, maps, SKU/last6, warehouse DOM)",
+        "DMart image cache prune (max 400 entries)",
+        "Product image loading skeleton; soft PWA beforeinstallprompt capture",
+        "Toast on background catalog update (smouha:db-updated)",
+        "products-search.json slim catalog (no images) for faster index download",
+        "Full products.json used in background only to fill catalog images",
+        "Toast when background catalog update fails (data may be outdated)",
+        "Clearer Live status: branch vs relay fetching messages",
+        "Developer: Bridge last seen",
+        "Export / Import Settings & Recent (and favorites + theme)",
+        "tools/generate-search-catalog.py — regenerate products-search.json after products update",
+        "Catalog status badge: Updating… / may be outdated / brief OK",
+        "Session auth banner when DMart session missing or expired",
+        "Smoke Test: Live probe when bridge online + products-search HEAD check",
+        "Deploy Checklist in Settings (version, counts, data files, SW, bridge)",
+        "dmartLiveParse.js: pure field/URL helpers extracted from dmartLive.js",
+        "GitHub Action: auto-regenerate products-search.json when products.json changes",
+        "docs/DAILY_OPS.md — daily ops + mandatory deploy checklist",
+        "Bridge silence watchdog (3 min) → session banner if extension goes quiet",
+        "Remove white slab under search / Smouha Team rotator (transparent empty state)",
+        "Available row: same box as Reserved/Price; black label; green value only",
+        "app.js split: appStore.js, appSettingsQuick.js, appCatalogUi.js",
+        "Removed unused legacy productIndex + searchEngine from app.js",
+        "GitHub Action hardened for DS repo (write products-search.json on products change)",
+        "smartScan.js extracted from app.js (Pelican Mode factory + search callback)",
+        "dmartAdjust.js extracted from dmartLive.js (stock adjust UI + Ctrl+Y boost)",
+        "CSS: gradual !important reduction in historical layers (kept display/position/z-index/a11y + final design layers)",
+        "Fix: app.js corruption from smartScan extract (SyntaxError blocked all UI)",
+        "Fix: loadInitial catch unlocks search if catalog fetch fails",
+        "Fix: selectSearchAfterProduct uses #searchInput (no els leak)",
+        "Perf: lighter SW install (lazy-cache Settings/Pelican/Adjust/QR)",
+        "Perf: never SW-cache products-search.json (updater owns freshness)",
+        "Perf: fewer modulepreloads; dns-prefetch for image/CDN hosts",
+        "Perf: mobile disables backdrop-filter; content-visibility on cards",
+        "Perf: catalog image fill + recent preload on requestIdleCallback",
+        "Faster images: preconnect dhmedia, deduped warm cache, concurrency-limited preload",
+        "Connection-aware preload limits (2g/save-data fewer images)",
+        "Main product image: fetchpriority high + async decode + skip reload if same URL",
+        "Reserve image box (aspect-ratio) to reduce layout shift while loading"
+      ]
+    },
+    {
+      "version": "1.9.4",
+      "date": "2026-09-17",
+      "items": [
+        "Web Worker (+ chunked fallback) for product index build — UI stays responsive during load",
+        "Live requests: abort stale bridge responses when switching SKU/warehouse",
+        "Shared leveled logger (utils.log); stronger Performance Mode + prefers-reduced-motion",
+        "Skeleton shine, focus-visible rings, fetchpriority on product image",
+        "Recent list renders latest 40 for smoother mobile scroll",
+        "Service worker precaches search-worker; cache bump"
+      ]
+    },
+    {
+      "version": "1.9.3",
+      "date": "2026-09-17",
+      "items": [
+        "Faster first load: minify products.json (~1MB smaller)",
+        "Remove 500KB+ embedded logo PNG; lightweight SVG brand mark",
+        "Defer ZXing + Tesseract until camera opens (not on every page load)",
+        "JsBarcode defer; modulepreload critical JS; settings.css non-blocking",
+        "Fix Dark Mode switch inverted state (apply theme immediately with toggle)",
+        "Chrome-style circular dark-mode fill animation",
+        "DMart live card restyle: white rows, orange identity, solid Check in Dmart button"
+      ]
+    },
+    {
+      "version": "1.9.2",
+      "date": "2026-09-17",
+      "items": [
+        "Kept current JS/feature set; no extra logic merge from external redesign package",
+        "Did not replace feature CSS (adjust animations, warehouse dropdown, empty state, QR FAB)",
+        "Did not adopt stripped index.html (kept existing DOM ids)",
+        "Did not add extra web-font CDN (faster first paint + offline)",
+        "Safe perf only: content-visibility on list rows"
+      ]
+    },
     {
       "version": "1.9.1",
       "date": "2026-09-12",
