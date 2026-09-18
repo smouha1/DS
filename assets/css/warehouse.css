@@ -276,7 +276,7 @@
 .performance-mode .wh-item,
 .performance-mode .wh-selector-btn,
 .performance-mode .wh-search-input {
-  transition: none !important;
+  transition: none;
 }
 
 /* ---- Dmart confirmation dialog (compact, non-blocking) ---- */
@@ -421,7 +421,7 @@
 
 .performance-mode .dmart-confirm-backdrop,
 .performance-mode .dmart-confirm-box {
-  transition: none !important;
+  transition: none;
 }
 
 
@@ -545,13 +545,13 @@
 
 /* prevent stretch on drag — size follows content only */
 .dmart-confirm-box{
-  height: auto !important;
+  height: auto;
   max-height: none;
   box-sizing: border-box;
 }
 .dmart-confirm-box.is-dragging{
-  height: auto !important;
-  max-height: none !important;
+  height: auto;
+  max-height: none;
 }
 
 /* Desktop warehouse chevron / select polish */
@@ -561,16 +561,16 @@
     padding:7px 12px 7px 14px;
   }
   .wh-selector-chevron{
-    width:18px !important;
-    height:18px !important;
+    width:18px;
+    height:18px;
     display:flex !important;
     align-items:center;
     justify-content:center;
     opacity:0.85;
   }
   .wh-selector-chevron svg{
-    width:16px !important;
-    height:16px !important;
+    width:16px;
+    height:16px;
     display:block !important;
     stroke:currentColor;
   }
@@ -589,10 +589,10 @@
 }
 
 .dmart-confirm-box{
-  max-height:none !important;
-  padding:10px 12px !important;
+  max-height:none;
+  padding:10px 12px;
 }
-.dmart-confirm-title{font-size:13.5px !important;line-height:1.25 !important;}
+.dmart-confirm-title{font-size:13.5px;line-height:1.25;}
 
 
 /* Stacking fix: warehouse menu always above page content */
@@ -608,11 +608,11 @@ html.wh-dropdown-open .wh-dropdown {
 }
 .wh-dropdown {
   z-index: 10000 !important;
-  background: #fff !important;
-  box-shadow: 0 12px 40px rgba(15,40,60,.22) !important;
+  background: #fff;
+  box-shadow: 0 12px 40px rgba(15,40,60,.22);
 }
 [data-theme="dark"] .wh-dropdown {
-  background: #1a222c !important;
+  background: #1a222c;
 }
 .wh-item {
   pointer-events: auto !important;
@@ -621,7 +621,7 @@ html.wh-dropdown-open .wh-dropdown {
 header.app-header,
 header.app-header .header-inner,
 header.app-header .header-actions {
-  overflow: visible !important;
+  overflow: visible;
 }
 .wh-selector {
   position: relative;

@@ -113,13 +113,13 @@ html.compact-mode #searchInput{padding:16px 46px;}
 html.performance-mode *{
   transition-duration:0ms !important;
   animation-duration:0ms !important;
-  scroll-behavior:auto !important;
+  scroll-behavior:auto;
 }
 
 /* ============================================================
    LARGE BARCODE / LARGE PRODUCT IMAGE — Settings toggles
    ============================================================ */
-html.large-barcode .barcode-128-wrap{width:92% !important;max-width:92% !important;}
+html.large-barcode .barcode-128-wrap{width:92%;max-width:92%;}
 html.large-barcode.compact-mode .barcode-128-wrap{width:85%;}
 html.large-product-image .product-image-wrap{max-width:260px;}
 
@@ -152,34 +152,34 @@ html.large-product-image .product-image-wrap{max-width:260px;}
   background: var(--bg);
 }
 .settings-wh-option input[type="radio"] {
-  -webkit-appearance: none !important;
-  appearance: none !important;
-  width: 18px !important;
-  height: 18px !important;
-  margin: 0 !important;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
   flex-shrink: 0;
-  border-radius: 50% !important;
-  border: 2px solid #ffffff !important;
-  background: rgba(0,0,0,.12) !important;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  background: rgba(0,0,0,.12);
   box-shadow: 0 0 0 1px rgba(0,0,0,.08);
-  outline: none !important;
+  outline: none;
   cursor: pointer;
 }
 .settings-wh-option input[type="radio"]:checked {
-  background: #FF6B00 !important;
-  border: 2px solid #ffffff !important;
+  background: #FF6B00;
+  border: 2px solid #ffffff;
   box-shadow: 0 0 0 2px #FF6B00;
 }
 .settings-wh-option input[type="radio"]:focus-visible {
   box-shadow: 0 0 0 2px #FF6B00, 0 0 0 4px rgba(255,107,0,.25);
 }
 [data-theme="dark"] .settings-wh-option input[type="radio"] {
-  border-color: #ffffff !important;
-  background: rgba(255,255,255,.15) !important;
+  border-color: #ffffff;
+  background: rgba(255,255,255,.15);
 }
 [data-theme="dark"] .settings-wh-option input[type="radio"]:checked {
-  background: #FF6B00 !important;
-  border-color: #ffffff !important;
+  background: #FF6B00;
+  border-color: #ffffff;
 }
 
 
