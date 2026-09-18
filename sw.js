@@ -10,7 +10,7 @@
      • Drop old caches on activate
    ------------------------------------------------------------------------ */
 
-const CACHE_NAME = 'smouha-pick-shell-v55-1805';
+const CACHE_NAME = 'smouha-pick-shell-v71-1821';
 
 /** Core shell — same-origin only. Lazy modules included so first offline
  *  open of Settings/Maintenance/DMart live still works after one online visit. */
@@ -25,24 +25,27 @@ const SHELL_FILES = [
   './assets/css/settings.css',
   './assets/css/warehouse.css',
   './assets/js/app.js',
-  './assets/js/utils.js',
+  './assets/js/appStore.js',
+  './assets/js/appSettingsQuick.js',
+  './assets/js/appCatalogUi.js',
+    './assets/js/utils.js',
   './assets/js/indexeddb.js',
   './assets/js/barcode.js',
   './assets/js/search.js',
-  './assets/js/updater.js',
+  './assets/js/search-worker.js',
+  './assets/js/dmartLiveParse.js',
+    './assets/js/updater.js',
   './assets/js/image.js',
   './assets/js/dmart.js',
   './assets/js/dmartLive.js',
   './assets/js/warehouse.js',
-  './assets/js/settings.js',
-  './assets/js/maintenance.js',
-  './assets/js/qrcode-generator.js',
-  './data/warehouses.json',
+        './data/warehouses.json',
 ];
 
 function isDataPath(pathname) {
   return (
     pathname.includes('/data/products.json') ||
+    pathname.includes('/data/products-search.json') ||
     pathname.includes('/data/version.json')
   );
 }
