@@ -33,7 +33,19 @@ import * as barcode from './barcode.js';
 import { quickHash } from './utils.js';
 
 const VERSION_URL = 'data/version.json';
+
+function scheduleIdle(fn) {
+  try {
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(() => { try { fn(); } catch (e) {} }, { timeout: 2500 });
+      return;
+    }
+  } catch (e) {}
+  setTimeout(() => { try { fn(); } catch (e) {} }, 1);
+}
+
 const PRODUCTS_URL = 'data/products.json';
+const PRODUCTS_SEARCH_URL = 'data/products-search.json';
 
 let lastLoadSource = 'none'; // 'indexeddb' | 'network' | 'none' — for the Developer panel
 let lastVersionInfo = null;  // parsed version.json, for the Developer panel / footer
@@ -57,63 +69,165 @@ async function fetchJson(url) {
   return { text, json: JSON.parse(text) };
 }
 
+function normalizeSearchRow(row) {
+  // Slim row: [name, sku, barcode] OR already-normalized object
+  if (row && typeof row === 'object' && !Array.isArray(row)) {
+    const barcodes = row.barcodes || (row.barcode ? [String(row.barcode)] : []);
+    return {
+      sku: String(row.sku || ''),
+      name: row.name || 'Unnamed product',
+      barcodes: Array.isArray(barcodes) ? barcodes.map(String) : [],
+      image: row.image || '',
+      last6: row.last6 || [],
+    };
+  }
+  const name = row[0];
+  const sku = row[1];
+  const barcodeRaw = row[2];
+  const barcodes = barcode.parse(barcodeRaw);
+  const last6 = [...new Set(barcodes.filter(b => b.length >= 6).map(b => b.slice(-6)))];
+  return { sku: String(sku || ''), name: name || 'Unnamed product', barcodes, image: '', last6 };
+}
+
+/** Fill catalog images from full products.json without blocking search. */
+async function fillImagesFromFullCatalog() {
+  try {
+    const { text } = await fetchJson(PRODUCTS_URL);
+    const raw = JSON.parse(text);
+    if (!Array.isArray(raw)) return 0;
+    let n = 0;
+    for (const row of raw) {
+      if (!Array.isArray(row) || row.length < 4) continue;
+      const sku = String(row[1] || '');
+      const image = row[3] || '';
+      if (sku && image && /^https?:\/\//i.test(image)) {
+        try {
+          if (search.setCatalogImage) search.setCatalogImage(sku, image);
+          else if (search.setDmartImage) search.setDmartImage(sku, image);
+          n++;
+        } catch (e) {}
+      }
+    }
+    // Also attach onto in-memory products via imageBySku path in setDmartImage
+    return n;
+  } catch (e) {
+    console.warn('[updater] full catalog image fill failed:', e);
+    return 0;
+  }
+}
+
 async function fetchAndImportProducts() {
+  // 1) Prefer slim search catalog (no image URLs) for faster download + index
+  try {
+    const { text } = await fetchJson(PRODUCTS_SEARCH_URL);
+    const raw = JSON.parse(text);
+    const records = raw.map(normalizeSearchRow);
+    await search.buildAsync(records);
+    // Images from full file in background (non-blocking)
+    scheduleIdle(() => { fillImagesFromFullCatalog().catch(() => {}); });
+    return records;
+  } catch (e) {
+    console.info('[updater] products-search.json unavailable, using full products.json');
+  }
   const { text } = await fetchJson(PRODUCTS_URL);
   const raw = JSON.parse(text);
   const records = raw.map(normalizeRawRow);
-  search.build(records);
+  await search.buildAsync(records);
   return records;
 }
 
 /** First entry point, called once at startup. Resolves as soon as the app
  *  has *some* usable dataset in memory. Never rejects — on total failure it
  *  builds an empty index rather than leaving the app stuck. */
+function emitCatalogStatus(state, message) {
+  try {
+    window.dispatchEvent(new CustomEvent('smouha:catalog-status', {
+      detail: { state, message: message || '' }
+    }));
+  } catch (e) {}
+}
+
+async function backgroundRefresh(remoteVersion) {
+  emitCatalogStatus('updating', 'Updating catalog…');
+  try {
+    const t0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    const records = await fetchAndImportProducts();
+    await db.replaceAllProducts(records);
+    await db.setMeta('versionInfo', remoteVersion || lastVersionInfo);
+    lastLoadSource = 'network-bg';
+    lastVersionInfo = remoteVersion || lastVersionInfo;
+    const ms = ((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - t0;
+    try {
+      window.dispatchEvent(new CustomEvent('smouha:db-updated', {
+        detail: { count: records.length, ms: Math.round(ms), source: 'network-bg' }
+      }));
+    } catch (e) {}
+    emitCatalogStatus('ok', 'Catalog updated');
+    return records.length;
+  } catch (e) {
+    console.warn('[updater] background refresh failed:', e);
+    try {
+      window.dispatchEvent(new CustomEvent('smouha:db-update-failed', {
+        detail: { message: (e && e.message) ? String(e.message) : 'Catalog background update failed' }
+      }));
+    } catch (err) {}
+    emitCatalogStatus('stale', 'Catalog may be outdated');
+    return 0;
+  }
+}
+
 export async function loadInitial() {
-  // 1) Read version.json first — a few bytes, tells us if we even need to
-  //    look at products.json at all.
+  // 1) version.json (tiny) — optional on first paint
   let remoteVersion = null;
   try {
     const { json } = await fetchJson(VERSION_URL);
     remoteVersion = json;
     lastVersionInfo = json;
   } catch (e) {
-    // Offline on first paint, or version.json missing — fall through to
-    // whatever IndexedDB already has, or products.json as a last resort.
+    /* offline or missing */
   }
 
-  // 2) If IndexedDB already has data AND its stored build matches the
-  //    remote build (or we couldn't reach the network at all), use it
-  //    immediately — instant search, no network wait.
+  // 2) IndexedDB-first: serve cache immediately, refresh in background if stale
   try {
     const cachedCount = await db.countProducts();
     if (cachedCount > 0) {
       const storedVersion = await db.getMeta('versionInfo');
+      const records = await db.getAllProducts();
+      const t0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+      await search.buildAsync(records);
+      const indexMs = Math.round(((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - t0);
+      try { window.__smouhaIndexMs = indexMs; } catch (e) {}
+      lastLoadSource = 'indexeddb';
+      if (!lastVersionInfo) lastVersionInfo = storedVersion;
+
       const buildMatches = !remoteVersion || (storedVersion && storedVersion.build === remoteVersion.build);
       const countMatches = !remoteVersion || !remoteVersion.products || cachedCount === Number(remoteVersion.products);
+
       if (buildMatches && countMatches) {
-        const records = await db.getAllProducts();
-        search.build(records);
-        lastLoadSource = 'indexeddb';
-        if (!lastVersionInfo) lastVersionInfo = storedVersion;
-        return { source: 'indexeddb', count: records.length, updated: false };
+        return { source: 'indexeddb', count: records.length, updated: false, indexMs };
       }
-      if (buildMatches && !countMatches) {
-        console.info('[updater] products count mismatch idb=%s version=%s — re-importing', cachedCount, remoteVersion && remoteVersion.products);
-      }
-      // Build changed: fall through to re-download products.json below.
+
+      // Stale or count mismatch: keep UI usable, refresh catalog in background
+      console.info('[updater] serving IndexedDB now; background refresh (build/count mismatch)');
+      emitCatalogStatus('updating', 'Updating catalog…');
+      backgroundRefresh(remoteVersion).catch(() => {});
+      return { source: 'indexeddb', count: records.length, updated: false, backgroundRefresh: true, indexMs };
     }
   } catch (e) {
     console.warn('[updater] IndexedDB unavailable, falling back to products.json:', e);
   }
 
-  // 3) First launch, empty cache, or build changed: fetch products.json.
+  // 3) First launch / empty cache: full network import
   try {
+    const t0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
     const records = await fetchAndImportProducts();
+    const indexMs = Math.round(((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - t0);
+    try { window.__smouhaIndexMs = indexMs; } catch (e) {}
     lastLoadSource = 'network';
     db.replaceAllProducts(records)
       .then(() => db.setMeta('versionInfo', remoteVersion || lastVersionInfo))
       .catch(e => console.warn('[updater] Could not persist products to IndexedDB:', e));
-    return { source: 'network', count: records.length, updated: true };
+    return { source: 'network', count: records.length, updated: true, indexMs };
   } catch (e) {
     console.error('[updater] Could not load product data from IndexedDB or products.json:', e);
     search.build([]);

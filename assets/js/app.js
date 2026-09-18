@@ -24,335 +24,21 @@ import * as dmartLib from './dmart.js';
 import * as dmartLive from './dmartLive.js';
 import * as warehouse from './warehouse.js';
 import * as image from './image.js';
-
-const SETTINGS_KEY = 'smouhaPickSettings';
-const SETTINGS_DEFAULTS = {
-  autoCopyBarcode: false,
-  autoCopySku: false,
-  hoverPreview: true,
-  compactMode: false,
-  performanceMode: false,
-  largeBarcode: false,
-  largeProductImage: false,
-  qrCode: true,
-  scanSound: true,
-  showProductCount: true,
-  showVersion: true,
-  warehouseDisplay: 'friendly',
-  recentBesideBarcode: true,
-  dmartPopupEnabled: true,
-  intensiveAutoFocus: false,
-};
-
-function quickGetSettings() {
-  try {
-    const raw = localStorage.getItem(SETTINGS_KEY);
-    return raw ? { ...SETTINGS_DEFAULTS, ...JSON.parse(raw) } : { ...SETTINGS_DEFAULTS };
-  } catch (e) {
-    return { ...SETTINGS_DEFAULTS };
-  }
-}
-
-function isMobileViewport() {
-  try { return window.matchMedia('(max-width:720px)').matches; } catch (e) { return false; }
-}
-
-/** PC default ON, mobile default OFF.
- *  On mobile, only ON if user explicitly enabled AFTER this version (flag). */
-function suppressGhostImageTap(ms) {
-  try { window.__smouhaIgnoreTapUntil = Date.now() + (ms || 450); } catch (e) { /* ignore */ }
-}
-
-function selectSearchAfterProduct() {
-  // Mobile: do NOT open keyboard after product appears
-  if (isMobileViewport()) {
-    try { els.searchInput.blur(); } catch (e) { /* ignore */ }
-    return;
-  }
-  try {
-    requestAnimationFrame(() => {
-      els.searchInput.focus({ preventScroll: true });
-      els.searchInput.select();
-    });
-  } catch (e) { /* ignore */ }
-}
-
-function effectiveRecentBeside() {
-  try {
-    const raw = localStorage.getItem(SETTINGS_KEY);
-    let explicit = null;
-    if (raw) {
-      const p = JSON.parse(raw);
-      if (p && Object.prototype.hasOwnProperty.call(p, 'recentBesideBarcode')) {
-        explicit = !!p.recentBesideBarcode;
-      }
-    }
-    if (isMobileViewport()) {
-      // Mobile default OFF — ignore old saved true unless user re-enabled
-      try {
-        if (localStorage.getItem('smouha_rb_mobile_on') === '1') {
-          return explicit !== false; // user opted in on mobile
-        }
-      } catch (e2) { /* ignore */ }
-      return false;
-    }
-    // PC: ON unless user explicitly disabled
-    return explicit === null ? true : explicit;
-  } catch (e) {
-    return !isMobileViewport();
-  }
-}
-
-function effectiveWarehouseDisplay() {
-  try {
-    const raw = localStorage.getItem(SETTINGS_KEY);
-    let explicit = null;
-    if (raw) {
-      const p = JSON.parse(raw);
-      if (p && Object.prototype.hasOwnProperty.call(p, 'warehouseDisplay')) {
-        explicit = p.warehouseDisplay;
-      }
-    }
-    // Default Friendly on mobile + desktop; Settings can still force Original names
-    return explicit == null ? 'friendly' : explicit;
-  } catch (e) {
-    return 'friendly';
-  }
-}
-
-function effectiveDmartPopup() {
-  try {
-    const s = quickGetSettings();
-    if (!isMobileViewport()) return s.dmartPopupEnabled !== false;
-    // Mobile default OFF
-    try {
-      if (localStorage.getItem('smouha_dmart_popup_mobile_on') === '1') {
-        return s.dmartPopupEnabled !== false;
-      }
-    } catch (e2) { /* ignore */ }
-    return false;
-  } catch (e) {
-    return !isMobileViewport();
-  }
-}
-
-function quickApplyGlobalModes() {
-  const s = quickGetSettings();
-  document.documentElement.classList.toggle('performance-mode', !!s.performanceMode);
-  document.documentElement.classList.toggle('compact-mode', !!s.compactMode);
-  document.documentElement.classList.toggle('large-barcode', !!s.largeBarcode);
-  document.documentElement.classList.toggle('large-product-image', !!s.largeProductImage);
-  document.documentElement.classList.toggle('recent-beside-barcode', effectiveRecentBeside());
-  document.documentElement.classList.toggle('hide-dmart-live', !s.showProductCount);
-}
-
-/* ============================================================================
-   MODULE: store (localStorage persistence)
-   ============================================================================ */
-const store = (() => {
-  const KEYS = { RECENT: 'tm_recent_searches', FAVS: 'tm_favorites', THEME: 'tm_theme' };
-  const MAX_RECENT = 20;
-
-  function safeGet(key, fallback) {
-    try {
-      const v = localStorage.getItem(key);
-      return v ? JSON.parse(v) : fallback;
-    } catch (e) { return fallback; }
-  }
-  function safeSet(key, val) {
-    try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* storage full/unavailable */ }
-  }
-
-  function getRecent() { return safeGet(KEYS.RECENT, []); }
-  function addRecent(sku) {
-    let list = getRecent().filter(s => s !== sku);
-    list.unshift(sku);
-    if (list.length > MAX_RECENT) list = list.slice(0, MAX_RECENT);
-    safeSet(KEYS.RECENT, list);
-    return list;
-  }
-  function clearRecent() { safeSet(KEYS.RECENT, []); }
-
-  function getFavs() { return safeGet(KEYS.FAVS, []); }
-  function isFav(sku) { return getFavs().includes(sku); }
-  function toggleFav(sku) {
-    let list = getFavs();
-    if (list.includes(sku)) list = list.filter(s => s !== sku);
-    else list.unshift(sku);
-    safeSet(KEYS.FAVS, list);
-    return list;
-  }
-  function clearFavs() { safeSet(KEYS.FAVS, []); }
-
-  function getTheme() { return safeGet(KEYS.THEME, null); }
-  function setTheme(t) { safeSet(KEYS.THEME, t); }
-
-  return { getRecent, addRecent, clearRecent, getFavs, isFav, toggleFav, clearFavs, getTheme, setTheme };
-})();
-
-/* ============================================================================
-   MODULE: productIndex
-   ------------------------------------------------------------------------
-   Builds Map-based indexes ONCE at startup for O(1) exact lookups:
-     Map<SKU, Product>
-     Map<Barcode, Product[]>        (any entry in a product's barcodes[] resolves)
-     Map<Last6Digits, Product[]>
-   No iteration over the product list happens during an exact-match search.
-   Prefix search (SKU/barcode "starts with") and name search ("contains")
-   are linear scans — fast enough at this catalog size and needed for the
-   suggestions dropdown's lower-priority tiers.
-   ============================================================================ */
-const productIndex = (() => {
-  let products = [];
-  const bySku = new Map();
-  const byBarcode = new Map();      // any barcode in barcodes[] -> [productRef]
-  const bySuffix6 = new Map();      // last 6 digits of any barcode -> [productRef]
-  const nameSearchCache = [];       // {product, lowerName} — used only for the suggestions dropdown
-  const barcodeFlatCache = [];      // {product, barcode} — used for "barcode starts with"
-
-  /** Normalizes raw rows into { id, sku, name, image, barcodes[] } and builds
-   *  the O(1) lookup maps. barcodes[0] is treated as the primary barcode. */
-  function build(raw) {
-    products = raw.map((row, i) => {
-      const [name, sku, barcodeRaw, image] = row;
-      const barcodes = barcodeParser.parse(barcodeRaw);
-      return { id: i, name: name || 'Unnamed product', sku: String(sku || ''), barcodes, image: image || '' };
-    });
-
-    for (const p of products) {
-      if (p.sku) bySku.set(p.sku, p);
-      for (const bc of p.barcodes) {
-        if (!byBarcode.has(bc)) byBarcode.set(bc, []);
-        byBarcode.get(bc).push(p);
-        barcodeFlatCache.push({ product: p, barcode: bc });
-
-        if (bc.length >= 6) {
-          const suf = bc.slice(-6);
-          if (!bySuffix6.has(suf)) bySuffix6.set(suf, []);
-          bySuffix6.get(suf).push(p);
-        }
-      }
-      nameSearchCache.push({ product: p, lowerName: p.name.toLowerCase() });
-    }
-  }
-
-  function findBySku(sku) { return bySku.get(sku) || null; }
-  function findByBarcode(barcode) { return byBarcode.get(barcode) || []; }
-  function findBySuffix(suffix) { return bySuffix6.get(suffix) || []; }
-  function getBySkuList(skus) { return skus.map(s => bySku.get(s)).filter(Boolean); }
-
-  function searchNames(query, limit = 8) {
-    const q = query.toLowerCase();
-    const results = [];
-    for (let i = 0; i < nameSearchCache.length && results.length < limit; i++) {
-      if (nameSearchCache[i].lowerName.includes(q)) results.push(nameSearchCache[i].product);
-    }
-    return results;
-  }
-
-  /** Priority tier 4: SKU starts with the typed text (excludes exact match,
-   *  which is already handled separately at higher priority). */
-  function skusStartingWith(prefix, limit = 10) {
-    const results = [];
-    for (let i = 0; i < products.length && results.length < limit; i++) {
-      const p = products[i];
-      if (p.sku && p.sku !== prefix && p.sku.startsWith(prefix)) results.push(p);
-    }
-    return results;
-  }
-
-  /** Priority tier 5: any barcode starts with the typed text. */
-  function barcodesStartingWith(prefix, limit = 10) {
-    const results = [];
-    const seen = new Set();
-    for (let i = 0; i < barcodeFlatCache.length && results.length < limit; i++) {
-      const entry = barcodeFlatCache[i];
-      if (entry.barcode !== prefix && entry.barcode.startsWith(prefix) && !seen.has(entry.product.id)) {
-        seen.add(entry.product.id);
-        results.push(entry.product);
-      }
-    }
-    return results;
-  }
-
-  function count() { return products.length; }
-
-  return {
-    build, findBySku, findByBarcode, findBySuffix, getBySkuList,
-    searchNames, skusStartingWith, barcodesStartingWith, count
-  };
-})();
-
-/* ============================================================================
-   MODULE: searchEngine
-   ------------------------------------------------------------------------
-   Two distinct strategies, each with its own explicit priority:
-
-   query() — MANUAL typed search
-     1) exact SKU
-     2) last 6 digits of a barcode
-     Full barcode is intentionally NOT supported for manual typing.
-
-   queryPelican() — Pelican Mode (camera) search
-     1) full barcode (exact match against any entry in barcodes[])
-     2) exact SKU
-     3) last 6 digits of a barcode
-
-   Neither ever guesses — if multiple products match, caller must present
-   a choice.
-   ============================================================================ */
-const searchEngine = (() => {
-  function query(raw) {
-    const q = raw.trim();
-    if (!q) return { type: 'empty', results: [] };
-    if (!/^[0-9A-Za-z]+$/.test(q)) return { type: 'invalid', results: [] };
-
-    // 1. Exact SKU
-    const skuMatch = productIndex.findBySku(q);
-    if (skuMatch) return { type: 'sku', results: [skuMatch] };
-
-    // 2. Last 6 digits
-    if (q.length >= 4) {
-      const suffix = q.length >= 6 ? q.slice(-6) : q;
-      const suffixMatches = productIndex.findBySuffix(suffix);
-      if (suffixMatches.length) return { type: 'suffix', results: dedupe(suffixMatches) };
-    }
-
-    return { type: 'none', results: [] };
-  }
-
-  function queryPelican(raw) {
-    const q = raw.trim();
-    if (!q) return { type: 'empty', results: [] };
-    if (!/^[0-9A-Za-z]+$/.test(q)) return { type: 'invalid', results: [] };
-
-    // 1. Full barcode (any entry in barcodes[])
-    const barcodeMatches = productIndex.findByBarcode(q);
-    if (barcodeMatches.length) return { type: 'barcode', results: dedupe(barcodeMatches) };
-
-    // 2. Exact SKU
-    const skuMatch = productIndex.findBySku(q);
-    if (skuMatch) return { type: 'sku', results: [skuMatch] };
-
-    // 3. Last 6 digits
-    if (q.length >= 4) {
-      const suffix = q.length >= 6 ? q.slice(-6) : q;
-      const suffixMatches = productIndex.findBySuffix(suffix);
-      if (suffixMatches.length) return { type: 'suffix', results: dedupe(suffixMatches) };
-    }
-
-    return { type: 'none', results: [] };
-  }
-
-  function dedupe(list) {
-    const seen = new Set();
-    return list.filter(p => (seen.has(p.id) ? false : (seen.add(p.id), true)));
-  }
-
-  return { query, queryPelican };
-})();
-
-
+import { store } from './appStore.js';
+import {
+  SETTINGS_KEY,
+  SETTINGS_DEFAULTS,
+  quickGetSettings,
+  isMobileViewport,
+  suppressGhostImageTap,
+  selectSearchAfterProduct,
+  effectiveRecentBeside,
+  effectiveWarehouseDisplay,
+  effectiveDmartPopup,
+  quickApplyGlobalModes,
+} from './appSettingsQuick.js';
+import { wireCatalogAndSessionUi } from './appCatalogUi.js';
+import { createSmartScan } from './smartScan.js';
 
 /* ============================================================================
    MODULE: ui — rendering & DOM interaction
@@ -440,7 +126,6 @@ const ui = (() => {
         window.addEventListener('smouha:toggle-theme', () => {
       const root = document.documentElement;
       const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      // Wipe overlay top → bottom
       let ov = document.getElementById('themeWipeOverlay');
       if (!ov) {
         ov = document.createElement('div');
@@ -448,15 +133,14 @@ const ui = (() => {
         ov.className = 'theme-wipe-overlay';
         document.body.appendChild(ov);
       }
-      ov.classList.remove('run');
+      ov.className = 'theme-wipe-overlay theme-wipe-' + next;
       void ov.offsetWidth;
       ov.classList.add('run');
-      setTimeout(() => {
-        applyTheme(next);
-        store.setTheme(next);
-        try { window.dispatchEvent(new CustomEvent('smouha:theme-changed', { detail: { theme: next } })); } catch (e) {}
-      }, 120);
-      setTimeout(() => { ov.classList.remove('run'); }, 300);
+      // Apply immediately so Settings switch matches the real theme
+      applyTheme(next);
+      store.setTheme(next);
+      try { window.dispatchEvent(new CustomEvent('smouha:theme-changed', { detail: { theme: next } })); } catch (e) {}
+      setTimeout(() => { ov.classList.remove('run'); ov.className = 'theme-wipe-overlay'; }, 620);
     });
   }
 
@@ -1538,7 +1222,7 @@ function renderSuggestions(matches, query) {
       img.removeAttribute('src');
       if (wrap) wrap.classList.remove('loading');
     };
-    img.src = u;
+    setProdImgSrc(img, u, { highPriority: true });
   }
 
   async function enrichProductImageFromDmart(product) {
@@ -1618,7 +1302,7 @@ function renderSuggestions(matches, query) {
           showLoading();
           fetchDmart();
         };
-        img.src = fileUrl;
+        setProdImgSrc(img, fileUrl, { highPriority: true });
       }
       return;
     }
@@ -1710,7 +1394,7 @@ function renderSuggestions(matches, query) {
           <div class="product-image-col">
             <div class="product-image-wrap loading" id="prodImgWrap">
               ${product.fromDmart ? '<span class="dmart-source-badge" title="Loaded from DMart">DMart</span>' : ''}
-              <img id="prodImg" alt="${escapeAttr(product.name)}" loading="lazy" decoding="async" src="">
+              <img id="prodImg" alt="" loading="eager" decoding="async" fetchpriority="high" src="">
               <span class="image-zoom-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg> Zoom</span>
             </div>
             <div class="product-name-under-img" title="${escapeAttr(product.name)}">${escapeHtml(product.name)}</div>
@@ -1988,8 +1672,14 @@ function renderSuggestions(matches, query) {
     if (!products.length) {
       els.recentList.innerHTML = '<div class="panel-empty">No recent searches yet.</div>';
     } else {
-      els.recentList.innerHTML = products.map(p => panelItemHtml(p)).join('');
-      wirePanelItems(els.recentList, products);
+      const MAX_RECENT_RENDER = 40;
+      const shown = products.slice(0, MAX_RECENT_RENDER);
+      let html = shown.map(p => panelItemHtml(p)).join('');
+      if (products.length > MAX_RECENT_RENDER) {
+        html += '<div class="panel-empty">Showing latest ' + MAX_RECENT_RENDER + ' of ' + products.length + '</div>';
+      }
+      els.recentList.innerHTML = html;
+      wirePanelItems(els.recentList, shown);
     }
     fillInlineRecent();
     try { wirePanelAccordion(); } catch (e) {}
@@ -2153,7 +1843,15 @@ function renderSuggestions(matches, query) {
     renderRecent();
     renderFavorites();
     renderQuickAccess();
-    preloadRecentImages();
+    try {
+      if (typeof requestIdleCallback === 'function') {
+        requestIdleCallback(() => { try { preloadRecentImages(); } catch (e) {} }, { timeout: 3000 });
+      } else {
+        setTimeout(() => { try { preloadRecentImages(); } catch (e) {} }, 50);
+      }
+    } catch (e) {
+      try { preloadRecentImages(); } catch (e2) {}
+    }
     els.clearRecent.addEventListener('click', () => {
       if (!confirm('Clear all Recent items? This cannot be undone.')) return; store.clearRecent(); renderRecent(); toast('Recent searches cleared'); });
     els.clearFavs.addEventListener('click', () => {
@@ -2180,6 +1878,30 @@ function renderSuggestions(matches, query) {
       `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" rx="16" fill="#E8F3F8"/><rect x="70" y="58" width="60" height="48" rx="6" fill="none" stroke="#8AAEBC" stroke-width="3"/><circle cx="88" cy="76" r="5" fill="#8AAEBC"/><path d="M78 98l16-14 14 12 18-16 16 18" fill="none" stroke="#8AAEBC" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><text x="50%" y="168" font-family="system-ui,sans-serif" font-size="13" fill="#6A8694" text-anchor="middle">No image</text></svg>`
     );
   }
+  
+  function applyProdImgAttrs(img, { highPriority = true } = {}) {
+    if (!img) return;
+    try { img.decoding = 'async'; } catch (e) {}
+    try {
+      if (highPriority) img.setAttribute('fetchpriority', 'high');
+      else img.setAttribute('fetchpriority', 'low');
+    } catch (e) {}
+    try { img.referrerPolicy = 'no-referrer'; } catch (e) {}
+  }
+
+  function setProdImgSrc(img, url, opts) {
+    if (!img || !url) return;
+    applyProdImgAttrs(img, opts);
+    if (img.src === url) {
+      // already showing — still ensure load handlers can complete
+      if (img.complete && img.naturalWidth > 0) {
+        try { img.dispatchEvent(new Event('load')); } catch (e) {}
+      }
+      return;
+    }
+    img.src = url;
+  }
+
   function loadingImagePlaceholder() {
     return 'data:image/svg+xml;utf8,' + encodeURIComponent(
       `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" rx="16" fill="#EEF6FA"/><circle cx="100" cy="78" r="22" fill="none" stroke="#FF6B00" stroke-width="3" stroke-dasharray="28 40" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 100 78" to="360 100 78" dur="0.9s" repeatCount="indefinite"/></circle><text x="50%" y="130" font-family="system-ui,sans-serif" font-size="12" font-weight="600" fill="#FF6B00" text-anchor="middle">Fetching from DMart</text><text x="50%" y="150" font-family="system-ui,sans-serif" font-size="11" fill="#7A929E" text-anchor="middle">Loading image…</text></svg>`
@@ -2580,418 +2302,21 @@ function renderSuggestions(matches, query) {
 
   window.addEventListener('resize', () => { try { quickApplyGlobalModes(); } catch (e) {} });
 
-  return { init, setLoadingState, onDataReady, toast, renderRecent, renderFavorites, searchFromExternalInput };
-
+  return {
+    init,
+    setLoadingState,
+    onDataReady,
+    toast,
+    renderRecent,
+    renderFavorites,
+    searchFromExternalInput,
+  };
 })();
 
-
-
-/* ============================================================================
-   MODULE: smartScan (internal module name unchanged — user-facing feature
-   is now called "Pelican Mode")
-   ------------------------------------------------------------------------
-   Flow (speed-optimized):
-     Open Camera → ZXing scans continuously (PRIMARY engine), analyzing
-     only the center ROI of the frame → if a FULL BARCODE is detected →
-     search using Pelican Mode priority (full barcode -> SKU -> last 6
-     digits) → display product → generate Code128(s) → stop camera.
-
-     If ZXing finds nothing after ~1000ms → OCR fallback, cropped to the
-     white product card only:
-       Step 2: extract SKU → search by SKU
-       Step 3: if no SKU, extract full barcode → use its LAST 6 DIGITS →
-               search via the existing last-6-digits engine
-
-   BarcodeDetector is OPTIONAL: used only as a cheap opportunistic check
-   run alongside ZXing (never gating it, never the primary loop). No
-   search logic is duplicated — everything routes through
-   ui.searchFromExternalInput(), which reuses search.queryPelican().
-   ============================================================================ */
-const smartScan = (() => {
-  const OCR_FALLBACK_MS = 1000;      // ZXing detection window before OCR kicks in
-  const DUPLICATE_IGNORE_MS = 2000;  // ignore repeat detections of the same code
-
-  let els = {};
-  let stream = null;
-  let zxingReader = null;
-  let zxingControls = null;
-  let nativeDetector = null;
-  let nativeCheckId = null;
-  let ocrTimer = null;
-  let running = false;
-  let ocrBusy = false;
-  let lastCode = null;
-  let lastCodeAt = 0;
-
-  function cacheEls() {
-    els.scanBtn = document.getElementById('smartScanBtn');
-    els.backdrop = document.getElementById('scanBackdrop');
-    els.closeBtn = document.getElementById('scanCloseBtn');
-    els.video = document.getElementById('scanVideo');
-    els.ocrCanvas = document.getElementById('scanOcrCanvas');
-    els.status = document.getElementById('scanStatus');
-  }
-
-  function setStatus(text, kind) {
-    els.status.textContent = text;
-    els.status.classList.remove('error', 'success');
-    if (kind) els.status.classList.add(kind);
-  }
-
-  /* ---------- Lifecycle ---------- */
-  async function open() {
-    els.backdrop.classList.add('open');
-    setStatus('Requesting camera…');
-
-    if (!window.ZXingBrowser || !window.ZXing) {
-      setStatus('Scanner engine failed to load', 'error');
-      setTimeout(close, 1800);
-      return;
-    }
-
-    running = true;
-    lastCode = null;
-    lastCodeAt = 0;
-    initNativeDetector(); // optional, opportunistic only — never blocks ZXing
-
-    const hints = new Map();
-    const { BarcodeFormat, DecodeHintType } = window.ZXing;
-    hints.set(DecodeHintType.POSSIBLE_FORMATS, [
-      BarcodeFormat.EAN_13, BarcodeFormat.EAN_8, BarcodeFormat.UPC_A, BarcodeFormat.UPC_E,
-      BarcodeFormat.CODE_128, BarcodeFormat.CODE_39
-    ]);
-    hints.set(DecodeHintType.TRY_HARDER, false); // favor speed over exhaustive retries per frame
-    zxingReader = new window.ZXingBrowser.BrowserMultiFormatReader(hints);
-
-    try {
-      setStatus('Searching…');
-      scheduleOcrFallback();
-
-      const baseVideo = {
-        width: { ideal: 1920 },
-        height: { ideal: 1080 },
-        advanced: [{ focusMode: 'continuous' }]
-      };
-
-      // Acquire REAR-only stream BEFORE attaching to video / ZXing.
-      // Never use facingMode:ideal or unconstrained video — those briefly open the front camera on many phones.
-      const isFrontLabel = (label) => /front|user|face|selfie|أمام|امام/i.test(String(label || ''));
-      const isRearLabel = (label) => /back|rear|environment|world|خلف|خلفية/i.test(String(label || ''));
-
-      async function stopStream(s) {
-        if (!s) return;
-        try { s.getTracks().forEach(t => { try { t.stop(); } catch (e) {} }); } catch (e) {}
-      }
-
-      async function openRearStreamOnly() {
-        // 1) exact environment only (never ideal / never default)
-        const exactTries = [
-          { audio: false, video: { facingMode: { exact: 'environment' }, ...baseVideo } },
-          { audio: false, video: { facingMode: { exact: 'environment' } } },
-        ];
-        for (const c of exactTries) {
-          try {
-            const s = await navigator.mediaDevices.getUserMedia(c);
-            const label = (s.getVideoTracks()[0] && s.getVideoTracks()[0].label) || '';
-            if (isFrontLabel(label)) { await stopStream(s); continue; }
-            return s;
-          } catch (e) { /* try next */ }
-        }
-
-        // 2) Permission granted — labels should exist; pick rear by deviceId
-        let devices = [];
-        try {
-          devices = await navigator.mediaDevices.enumerateDevices();
-        } catch (e) { devices = []; }
-        const cams = devices.filter(d => d.kind === 'videoinput');
-        const rear =
-          cams.find(d => isRearLabel(d.label)) ||
-          cams.find(d => d.label && !isFrontLabel(d.label)) ||
-          null;
-        if (rear && rear.deviceId) {
-          try {
-            const s = await navigator.mediaDevices.getUserMedia({
-              audio: false,
-              video: { deviceId: { exact: rear.deviceId }, ...baseVideo }
-            });
-            const label = (s.getVideoTracks()[0] && s.getVideoTracks()[0].label) || '';
-            if (isFrontLabel(label)) { await stopStream(s); }
-            else return s;
-          } catch (e) { /* fall through */ }
-        }
-
-        // 3) Last resort: any non-front deviceId
-        for (const cam of cams) {
-          if (!cam.deviceId || isFrontLabel(cam.label)) continue;
-          try {
-            const s = await navigator.mediaDevices.getUserMedia({
-              audio: false,
-              video: { deviceId: { exact: cam.deviceId }, ...baseVideo }
-            });
-            const label = (s.getVideoTracks()[0] && s.getVideoTracks()[0].label) || '';
-            if (isFrontLabel(label)) { await stopStream(s); continue; }
-            return s;
-          } catch (e) { /* next */ }
-        }
-        return null;
-      }
-
-      stream = await openRearStreamOnly();
-      if (!stream) {
-        throw Object.assign(new Error('No rear camera available'), { name: 'NotFoundError' });
-      }
-
-      // Final guard: never attach a front track
-      {
-        const label = (stream.getVideoTracks()[0] && stream.getVideoTracks()[0].label) || '';
-        if (isFrontLabel(label)) {
-          await stopStream(stream);
-          stream = null;
-          throw Object.assign(new Error('Front camera blocked'), { name: 'NotFoundError' });
-        }
-      }
-
-      const onDetect = (result) => {
-        if (result && running) onCodeDetected(result.getText());
-      };
-
-      // Prefer decodeFromStream so ZXing does not open its own (possibly front) constraints
-      if (typeof zxingReader.decodeFromStream === 'function') {
-        zxingControls = await zxingReader.decodeFromStream(stream, els.video, onDetect);
-      } else {
-        els.video.srcObject = stream;
-        await els.video.play().catch(() => {});
-        zxingControls = await zxingReader.decodeFromConstraints(
-          { audio: false, video: { facingMode: { exact: 'environment' } } },
-          els.video,
-          onDetect
-        );
-        // If ZXing replaced the stream, re-check
-        stream = els.video.srcObject || stream;
-        const label = (stream.getVideoTracks && stream.getVideoTracks()[0] && stream.getVideoTracks()[0].label) || '';
-        if (isFrontLabel(label)) {
-          if (zxingControls) { try { zxingControls.stop(); } catch (e) {} zxingControls = null; }
-          await stopStream(stream);
-          throw Object.assign(new Error('Front camera blocked'), { name: 'NotFoundError' });
-        }
-      }
-    } catch (err) {
-      handleCameraError(err);
-    }
-  }
-
-
-  function close() {
-    running = false;
-    clearTimeout(ocrTimer);
-    if (nativeCheckId) { clearInterval(nativeCheckId); nativeCheckId = null; }
-    if (zxingControls) {
-      try { zxingControls.stop(); } catch (e) { /* already stopped */ }
-      zxingControls = null;
-    }
-    zxingReader = null;
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop()); // release camera immediately
-      stream = null;
-    }
-    els.video.srcObject = null;
-    els.backdrop.classList.remove('open');
-    nativeDetector = null;
-    ocrBusy = false;
-  }
-
-  function handleCameraError(err) {
-    if (err && err.name === 'NotAllowedError') {
-      setStatus('Camera permission denied', 'error');
-    } else if (err && err.name === 'NotFoundError') {
-      setStatus('No camera found on this device', 'error');
-    } else {
-      setStatus('Unable to access camera', 'error');
-    }
-    setTimeout(close, 1800);
-  }
-
-  function pickRearCamera(devices) {
-    if (!devices || !devices.length) return null;
-    // Never guess "last device" when labels are empty — that often picks the front camera.
-    const labeled = devices.filter(d => d && d.label && String(d.label).trim());
-    if (!labeled.length) return null;
-    const rear = labeled.find(d => /back|rear|environment|world|خلف/i.test(d.label));
-    if (rear) return rear;
-    const notFront = labeled.find(d => !/front|user|face|أمام/i.test(d.label));
-    return notFront || null;
-  }
-
-  /* ---------- Optional secondary check: native BarcodeDetector ----------
-     Purely opportunistic — on devices that support it, this can catch an
-     obvious code a few frames earlier than ZXing. It never gates or
-     replaces the ZXing loop above, and is skipped entirely if unsupported.
-     It also only analyzes the center ROI, matching the ZXing crop. */
-  function initNativeDetector() {
-    if (!('BarcodeDetector' in window)) return;
-    try {
-      nativeDetector = new BarcodeDetector({
-        formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39']
-      });
-    } catch (e) {
-      nativeDetector = null;
-      return;
-    }
-    nativeCheckId = setInterval(async () => {
-      if (!running || !nativeDetector || !els.video.videoWidth) return;
-      try {
-        const roiBitmap = await centerRoiBitmap();
-        const codes = await nativeDetector.detect(roiBitmap);
-        if (codes && codes.length && running) onCodeDetected(codes[0].rawValue);
-      } catch (e) { /* opportunistic only — ignore and keep relying on ZXing */ }
-    }, 150);
-  }
-
-  /** Crops the live video down to the center ROI (matching the on-screen
-   *  .scan-frame guide) and returns it as an ImageBitmap for detection.
-   *  Keeps analysis focused on where the user is asked to hold the code,
-   *  which is faster and more accurate than scanning the full frame. */
-  async function centerRoiBitmap() {
-    const rect = centerRoiRect();
-    els.ocrCanvas.width = rect.w;
-    els.ocrCanvas.height = rect.h;
-    const ctx = els.ocrCanvas.getContext('2d');
-    ctx.drawImage(els.video, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h);
-    return createImageBitmap(els.ocrCanvas);
-  }
-
-  function centerRoiRect() {
-    const vw = els.video.videoWidth, vh = els.video.videoHeight;
-    // Matches the .scan-frame overlay proportions (inset 12% vertical, 8% horizontal)
-    return {
-      x: Math.round(vw * 0.08),
-      y: Math.round(vh * 0.12),
-      w: Math.round(vw * 0.84),
-      h: Math.round(vh * 0.76)
-    };
-  }
-
-  function onCodeDetected(rawValue) {
-    if (!running) return;
-    const code = String(rawValue).trim();
-
-    // Ignore duplicate detections of the same code within the debounce window
-    const now = Date.now();
-    if (code === lastCode && (now - lastCodeAt) < DUPLICATE_IGNORE_MS) return;
-    lastCode = code;
-    lastCodeAt = now;
-
-    running = false; // stop every running process immediately
-    clearTimeout(ocrTimer);
-    if (nativeCheckId) { clearInterval(nativeCheckId); nativeCheckId = null; }
-    setStatus('Product Found', 'success');
-    close();
-    ui.searchFromExternalInput(code);
-  }
-
-  /* ---------- Step 2 & 3: OCR fallback (cropped to the white info card) ---------- */
-  function scheduleOcrFallback() {
-    ocrTimer = setTimeout(() => {
-      if (running && !ocrBusy) runOcrPass();
-    }, OCR_FALLBACK_MS);
-  }
-
-  async function runOcrPass() {
-    if (!running || !window.Tesseract || !els.video.videoWidth) {
-      if (running) scheduleOcrFallback();
-      return;
-    }
-    ocrBusy = true;
-    setStatus('Detecting barcode…');
-    try {
-      const cropRect = locateInfoCard();
-      const ocrCanvas = els.ocrCanvas;
-      ocrCanvas.width = cropRect.w;
-      ocrCanvas.height = cropRect.h;
-      const ctx = ocrCanvas.getContext('2d');
-      ctx.drawImage(els.video, cropRect.x, cropRect.y, cropRect.w, cropRect.h, 0, 0, cropRect.w, cropRect.h);
-
-      setStatus('Reading SKU…');
-      const { data } = await Tesseract.recognize(ocrCanvas, 'eng', { logger: () => {} });
-
-      if (!running) return; // a barcode may have been found while OCR was running
-
-      // Step 2: SKU first
-      const sku = extractSku(data.text);
-      if (sku) {
-        setStatus('Product Found', 'success');
-        close();
-        ui.searchFromExternalInput(sku);
-        return;
-      }
-
-      // Step 3: fall back to the full barcode's last 6 digits
-      const last6 = extractLast6FromBarcode(data.text);
-      if (last6) {
-        setStatus('Product Found', 'success');
-        close();
-        ui.searchFromExternalInput(last6);
-        return;
-      }
-
-      setStatus('No Barcode Detected — Reading Again…', 'error');
-      ocrBusy = false;
-      if (running) scheduleOcrFallback();
-    } catch (e) {
-      setStatus('OCR Failed — Retrying…', 'error');
-      ocrBusy = false;
-      if (running) scheduleOcrFallback();
-    }
-  }
-
-  /** Locates the white product-info card region within the frame.
-   *  Uses a fixed relative crop matching the on-screen scan-frame guide,
-   *  which is where the app instructs the user to align the card. This
-   *  avoids OCR-ing the full frame, keeping recognition fast and accurate. */
-  function locateInfoCard() {
-    return centerRoiRect();
-  }
-
-  /** Extracts ONLY the SKU value from OCR text, ignoring product name,
-   *  price, location, buttons, icons, and everything else on the card. */
-  function extractSku(text) {
-    const skuMatch = text.match(/SKU[:\s]*([0-9]{4,10})/i);
-    return skuMatch ? skuMatch[1] : null;
-  }
-
-  /** Extracts a full barcode from OCR text and returns only its last 6
-   *  digits, to be routed through the existing last-6-digits search. */
-  function extractLast6FromBarcode(text) {
-    const barcodeMatch = text.match(/Barcode[:\s]*([0-9A-Za-z]{6,20})/i);
-    const code = barcodeMatch ? barcodeMatch[1] : null;
-    if (!code) return null;
-    return code.length >= 6 ? code.slice(-6) : code;
-  }
-
-  function init() {
-    cacheEls();
-    // Unlock WebAudio after first gesture so scan sound works on mobile
-    const unlockAudio = () => {
-      try {
-        if (!_scanAudioCtx) {
-          const AC = window.AudioContext || window.webkitAudioContext;
-          if (AC) _scanAudioCtx = new AC();
-        }
-        if (_scanAudioCtx && _scanAudioCtx.state === 'suspended') _scanAudioCtx.resume();
-      } catch (e) { /* ignore */ }
-      document.removeEventListener('pointerdown', unlockAudio, true);
-    };
-    document.addEventListener('pointerdown', unlockAudio, true);
-
-    els.scanBtn.addEventListener('click', open);
-    els.closeBtn.addEventListener('click', close);
-    els.backdrop.addEventListener('click', (e) => { if (e.target === els.backdrop) close(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && els.backdrop.classList.contains('open')) close(); });
-  }
-
-  return { init };
-})();
-
+/* Pelican Mode — extracted module */
+const smartScan = createSmartScan({
+  searchFromExternalInput: (code) => ui.searchFromExternalInput(code),
+});
 
 
 /* ============================================================================
@@ -3025,9 +2350,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   smartScan.init();
 
+  try {
+    import('./dmartLive.js').then((m) => { if (m.startBridgeWatchdog) m.startBridgeWatchdog(); }).catch(() => {});
+  } catch (e) {}
   updater.loadInitial().then((result) => {
     ui.onDataReady();
-    if (result.updated && result.source === 'network') {
+    if (result && result.updated && result.source === 'network') {
       ui.toast('Database Updated Successfully');
     }
     const versionEl = document.getElementById('appVersionLine');
@@ -3036,6 +2364,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const countText = quickGetSettings().showProductCount ? (' \u00b7 ' + search.count().toLocaleString() + ' Products') : '';
       versionEl.textContent = (v.version ? 'v' + v.version : '') + (v.build != null ? ' (build ' + v.build + ')' : '') + countText;
     }
+  }).catch((err) => {
+    console.error('[updater] loadInitial failed', err);
+    try { ui.onDataReady(); } catch (e) {}
+    try { ui.toast('Could not load catalog — check connection', 'error'); } catch (e) {}
   });
 });
 
@@ -3048,3 +2380,31 @@ window.addEventListener('smouha:clear-dmart-cache', () => {
     alert('Could not clear DMart cache.');
   }
 });
+
+
+window.addEventListener('smouha:db-updated', (ev) => {
+  try {
+    const n = ev && ev.detail && ev.detail.count;
+    if (typeof ui !== 'undefined' && ui.toast) {
+      ui.toast(n ? ('Catalog updated · ' + Number(n).toLocaleString() + ' products') : 'Catalog updated');
+    }
+  } catch (e) {}
+});
+
+/* Soft PWA install capture (no forced UI) */
+window.addEventListener('beforeinstallprompt', (e) => {
+  try {
+    e.preventDefault();
+    window.__smouhaPwaEvent = e;
+  } catch (err) {}
+});
+
+window.addEventListener('smouha:db-update-failed', (ev) => {
+  try {
+    const msg = (ev && ev.detail && ev.detail.message) ? ev.detail.message : 'Background catalog update failed';
+    if (typeof ui !== 'undefined' && ui.toast) ui.toast(msg + ' — data may be outdated', 'error');
+    else alert(msg + ' — data may be outdated');
+  } catch (e) {}
+});
+
+wireCatalogAndSessionUi();

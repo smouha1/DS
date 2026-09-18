@@ -99,11 +99,86 @@ export function wireProductImageInteractions(wrap, img, getSettings) {
 /** Warms the browser's image cache for up to `limit` products, so
  *  reopening a recently-scanned item feels instant. Purely additive —
  *  does not touch search, database, or rendering logic. */
-export function preloadImages(products, limit = 20) {
-  products.slice(0, limit).forEach(p => {
-    if (!p || !p.image) return;
-    const img = new Image();
-    img.decoding = 'async';
-    img.src = p.image;
+/** In-flight + warmed URL set — avoids duplicate network work. */
+const warmedUrls = new Set();
+const inflight = new Map(); // url -> Promise
+
+function connectionAwareLimit(requested) {
+  try {
+    const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (c) {
+      if (c.saveData) return Math.min(requested, 4);
+      const t = String(c.effectiveType || '');
+      if (t.includes('2g')) return Math.min(requested, 3);
+      if (t === '3g') return Math.min(requested, 8);
+    }
+  } catch (e) {}
+  return requested;
+}
+
+/**
+ * Load one URL into the HTTP cache (deduped). Resolves when decoded or loaded.
+ */
+export function warmImageUrl(url) {
+  if (!url || !/^https?:\/\//i.test(url)) return Promise.resolve(false);
+  if (warmedUrls.has(url)) return Promise.resolve(true);
+  if (inflight.has(url)) return inflight.get(url);
+
+  const p = new Promise((resolve) => {
+    try {
+      const img = new Image();
+      img.decoding = 'async';
+      try { img.referrerPolicy = 'no-referrer'; } catch (e) {}
+      img.onload = async () => {
+        try {
+          if (img.decode) await img.decode();
+        } catch (e) { /* decode optional */ }
+        warmedUrls.add(url);
+        inflight.delete(url);
+        resolve(true);
+      };
+      img.onerror = () => {
+        inflight.delete(url);
+        resolve(false);
+      };
+      img.src = url;
+    } catch (e) {
+      inflight.delete(url);
+      resolve(false);
+    }
   });
+  inflight.set(url, p);
+  return p;
+}
+
+/**
+ * Warms the browser image cache with limited concurrency so mobile radios
+ * are not flooded. Safe / additive — does not change search or UI logic.
+ */
+export function preloadImages(products, limit = 20) {
+  const max = connectionAwareLimit(limit);
+  const urls = [];
+  const seen = new Set();
+  for (const p of products || []) {
+    if (!p || !p.image) continue;
+    const u = String(p.image).trim();
+    if (!/^https?:\/\//i.test(u) || seen.has(u) || warmedUrls.has(u)) continue;
+    seen.add(u);
+    urls.push(u);
+    if (urls.length >= max) break;
+  }
+  const concurrency = connectionAwareLimit(4);
+  let i = 0;
+  function pump() {
+    while (i < urls.length && inflight.size < concurrency) {
+      const u = urls[i++];
+      warmImageUrl(u).then(() => pump());
+    }
+  }
+  pump();
+}
+
+/** True if URL was already successfully warmed this session. */
+export function isImageWarmed(url) {
+  return !!(url && warmedUrls.has(url));
 }

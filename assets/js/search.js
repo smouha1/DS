@@ -23,6 +23,7 @@
    ============================================================================ */
 
 let products = [];
+let imageBySku = new Map();
 const bySku = new Map();
 const byBarcode = new Map();
 const bySuffix6 = new Map();
@@ -102,6 +103,20 @@ export function registerDmartProduct(rec) {
 }
 
 /** Image-only cache (SKU → https URL from DMart). Survives until cleared. */
+
+/** Cap DMart image cache size to avoid unbounded localStorage growth. */
+function pruneImageCache(maxEntries) {
+  const map = loadImageCache();
+  const keys = Object.keys(map);
+  const limit = maxEntries || 400;
+  if (keys.length <= limit) return;
+  // Drop oldest arbitrary keys (object key order is insertion order in modern engines)
+  const drop = keys.length - limit;
+  for (let i = 0; i < drop; i++) delete map[keys[i]];
+  imageCache = map;
+  saveImageCache();
+}
+
 const DMART_IMAGE_KEY = 'smouha_dmart_image_cache_v1';
 let imageCache = null;
 function loadImageCache() {
@@ -144,6 +159,8 @@ export function setDmartImage(sku, url) {
   // Refresh local catalog product so Recent/Favorites thumbs resolve
   const local = bySku.get(key);
   if (local) local.image = u;
+  try { if (sku) imageBySku.set(String(sku), u); } catch (e) {}
+  try { pruneImageCache(400); } catch (e) {}
 }
 export function clearDmartCache() {
   try { localStorage.removeItem(DMART_CACHE_KEY); } catch (e) {}
@@ -174,8 +191,83 @@ function findDmartBySuffix(suf) {
   return dmartBySuffix6.get(String(suf)) || null;
 }
 
+function applyBuiltPayload(payload) {
+  products = payload.products || [];
+  bySku.clear();
+  byBarcode.clear();
+  bySuffix6.clear();
+  nameSearchCache = [];
+  barcodeFlatCache = [];
+
+  const bySkuIdx = payload.bySku || {};
+  const byBarcodeIdx = payload.byBarcode || {};
+  const bySuffixIdx = payload.bySuffix6 || {};
+  const nameSearch = payload.nameSearch || [];
+
+  for (const sku of Object.keys(bySkuIdx)) {
+    const p = products[bySkuIdx[sku]];
+    if (p) bySku.set(sku, p);
+  }
+  for (const bc of Object.keys(byBarcodeIdx)) {
+    const list = (byBarcodeIdx[bc] || []).map((i) => products[i]).filter(Boolean);
+    if (list.length) {
+      byBarcode.set(bc, list);
+      list.forEach((p) => barcodeFlatCache.push({ product: p, barcode: bc }));
+    }
+  }
+  for (const suf of Object.keys(bySuffixIdx)) {
+    const list = (bySuffixIdx[suf] || []).map((i) => products[i]).filter(Boolean);
+    if (list.length) bySuffix6.set(suf, list);
+  }
+  for (const row of nameSearch) {
+    const p = products[row.i];
+    if (p) nameSearchCache.push({ product: p, lowerName: row.lowerName || p.name.toLowerCase() });
+  }
+}
+
+
+function fillImagesFromRecords(records) {
+  imageBySku.clear();
+  const list = Array.isArray(records) ? records : [];
+  for (let i = 0; i < list.length; i++) {
+    const r = list[i];
+    if (!r) continue;
+    const sku = String(r.sku || '');
+    const img = r.image || '';
+    if (sku && img) imageBySku.set(sku, img);
+    if (products[i] && !products[i].image && img) products[i].image = img;
+  }
+  // Ensure every product has catalog image when available
+  for (const p of products) {
+    if (p && p.sku && !p.image) {
+      const u = imageBySku.get(p.sku);
+      if (u) p.image = u;
+    }
+  }
+}
+
+export function setCatalogImage(sku, url) {
+  if (!sku || !url) return;
+  const s = String(sku);
+  const u = String(url);
+  imageBySku.set(s, u);
+  const p = bySku.get(s);
+  if (p) p.image = u;
+}
+
+export function getCatalogImage(sku) {
+  if (!sku) return '';
+  const s = String(sku);
+  const fromMap = imageBySku.get(s);
+  if (fromMap) return fromMap;
+  const p = bySku.get(s);
+  return (p && p.image) || '';
+}
+
+/** Synchronous build (fallback). */
 export function build(records) {
-  products = records.map((r, i) => ({
+  const list = Array.isArray(records) ? records : [];
+  products = list.map((r, i) => ({
     id: i,
     sku: String(r.sku || ''),
     name: r.name || 'Unnamed product',
@@ -204,6 +296,107 @@ export function build(records) {
     }
     nameSearchCache.push({ product: p, lowerName: p.name.toLowerCase() });
   }
+  imageBySku.clear();
+  for (const p of products) {
+    if (p.sku && p.image) imageBySku.set(p.sku, p.image);
+  }
+}
+
+/**
+ * Build indexes off the main thread when Worker is available.
+ * Falls back to chunked main-thread indexing so the UI stays responsive.
+ */
+export function buildAsync(records) {
+  const list = Array.isArray(records) ? records : [];
+  return new Promise((resolve) => {
+    let settled = false;
+    const done = () => { if (!settled) { settled = true; resolve(products.length); } };
+
+    // Prefer Worker
+    try {
+      if (typeof Worker !== 'undefined') {
+        const worker = new Worker(new URL('./search-worker.js', import.meta.url));
+        const id = 'b_' + Date.now().toString(36);
+        const timer = setTimeout(() => {
+          try { worker.terminate(); } catch (e) {}
+          // fallback sync
+          build(list);
+          done();
+        }, 45000);
+        worker.onmessage = (ev) => {
+          const msg = ev.data || {};
+          if (msg.id !== id) return;
+          clearTimeout(timer);
+          try {
+            applyBuiltPayload(msg);
+            fillImagesFromRecords(list);
+          } catch (e) {
+            build(list);
+          }
+          try { worker.terminate(); } catch (e) {}
+          done();
+        };
+        worker.onerror = () => {
+          clearTimeout(timer);
+          try { worker.terminate(); } catch (e) {}
+          build(list);
+          done();
+        };
+        const slim = list.map((r) => ({
+          sku: r.sku,
+          name: r.name,
+          barcodes: r.barcodes || []
+        }));
+        worker.postMessage({ type: 'build', id, records: slim });
+        return;
+      }
+    } catch (e) { /* fall through */ }
+
+    // Chunked main-thread build (keeps UI responsive)
+    products = list.map((r, i) => ({
+      id: i,
+      sku: String(r.sku || ''),
+      name: r.name || 'Unnamed product',
+      barcodes: r.barcodes || [],
+      image: r.image || ''
+    }));
+    bySku.clear();
+    byBarcode.clear();
+    bySuffix6.clear();
+    nameSearchCache = [];
+    barcodeFlatCache = [];
+    const CHUNK = 2500;
+    let start = 0;
+    function step() {
+      const end = Math.min(start + CHUNK, products.length);
+      for (let i = start; i < end; i++) {
+        const p = products[i];
+        if (p.sku) bySku.set(p.sku, p);
+        for (const bc of p.barcodes) {
+          if (!byBarcode.has(bc)) byBarcode.set(bc, []);
+          byBarcode.get(bc).push(p);
+          barcodeFlatCache.push({ product: p, barcode: bc });
+          if (bc.length >= 6) {
+            const suf = bc.slice(-6);
+            if (!bySuffix6.has(suf)) bySuffix6.set(suf, []);
+            bySuffix6.get(suf).push(p);
+          }
+        }
+        nameSearchCache.push({ product: p, lowerName: p.name.toLowerCase() });
+      }
+      start = end;
+      if (start < products.length) {
+        setTimeout(step, 0);
+      } else {
+        imageBySku.clear();
+        for (const p of products) {
+          if (p.sku && p.image) imageBySku.set(p.sku, p.image);
+        }
+        done();
+      }
+    }
+    step();
+  });
 }
 
 export function findBySku(sku) {

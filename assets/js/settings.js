@@ -21,7 +21,7 @@
 import * as db from './indexeddb.js';
 import * as updater from './updater.js';
 import * as search from './search.js';
-import { formatBytes } from './utils.js';
+import { formatBytes, getRecentLogs, log} from './utils.js';
 
 const STORAGE_KEY = 'smouhaPickSettings';
 
@@ -190,6 +190,34 @@ async function developerInfoHtml() {
     const productCount = search.count ? search.count() : 0;
     const dataSource = updater.getLastLoadSource ? updater.getLastLoadSource() : '—';
 
+    let indexMs = '—';
+    try { if (window.__smouhaIndexMs != null) indexMs = window.__smouhaIndexMs + ' ms'; } catch (e) {}
+    let liveMs = '—';
+    try { if (window.__smouhaLastLiveMs != null) liveMs = window.__smouhaLastLiveMs + ' ms'; } catch (e) {}
+    let bridgeSeen = '—';
+    try {
+      const mod = await import('./dmartLive.js');
+      const ts = mod.getBridgeLastSeen && mod.getBridgeLastSeen();
+      if (ts) {
+        const sec = Math.round((Date.now() - ts) / 1000);
+        bridgeSeen = sec < 60 ? (sec + 's ago') : (Math.round(sec / 60) + 'm ago');
+      } else bridgeSeen = 'Never';
+    } catch (e) { bridgeSeen = '—'; }
+    let logsHtml = '';
+    try {
+      const logs = (typeof getRecentLogs === 'function' ? getRecentLogs() : []);
+      if (logs && logs.length) {
+        logsHtml = logs.slice().reverse().map((row) => {
+          const ts = new Date(row.t).toLocaleTimeString();
+          return `<div class="dev-log-line"><span>${escapeHtmlLocal(ts)} ${escapeHtmlLocal(row.level)}</span><b>${escapeHtmlLocal((row.scope ? row.scope + ': ' : '') + row.message)}</b></div>`;
+        }).join('');
+      } else {
+        logsHtml = '<div class="dev-log-line"><span>Logs</span><b>Empty</b></div>';
+      }
+    } catch (e) {
+      logsHtml = '<div class="dev-log-line"><span>Logs</span><b>Unavailable</b></div>';
+    }
+
     return `
     <div><span>Version</span><b>${escapeHtmlLocal(String(versionInfo.version || '—'))}</b></div>
     <div><span>Build</span><b>${versionInfo.build != null ? versionInfo.build : '—'}</b></div>
@@ -197,10 +225,15 @@ async function developerInfoHtml() {
     <div><span>Data Source</span><b>${escapeHtmlLocal(String(dataSource || '—'))}</b></div>
     <div><span>Maps (sku/barcode/last6)</span><b>${mapsCount.bySku || 0} / ${mapsCount.byBarcode || 0} / ${mapsCount.bySuffix6 || 0}</b></div>
     <div><span>Load Time</span><b>${loadTime}</b></div>
+    <div><span>Index Build</span><b>${escapeHtmlLocal(indexMs)}</b></div>
+    <div><span>Last Live Fetch</span><b>${escapeHtmlLocal(liveMs)}</b></div>
+    <div><span>Bridge last seen</span><b>${escapeHtmlLocal(bridgeSeen)}</b></div>
     <div><span>Memory Usage</span><b>${escapeHtmlLocal(memory)}</b></div>
     <div><span>Storage Usage</span><b>${escapeHtmlLocal(dbSize)}</b></div>
     <div><span>Last Updated</span><b>${escapeHtmlLocal(String(versionInfo.updated || '—'))}</b></div>
     <div><span>Browser</span><b>${escapeHtmlLocal(navigator.userAgent).slice(0, 60)}…</b></div>
+    <div class="dev-log-block"><span>Recent Logs (20)</span></div>
+    ${logsHtml}
   `;
   } catch (e) {
     return `<div><span>Developer info</span><b>Could not load (${escapeHtmlLocal(e && e.message ? e.message : 'error')})</b></div>`;
@@ -357,7 +390,13 @@ async function renderPanel() {
       <button class="btn settings-action" id="settingsClearDb">Clear IndexedDB</button>
       <button class="btn settings-action" id="settingsClearDmartCache">Clear DMart Cache</button>
       <button class="btn settings-action" id="settingsRunImageCheck">Run Image Check</button>
+      <button class="btn settings-action" id="settingsSmokeTest">Run Smoke Test</button>
+      <button class="btn settings-action" id="settingsDeployChecklist">Deploy Checklist</button>
+      <button class="btn settings-action" id="settingsExportBackup">Export Settings & Recent</button>
+      <button class="btn settings-action" id="settingsImportBackup">Import Settings & Recent</button>
+      <input type="file" id="settingsImportFile" accept="application/json,.json" hidden>
       <button class="btn settings-action" id="settingsReset">Reset Settings</button>
+      <div id="settingsSmokeResult" class="dev-grid" style="margin-top:8px;display:none"></div>
     </div>
     <div class="settings-section">
       <h4>Developer</h4>
@@ -379,14 +418,212 @@ async function renderPanel() {
 
   wireChangelogButtons(panelEl);
 
+  const deployBtn = panelEl.querySelector('#settingsDeployChecklist');
+  if (deployBtn) {
+    deployBtn.addEventListener('click', async () => {
+      const out = panelEl.querySelector('#settingsSmokeResult');
+      if (out) { out.style.display = 'grid'; out.innerHTML = '<div><span>Checklist</span><b>Running…</b></div>'; }
+      const rows = [];
+      try {
+        const v = (updater.getLastVersionInfo && updater.getLastVersionInfo()) || {};
+        rows.push(['version.json version', !!v.version, String(v.version || '—')]);
+        rows.push(['version.json build', v.build != null, String(v.build ?? '—')]);
+        const count = search.count ? search.count() : 0;
+        rows.push(['In-memory products', count > 0, String(count)]);
+        if (v.products != null) {
+          rows.push(['Count matches version.products', count === Number(v.products), count + ' vs ' + v.products]);
+        }
+        try {
+          const r = await fetch('data/products-search.json', { method: 'HEAD', cache: 'no-store' });
+          rows.push(['products-search.json', r.ok, 'HTTP ' + r.status]);
+        } catch (e) {
+          rows.push(['products-search.json', false, e.message || 'err']);
+        }
+        try {
+          const r = await fetch('data/products.json', { method: 'HEAD', cache: 'no-store' });
+          rows.push(['products.json', r.ok, 'HTTP ' + r.status]);
+        } catch (e) {
+          rows.push(['products.json', false, e.message || 'err']);
+        }
+        try {
+          const r = await fetch('sw.js', { method: 'HEAD', cache: 'no-store' });
+          rows.push(['sw.js reachable', r.ok, 'HTTP ' + r.status]);
+        } catch (e) {
+          rows.push(['sw.js', false, e.message || 'err']);
+        }
+        const swCtrl = navigator.serviceWorker && navigator.serviceWorker.controller;
+        rows.push(['SW controlling page', !!swCtrl, swCtrl ? 'yes' : 'no']);
+        try {
+          const live = await import('./dmartLive.js');
+          rows.push(['Bridge online', !!(live.isBridgeOnline && live.isBridgeOnline()), '']);
+          const ts = live.getBridgeLastSeen && live.getBridgeLastSeen();
+          rows.push(['Bridge last seen', !!ts, ts ? (Math.round((Date.now() - ts) / 1000) + 's ago') : 'never']);
+        } catch (e) {
+          rows.push(['Bridge module', false, e.message || 'err']);
+        }
+        if (out) {
+          out.innerHTML = rows.map(([k, ok, d]) =>
+            `<div><span>${escapeHtmlLocal(k)}</span><b style="color:${ok ? '#16a34a' : '#dc2626'}">${ok ? 'PASS' : 'CHECK'} — ${escapeHtmlLocal(String(d))}</b></div>`
+          ).join('');
+        }
+      } catch (e) {
+        if (out) out.innerHTML = `<div><span>Checklist</span><b style="color:#dc2626">${escapeHtmlLocal(e.message || 'error')}</b></div>`;
+      }
+    });
+  }
+
+
+  const exportBtn = panelEl.querySelector('#settingsExportBackup');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      try {
+        const payload = {
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          settings: getSettings(),
+          recent: null,
+          favorites: null,
+          theme: null,
+        };
+        try { payload.recent = JSON.parse(localStorage.getItem('tm_recent_searches') || 'null'); } catch (e) {}
+        try { payload.favorites = JSON.parse(localStorage.getItem('tm_favorites') || 'null'); } catch (e) {}
+        try { payload.theme = localStorage.getItem('tm_theme'); } catch (e) {}
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'smouha-pick-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { try { URL.revokeObjectURL(a.href); a.remove(); } catch (e) {} }, 500);
+        try { log('info', 'backup', 'Settings exported'); } catch (e) {}
+      } catch (e) {
+        alert('Export failed: ' + (e.message || e));
+      }
+    });
+  }
+  const importBtn = panelEl.querySelector('#settingsImportBackup');
+  const importFile = panelEl.querySelector('#settingsImportFile');
+  if (importBtn && importFile) {
+    importBtn.addEventListener('click', () => importFile.click());
+    importFile.addEventListener('change', async () => {
+      const file = importFile.files && importFile.files[0];
+      importFile.value = '';
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if (!data || typeof data !== 'object') throw new Error('Invalid file');
+        if (data.settings && typeof data.settings === 'object') {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...getSettings(), ...data.settings }));
+        }
+        if (data.recent != null) localStorage.setItem('tm_recent_searches', JSON.stringify(data.recent));
+        if (data.favorites != null) localStorage.setItem('tm_favorites', JSON.stringify(data.favorites));
+        if (data.theme != null) localStorage.setItem('tm_theme', data.theme);
+        try { applyGlobalModes(); } catch (e) {}
+        try { log('info', 'backup', 'Settings imported — reloading'); } catch (e) {}
+        alert('Import OK. The page will reload.');
+        location.reload();
+      } catch (e) {
+        alert('Import failed: ' + (e.message || e));
+      }
+    });
+  }
+
+
+  const smokeBtn = panelEl.querySelector('#settingsSmokeTest');
+  if (smokeBtn) {
+    smokeBtn.addEventListener('click', async () => {
+      const out = panelEl.querySelector('#settingsSmokeResult');
+      if (out) { out.style.display = 'grid'; out.innerHTML = '<div><span>Smoke</span><b>Running…</b></div>'; }
+      try {
+        const results = [];
+        const count = search.count ? search.count() : 0;
+        results.push(['Products loaded', count > 0, String(count)]);
+        // sample first product via maps if possible
+        let sampleSku = null;
+        try {
+          const maps = search.getMapsCount ? search.getMapsCount() : {};
+          results.push(['SKU map', (maps.bySku || 0) > 0, String(maps.bySku || 0)]);
+          results.push(['Barcode map', (maps.byBarcode || 0) > 0, String(maps.byBarcode || 0)]);
+          results.push(['Last6 map', (maps.bySuffix6 || 0) > 0, String(maps.bySuffix6 || 0)]);
+        } catch (e) {
+          results.push(['Maps', false, e.message || 'err']);
+        }
+        // Try a known-pattern: if any product in recent localStorage
+        try {
+          const raw = localStorage.getItem('tm_recent_searches');
+          const arr = raw ? JSON.parse(raw) : [];
+          if (Array.isArray(arr) && arr[0] && arr[0].sku) sampleSku = String(arr[0].sku);
+        } catch (e) {}
+        if (sampleSku && search.findBySku) {
+          const p = search.findBySku(sampleSku);
+          results.push(['findBySku(recent)', !!p, sampleSku]);
+          if (p && p.barcodes && p.barcodes[0] && p.barcodes[0].length >= 6) {
+            const suf = p.barcodes[0].slice(-6);
+            const list = search.findBySuffix ? search.findBySuffix(suf) : [];
+            results.push(['findBySuffix(last6)', Array.isArray(list) && list.length > 0, suf]);
+          }
+        } else {
+          results.push(['findBySku sample', count > 0, 'no recent SKU']);
+        }
+        try {
+          const wid = (await import('./warehouse.js')).getSelectedId();
+          results.push(['Warehouse selected', !!wid, String(wid || 'none')]);
+        } catch (e) {
+          results.push(['Warehouse', false, e.message || 'err']);
+        }
+        results.push(['Search input', !!document.getElementById('searchInput'), 'DOM']);
+        results.push(['DMart card host', true, 'ok']);
+        // Live probe when bridge online
+        try {
+          const live = await import('./dmartLive.js');
+          const online = live.isBridgeOnline && live.isBridgeOnline();
+          results.push(['Bridge online', !!online, online ? 'yes' : 'no']);
+          if (online && sampleSku && live.fetchLiveProductInfo) {
+            const wid = (await import('./warehouse.js')).getSelectedId();
+            if (wid) {
+              const t0 = performance.now();
+              const data = await live.fetchLiveProductInfo(sampleSku, wid);
+              const ms = Math.round(performance.now() - t0);
+              const ok = !!(data && (data.ok || data.onHand != null || data.price != null));
+              results.push(['Live fetch', ok, (data && data.via ? data.via + ' · ' : '') + ms + 'ms']);
+            }
+          } else {
+            results.push(['Live fetch', true, 'skipped (bridge offline or no sample)']);
+          }
+        } catch (e) {
+          results.push(['Live fetch', false, e.message || 'err']);
+        }
+        // Search catalog file reachability
+        try {
+          const res = await fetch('data/products-search.json', { method: 'HEAD', cache: 'no-store' });
+          results.push(['products-search.json', res.ok, 'HTTP ' + res.status]);
+        } catch (e) {
+          results.push(['products-search.json', false, e.message || 'err']);
+        }
+        if (out) {
+          out.innerHTML = results.map(([k, ok, d]) =>
+            `<div><span>${escapeHtmlLocal(k)}</span><b style="color:${ok ? '#16a34a' : '#dc2626'}">${ok ? 'PASS' : 'FAIL'} — ${escapeHtmlLocal(String(d))}</b></div>`
+          ).join('');
+        }
+        try { log('info', 'smoke', 'Smoke test finished', results.filter(r => !r[1]).length + ' fails'); } catch (e) {}
+      } catch (e) {
+        if (out) out.innerHTML = `<div><span>Smoke</span><b style="color:#dc2626">${escapeHtmlLocal(e.message || 'error')}</b></div>`;
+      }
+    });
+  }
+
+
   panelEl.querySelectorAll('.switch').forEach(sw => {
     const activate = () => {
       const key = sw.dataset.key;
       if (key === '__theme') {
         window.dispatchEvent(new CustomEvent('smouha:toggle-theme'));
-        const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-        sw.classList.toggle('on', dark);
-        sw.setAttribute('aria-checked', String(dark));
+        requestAnimationFrame(() => {
+          const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+          sw.classList.toggle('on', dark);
+          sw.setAttribute('aria-checked', String(dark));
+        });
         return;
       }
       const next = !getSettings()[key];

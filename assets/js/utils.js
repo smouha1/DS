@@ -50,3 +50,37 @@ export function debounce(fn, delay) {
 export function isDesktopPointer() {
   return window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 }
+
+
+/** Lightweight leveled logger — one place for site diagnostics. */
+const LOG_LEVELS = { error: 0, warn: 1, info: 2, debug: 3 };
+let logLevel = 2;
+export function setLogLevel(level) {
+  if (level in LOG_LEVELS) logLevel = LOG_LEVELS[level];
+  else if (typeof level === 'number') logLevel = level;
+}
+const logRing = [];
+const LOG_RING_MAX = 20;
+export function getRecentLogs() {
+  return logRing.slice();
+}
+export function log(level, scope, message, detail) {
+  try {
+    logRing.push({
+      t: Date.now(),
+      level: level || 'info',
+      scope: scope || '',
+      message: String(message || ''),
+      detail: detail != null ? String(detail).slice(0, 180) : ''
+    });
+    while (logRing.length > LOG_RING_MAX) logRing.shift();
+  } catch (e) {}
+
+  const lv = LOG_LEVELS[level] != null ? LOG_LEVELS[level] : 2;
+  if (lv > logLevel) return;
+  const prefix = '[smouha' + (scope ? ':' + scope : '') + ']';
+  const args = detail !== undefined ? [prefix, message, detail] : [prefix, message];
+  if (level === 'error') console.error.apply(console, args);
+  else if (level === 'warn') console.warn.apply(console, args);
+  else console.info.apply(console, args);
+}
