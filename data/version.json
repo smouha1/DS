@@ -1,12 +1,12 @@
 {
   "version": "1.9.6",
-  "build": 123,
+  "build": 125,
   "updated": "2026-09-19",
   "products": 41125,
   "changelogByVersion": [
     {
       "version": "1.9.6",
-      "build": 123,
+      "build": 125,
       "date": "2026-09-18",
       "items": [
         "Images: generate from primary barcode (EGY_<barcode>.JPG) — no image column in catalog",
@@ -15,7 +15,12 @@
         "Catalog replaced from new products.json (41125 products, no image column)",
         "Confirm add/remove popup fully redesigned (modern premium UI)",
         "Confirm modal: premium enter/exit animation with staggered content",
-        "Stock adjust confirm modal redesigned from scratch (glass premium, hero quantity)"
+        "Stock adjust confirm modal redesigned from scratch (glass premium, hero quantity)",
+        "Removed modal blur (less lag)",
+        "Premium redesign: adjust stock +/− and quantity stepper",
+        "Premium center result cards after add/remove (no blur)",
+        "Removed unused background image assets",
+        "Reserved fix: require onHand+reserved complete, two matching reads, no partial relay accept"
       ]
     },
     {
