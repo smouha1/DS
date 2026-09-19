@@ -175,28 +175,47 @@ function ensureAdjustModal() {
   modal.innerHTML = `
     <div class="dmart-adjust-modal-backdrop" data-adj-cancel></div>
     <div class="dmart-adjust-modal-card" role="dialog" aria-modal="true" aria-labelledby="dmartAdjTitle">
-      <div class="dmart-adj-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
-      </div>
-      <h2 id="dmartAdjTitle" class="dmart-adj-title">Confirm stock adjust</h2>
-      <div class="dmart-adj-product">
-        <div class="dmart-adj-img-wrap" id="dmartAdjImgWrap">
-          <img id="dmartAdjImg" alt="" />
+      <div class="dmart-adj-glow" aria-hidden="true"></div>
+      <div class="dmart-adj-shell">
+        <header class="dmart-adj-head">
+          <div class="dmart-adj-badge" id="dmartAdjBadge">Stock</div>
+          <h2 id="dmartAdjTitle" class="dmart-adj-title">Confirm change</h2>
+        </header>
+
+        <div class="dmart-adj-hero">
+          <div class="dmart-adj-hero-delta" id="dmartAdjDelta">−2</div>
+          <div class="dmart-adj-hero-label" id="dmartAdjAction">Decrease · 2</div>
         </div>
-        <div class="dmart-adj-product-meta">
-          <div class="dmart-adj-name" id="dmartAdjName"></div>
-          <div class="dmart-adj-rows">
-            <div class="dmart-adj-row"><span class="dmart-adj-k">SKU</span><span class="dmart-adj-v" id="dmartAdjSku"></span></div>
-            <div class="dmart-adj-row"><span class="dmart-adj-k">Available</span><span class="dmart-adj-v" id="dmartAdjAvail"></span></div>
-            <div class="dmart-adj-row"><span class="dmart-adj-k">Warehouse</span><span class="dmart-adj-v" id="dmartAdjWh"></span></div>
-            <div class="dmart-adj-row"><span class="dmart-adj-k">Action</span><span class="dmart-adj-v" id="dmartAdjAction"></span></div>
+
+        <div class="dmart-adj-product">
+          <div class="dmart-adj-img-wrap" id="dmartAdjImgWrap">
+            <img id="dmartAdjImg" alt="" />
+            <div class="dmart-adj-img-fallback" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+            </div>
+          </div>
+          <div class="dmart-adj-product-meta">
+            <div class="dmart-adj-name" id="dmartAdjName"></div>
+            <div class="dmart-adj-sku-line">SKU <span id="dmartAdjSku"></span></div>
           </div>
         </div>
-      </div>
-      <div class="dmart-adj-warn" dir="rtl">ميزة الحذف والاضافة متاحة حصريا فقط لفرع Smouha DS60 لدواعي الامان</div>
-      <div class="dmart-adj-actions">
-        <button type="button" class="dmart-adj-btn dmart-adj-cancel" data-adj-cancel>Cancel</button>
-        <button type="button" class="dmart-adj-btn dmart-adj-confirm" data-adj-confirm>Confirm</button>
+
+        <ul class="dmart-adj-meta" role="list">
+          <li><span class="dmart-adj-k">Available now</span><span class="dmart-adj-v" id="dmartAdjAvail">—</span></li>
+          <li><span class="dmart-adj-k">Warehouse</span><span class="dmart-adj-v" id="dmartAdjWh">—</span></li>
+        </ul>
+
+        <div class="dmart-adj-warn" dir="rtl">
+          <svg class="dmart-adj-warn-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="10"/></svg>
+          <span>ميزة الحذف والإضافة متاحة حصرياً لفرع Smouha DS60 لدواعي الأمان</span>
+        </div>
+
+        <div class="dmart-adj-actions">
+          <button type="button" class="dmart-adj-btn dmart-adj-cancel" data-adj-cancel>Cancel</button>
+          <button type="button" class="dmart-adj-btn dmart-adj-confirm" data-adj-confirm>
+            <span class="dmart-adj-confirm-label">Confirm</span>
+          </button>
+        </div>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -252,32 +271,73 @@ function openAdjustConfirm({ sku, direction, quantity, available }) {
     const img = modal.querySelector('#dmartAdjImg');
     const nameEl = modal.querySelector('#dmartAdjName');
     img.src = ctx.image || '';
-    img.alt = ctx.name;
+    img.alt = ctx.name || '';
     img.style.display = ctx.image ? '' : 'none';
-    nameEl.textContent = ctx.name + ' (' + sku + ')';
+    nameEl.textContent = ctx.name || ('SKU ' + sku);
     modal.querySelector('#dmartAdjSku').textContent = sku;
     modal.querySelector('#dmartAdjAvail').textContent =
-      available != null && Number.isFinite(available) ? available + ' Units' : '—';
+      available != null && Number.isFinite(available) ? String(available) + ' units' : '—';
     modal.querySelector('#dmartAdjWh').textContent = getWarehouseLabel();
     const act = modal.querySelector('#dmartAdjAction');
-    act.textContent = (isInc ? 'Increase' : 'Decrease') + ' · ' + quantity;
-    act.className = 'dmart-adj-v ' + (isInc ? 'is-inc' : 'is-dec');
+    act.textContent = (isInc ? 'Increase stock' : 'Decrease stock') + ' · ' + quantity;
+    act.className = 'dmart-adj-hero-label';
+    const delta = modal.querySelector('#dmartAdjDelta');
+    if (delta) {
+      delta.textContent = (isInc ? '+' : '−') + quantity;
+      delta.className = 'dmart-adj-hero-delta ' + (isInc ? 'is-inc' : 'is-dec');
+    }
+    const badge = modal.querySelector('#dmartAdjBadge');
+    if (badge) {
+      badge.textContent = isInc ? 'Add' : 'Remove';
+      badge.className = 'dmart-adj-badge ' + (isInc ? 'is-inc' : 'is-dec');
+    }
+    const title = modal.querySelector('#dmartAdjTitle');
+    if (title) title.textContent = isInc ? 'Confirm add to stock' : 'Confirm remove from stock';
+    const confirmLabel = modal.querySelector('.dmart-adj-confirm-label');
+    if (confirmLabel) confirmLabel.textContent = isInc ? 'Add to stock' : 'Remove from stock';
+    const card = modal.querySelector('.dmart-adjust-modal-card');
+    if (card) {
+      card.classList.toggle('is-inc', isInc);
+      card.classList.toggle('is-dec', !isInc);
+    }
 
     const confirmBtn = modal.querySelector('[data-adj-confirm]');
     confirmBtn.disabled = false;
+    modal.classList.remove('is-closing');
     modal.hidden = false;
+    // force reflow so enter animation restarts every open
+    void modal.offsetWidth;
+    modal.classList.add('is-open');
     document.body.classList.add('dmart-modal-open');
-    setTimeout(() => confirmBtn.focus(), 30);
+    setTimeout(() => { try { confirmBtn.focus(); } catch (e) {} }, 80);
 
     let settled = false;
     function close(val) {
       if (settled) return;
       settled = true;
-      modal.hidden = true;
-      document.body.classList.remove('dmart-modal-open');
       document.removeEventListener('keydown', onKey);
       modal.removeEventListener('click', onClick);
-      resolve(val);
+      modal.classList.remove('is-open');
+      modal.classList.add('is-closing');
+      const finish = () => {
+        modal.classList.remove('is-closing');
+        modal.hidden = true;
+        document.body.classList.remove('dmart-modal-open');
+        resolve(val);
+      };
+      let done = false;
+      const once = () => {
+        if (done) return;
+        done = true;
+        finish();
+      };
+      const card = modal.querySelector('.dmart-adjust-modal-card');
+      if (card) {
+        card.addEventListener('animationend', once, { once: true });
+        setTimeout(once, 320);
+      } else {
+        setTimeout(once, 220);
+      }
     }
     function onKey(e) {
       if (e.key === 'Escape') { e.preventDefault(); close(false); }

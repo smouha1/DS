@@ -18,6 +18,28 @@ export function parse(raw) {
     .filter(s => isValid(s));
 }
 
+
+/**
+ * Talabat darkstores image URL from primary barcode (first token).
+ * Spec: GTIN-14 starting with "0" → strip only the first zero for the path.
+ * Does NOT mutate the stored barcode field.
+ */
+export function imageUrlFromBarcodes(barcodesOrRaw) {
+  let list;
+  if (Array.isArray(barcodesOrRaw)) {
+    list = barcodesOrRaw.map((s) => String(s || '').trim()).filter(Boolean);
+  } else {
+    list = parse(barcodesOrRaw);
+  }
+  if (!list.length) return '';
+  let primary = String(list[0]).trim();
+  if (!primary) return '';
+  if (primary.length === 14 && primary.charAt(0) === '0' && /^\d{14}$/.test(primary)) {
+    primary = primary.slice(1);
+  }
+  return 'https://talabat.dhmedia.io/image/darkstores-eg/EGY_' + primary + '.JPG';
+}
+
 /** Basic validity check: alphanumeric, reasonable length for retail barcodes. */
 export function isValid(code) {
   if (!/^[0-9A-Za-z]+$/.test(code)) return false;

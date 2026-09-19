@@ -1,3 +1,4 @@
+import * as barcodeMod from './barcode.js';
 /* ============================================================================
    search.js — MODULE: productIndex + searchEngine + suggestions
    ------------------------------------------------------------------------
@@ -23,6 +24,23 @@
    ============================================================================ */
 
 let products = [];
+
+/** Attach dhmedia image URLs from primary barcode for all indexed products. */
+export function applyBarcodeImages() {
+  let n = 0;
+  for (const p of products) {
+    if (!p) continue;
+    const url = barcodeMod.imageUrlFromBarcodes(p.barcodes || []);
+    if (!url) continue;
+    p.image = url;
+    if (p.sku) {
+      imageBySku.set(p.sku, url);
+      n++;
+    }
+  }
+  return n;
+}
+
 let imageBySku = new Map();
 const bySku = new Map();
 const byBarcode = new Map();
@@ -227,22 +245,11 @@ function applyBuiltPayload(payload) {
 
 
 function fillImagesFromRecords(records) {
+  // Always derive image URLs from primary barcode (ignore stored/file image column)
+  try { applyBarcodeImages(); } catch (e) {}
   imageBySku.clear();
-  const list = Array.isArray(records) ? records : [];
-  for (let i = 0; i < list.length; i++) {
-    const r = list[i];
-    if (!r) continue;
-    const sku = String(r.sku || '');
-    const img = r.image || '';
-    if (sku && img) imageBySku.set(sku, img);
-    if (products[i] && !products[i].image && img) products[i].image = img;
-  }
-  // Ensure every product has catalog image when available
   for (const p of products) {
-    if (p && p.sku && !p.image) {
-      const u = imageBySku.get(p.sku);
-      if (u) p.image = u;
-    }
+    if (p && p.sku && p.image) imageBySku.set(p.sku, p.image);
   }
 }
 
@@ -296,6 +303,7 @@ export function build(records) {
     }
     nameSearchCache.push({ product: p, lowerName: p.name.toLowerCase() });
   }
+  try { applyBarcodeImages(); } catch (e) {}
   imageBySku.clear();
   for (const p of products) {
     if (p.sku && p.image) imageBySku.set(p.sku, p.image);
@@ -388,6 +396,7 @@ export function buildAsync(records) {
       if (start < products.length) {
         setTimeout(step, 0);
       } else {
+        try { applyBarcodeImages(); } catch (e) {}
         imageBySku.clear();
         for (const p of products) {
           if (p.sku && p.image) imageBySku.set(p.sku, p.image);

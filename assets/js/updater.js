@@ -56,10 +56,14 @@ export function getLastVersionInfo() { return lastVersionInfo; }
 /** Converts one raw [name, sku, barcodeRaw, image] row from products.json
  *  into the normalized shape stored in both IndexedDB and search.js. */
 function normalizeRawRow(row) {
-  const [name, sku, barcodeRaw, image] = row;
+  // Tuple may be [name, sku, barcode] or [name, sku, barcode, image] — image column ignored
+  const name = Array.isArray(row) ? row[0] : row.name;
+  const sku = Array.isArray(row) ? row[1] : row.sku;
+  const barcodeRaw = Array.isArray(row) ? row[2] : (row.barcode || row.barcodes);
   const barcodes = barcode.parse(barcodeRaw);
   const last6 = [...new Set(barcodes.filter(b => b.length >= 6).map(b => b.slice(-6)))];
-  return { sku: String(sku || ''), name: name || 'Unnamed product', barcodes, image: image || '', last6 };
+  const image = barcode.imageUrlFromBarcodes(barcodes);
+  return { sku: String(sku || ''), name: name || 'Unnamed product', barcodes, image, last6 };
 }
 
 async function fetchJson(url) {
@@ -70,15 +74,16 @@ async function fetchJson(url) {
 }
 
 function normalizeSearchRow(row) {
-  // Slim row: [name, sku, barcode] OR already-normalized object
+  // Slim row: [name, sku, barcode] OR already-normalized object — image always from barcode
   if (row && typeof row === 'object' && !Array.isArray(row)) {
-    const barcodes = row.barcodes || (row.barcode ? [String(row.barcode)] : []);
+    const barcodes = row.barcodes || (row.barcode ? barcode.parse(row.barcode) : []);
+    const list = Array.isArray(barcodes) ? barcodes.map(String) : [];
     return {
       sku: String(row.sku || ''),
       name: row.name || 'Unnamed product',
-      barcodes: Array.isArray(barcodes) ? barcodes.map(String) : [],
-      image: row.image || '',
-      last6: row.last6 || [],
+      barcodes: list,
+      image: barcode.imageUrlFromBarcodes(list),
+      last6: row.last6 || [...new Set(list.filter(b => b.length >= 6).map(b => b.slice(-6)))],
     };
   }
   const name = row[0];
@@ -86,34 +91,19 @@ function normalizeSearchRow(row) {
   const barcodeRaw = row[2];
   const barcodes = barcode.parse(barcodeRaw);
   const last6 = [...new Set(barcodes.filter(b => b.length >= 6).map(b => b.slice(-6)))];
-  return { sku: String(sku || ''), name: name || 'Unnamed product', barcodes, image: '', last6 };
+  return { sku: String(sku || ''), name: name || 'Unnamed product', barcodes, image: barcode.imageUrlFromBarcodes(barcodes), last6 };
 }
 
-/** Fill catalog images from full products.json without blocking search. */
-async function fillImagesFromFullCatalog() {
+/** Ensure every in-memory product has an image URL derived from its barcode. */
+function fillImagesFromBarcodes() {
   try {
-    const { text } = await fetchJson(PRODUCTS_URL);
-    const raw = JSON.parse(text);
-    if (!Array.isArray(raw)) return 0;
-    let n = 0;
-    for (const row of raw) {
-      if (!Array.isArray(row) || row.length < 4) continue;
-      const sku = String(row[1] || '');
-      const image = row[3] || '';
-      if (sku && image && /^https?:\/\//i.test(image)) {
-        try {
-          if (search.setCatalogImage) search.setCatalogImage(sku, image);
-          else if (search.setDmartImage) search.setDmartImage(sku, image);
-          n++;
-        } catch (e) {}
-      }
+    if (typeof search.applyBarcodeImages === 'function') {
+      return search.applyBarcodeImages();
     }
-    // Also attach onto in-memory products via imageBySku path in setDmartImage
-    return n;
   } catch (e) {
-    console.warn('[updater] full catalog image fill failed:', e);
-    return 0;
+    console.warn('[updater] barcode image fill failed:', e);
   }
+  return 0;
 }
 
 async function fetchAndImportProducts() {
@@ -124,7 +114,7 @@ async function fetchAndImportProducts() {
     const records = raw.map(normalizeSearchRow);
     await search.buildAsync(records);
     // Images from full file in background (non-blocking)
-    scheduleIdle(() => { fillImagesFromFullCatalog().catch(() => {}); });
+    scheduleIdle(() => { try { fillImagesFromBarcodes(); } catch (e) {} });
     return records;
   } catch (e) {
     console.info('[updater] products-search.json unavailable, using full products.json');

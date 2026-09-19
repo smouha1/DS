@@ -561,14 +561,19 @@ export function lookupProductViaBridge(sku, warehouseId, timeoutMs) {
   });
 }
 
-export async function fetchLiveProductInfo(sku, warehouseId) {
+export async function fetchLiveProductInfo(sku, warehouseId, opts = {}) {
   if (!sku || !warehouseId) {
     return { onHand: null, reserved: null, price: null, ok: false, reason: 'missing-ids' };
   }
 
   const cacheKey = `${warehouseId}::${sku}`;
+  const force = !!(opts && opts.force);
+  if (force) {
+    try { cache.delete(cacheKey); } catch (e) {}
+  }
   const cached = cache.get(cacheKey);
-  if (cached && hasCompleteLiveData(cached.data) && Date.now() - cached.at < CACHE_TTL_MS) {
+  // TTL cache only for background/internal reuse — explicit product selection always force-refreshes
+  if (!force && cached && hasCompleteLiveData(cached.data) && Date.now() - cached.at < CACHE_TTL_MS) {
     return { ...cached.data, ok: true, cached: true };
   }
 
@@ -728,6 +733,9 @@ export function requestLiveForProduct(sku) {
     return;
   }
 
+  // Always hit DMart on every product selection (even same SKU a second later)
+  try { cache.delete(String(warehouseId) + '::' + String(sku)); } catch (e) {}
+
   const startedAt = Date.now();
   let attempt = 0;
   let lastData = null;
@@ -750,7 +758,7 @@ export function requestLiveForProduct(sku) {
 
       attempt += 1;
       try {
-        const data = await fetchLiveProductInfo(sku, warehouseId);
+        const data = await fetchLiveProductInfo(sku, warehouseId, { force: true });
         if (!stillCurrent()) return;
 
         lastData = data;
