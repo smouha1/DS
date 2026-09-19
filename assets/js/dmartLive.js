@@ -600,8 +600,11 @@ export async function fetchLiveProductInfo(sku, warehouseId, opts = {}) {
       reserved: relay.reserved,
       price: relay.price,
     };
-    cache.set(cacheKey, { at: Date.now(), data });
-    return { ...data, ok: true, via: 'live-relay' };
+    if (hasCompleteLiveData(data)) {
+      cache.set(cacheKey, { at: Date.now(), data });
+      return { ...data, ok: true, via: 'live-relay' };
+    }
+    return { ...data, ok: false, reason: 'partial-data', via: 'live-relay' };
   }
 
   // Bridge present but auth missing
@@ -739,6 +742,8 @@ export function requestLiveForProduct(sku) {
   const startedAt = Date.now();
   let attempt = 0;
   let lastData = null;
+  // will be set on poll function object for consecutive-read check
+  const pollState = { stable: null };
 
   const stillCurrent = () => {
     const current = document.getElementById('dmartLiveCard');
@@ -766,6 +771,21 @@ export function requestLiveForProduct(sku) {
         // Do not replace the loading state with dashes just because the bridge
         // is waking up or returning a partial response. Keep polling instead.
         if (hasCompleteLiveData(data)) {
+          // Require two consecutive identical stock readings so transient
+          // Reserved (1–2) from a partial/racy API response is not shown as final.
+          const prev = pollState.stable;
+          const same = prev
+            && prev.onHand === data.onHand
+            && prev.reserved === data.reserved;
+          pollState.stable = {
+            onHand: data.onHand,
+            reserved: data.reserved,
+            price: data.price,
+          };
+          if (!same && attempt < 4) {
+            // Keep spinner; fetch again quickly for confirmation
+            continue;
+          }
           try { window.__smouhaLastLiveMs = Date.now() - startedAt; } catch (e) {}
           setLiveValues(root, { ...data, ok: true });
           return;

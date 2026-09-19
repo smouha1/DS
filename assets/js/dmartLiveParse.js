@@ -92,7 +92,9 @@ export function extractLiveFields(raw, sku) {
 
 export function hasCompleteLiveData(data) {
   if (!data) return false;
-  return data.onHand != null || data.reserved != null || data.price != null;
+  // Stock truth needs BOTH on-hand and reserved. Price alone (or one field) is partial
+  // and was causing Reserved to flash 1–2 then correct to 0 after refresh.
+  return data.onHand != null && data.reserved != null;
 }
 
 export function buildSearchUrl(base, entity, sku, warehouseId) {

@@ -114,7 +114,7 @@ function showCenterToast(html, className, ms) {
 
 function enableBoostMaxOnce() {
   boostMaxOnce = true;
-  showCenterToast('<span class="dmart-toast-on">On</span>', 'is-boost', 1100);
+  showCenterToast('<div class="dmart-toast-card is-boost"><span class="dmart-toast-on">On</span><div class="dmart-toast-label">Max 20 once</div></div>', 'is-boost', 1100);
   document.querySelectorAll('.dmart-adjust-qty').forEach((inp) => {
     inp.max = String(ADJUST_MAX_BOOST);
   });
@@ -368,20 +368,25 @@ function playSuccessOverlay(direction, quantity) {
   const label = isInc ? ('Added ' + quantity) : ('Removed ' + quantity);
   const colorClass = isInc ? 'is-inc' : 'is-dec';
   showCenterToast(
-    '<div class="dmart-toast-delta ' + colorClass + '">' + sign + quantity + '</div>' +
-    '<div class="dmart-toast-label ' + colorClass + '">' + label + '</div>',
+    '<div class="dmart-toast-card ' + colorClass + '">' +
+      '<div class="dmart-toast-delta">' + sign + quantity + '</div>' +
+      '<div class="dmart-toast-label">' + label + '</div>' +
+    '</div>',
     'is-result',
-    1300
+    1400
   );
 }
 
 function playFailOverlay() {
   showCenterToast(
-    '<div class="dmart-toast-fail" aria-hidden="true">' +
-    '<svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>' +
+    '<div class="dmart-toast-card is-fail">' +
+      '<div class="dmart-toast-fail" aria-hidden="true">' +
+        '<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>' +
+      '</div>' +
+      '<div class="dmart-toast-label">Failed</div>' +
     '</div>',
     'is-fail',
-    1100
+    1200
   );
 }
 
@@ -422,11 +427,20 @@ function buildAdjustPanelHtml(sku) {
   const safe = String(sku || '').replace(/"/g, '');
   return `
     <div class="dmart-adjust-panel" data-adjust-sku="${safe}" hidden>
-      <div class="dmart-adjust-title">Adjust stock</div>
-      <div class="dmart-adjust-row">
-        <button type="button" class="dmart-adjust-btn dmart-adjust-minus" data-adj="minus" aria-label="Decrease">−</button>
-        <input type="number" class="dmart-adjust-qty" min="1" max="5" value="1" inputmode="numeric" aria-label="Quantity" />
-        <button type="button" class="dmart-adjust-btn dmart-adjust-plus" data-adj="plus" aria-label="Increase">+</button>
+      <div class="dmart-adjust-title">
+        <span class="dmart-adjust-title-text">Adjust stock</span>
+        <span class="dmart-adjust-title-hint">1–5 units</span>
+      </div>
+      <div class="dmart-adjust-row" role="group" aria-label="Quantity">
+        <button type="button" class="dmart-adjust-btn dmart-adjust-minus" data-adj="minus" aria-label="Decrease">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 12h12"/></svg>
+        </button>
+        <div class="dmart-adjust-qty-wrap">
+          <input type="number" class="dmart-adjust-qty" min="1" max="5" value="1" inputmode="numeric" aria-label="Quantity" />
+        </div>
+        <button type="button" class="dmart-adjust-btn dmart-adjust-plus" data-adj="plus" aria-label="Increase">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg>
+        </button>
       </div>
       <div class="dmart-adjust-msg" data-adj-msg hidden></div>
     </div>`;
