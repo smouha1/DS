@@ -1,9 +1,23 @@
 {
-  "version": "1.9.5",
-  "build": 118,
-  "updated": "2026-09-17",
-  "products": 39994,
+  "version": "1.9.6",
+  "build": 123,
+  "updated": "2026-09-19",
+  "products": 41125,
   "changelogByVersion": [
+    {
+      "version": "1.9.6",
+      "build": 123,
+      "date": "2026-09-18",
+      "items": [
+        "Images: generate from primary barcode (EGY_<barcode>.JPG) — no image column in catalog",
+        "products.json slimmed (name, sku, barcode only)",
+        "DMart Live: force fresh request on every product selection (no stale stock cache)",
+        "Catalog replaced from new products.json (41125 products, no image column)",
+        "Confirm add/remove popup fully redesigned (modern premium UI)",
+        "Confirm modal: premium enter/exit animation with staggered content",
+        "Stock adjust confirm modal redesigned from scratch (glass premium, hero quantity)"
+      ]
+    },
     {
       "version": "1.9.5",
       "date": "2026-09-17",
