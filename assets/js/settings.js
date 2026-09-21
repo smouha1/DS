@@ -146,18 +146,44 @@ export function initSettingsPanel(elements, callbacks = {}) {
   applyGlobalModes();
   renderPanel();
 
-  elements.openBtn.addEventListener('click', () => openPanel());
-  elements.closeBtn.addEventListener('click', () => closePanel());
-  elements.backdrop.addEventListener('click', (e) => { if (e.target === elements.backdrop) closePanel(); });
+  // openBtn is wired in app.js (async import + openPanel); do not double-bind
+  if (elements.closeBtn) {
+    elements.closeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closePanel();
+    });
+  }
+  if (elements.backdrop) {
+    elements.backdrop.addEventListener('click', (e) => {
+      if (e.target === elements.backdrop) closePanel();
+    });
+  }
 }
 
+
 export function openPanel() {
-  if (!panelEl) return;
-  // Refresh content so newly added options always appear
-  try { renderPanel(); } catch (e) { /* ignore */ }
-  panelEl.closest('.settings-backdrop').classList.add('open');
+  const backdrop = document.getElementById('settingsBackdrop')
+    || (panelEl && panelEl.closest && panelEl.closest('.settings-backdrop'));
+  if (!backdrop) {
+    console.warn('[settings] settingsBackdrop not found');
+    return;
+  }
+  try { if (panelEl) renderPanel(); } catch (e) { console.warn('[settings] renderPanel', e); }
+  backdrop.classList.add('open');
+  backdrop.setAttribute('aria-hidden', 'false');
+  try {
+    const closeBtn = document.getElementById('settingsClose');
+    if (closeBtn) closeBtn.focus({ preventScroll: true });
+  } catch (e) {}
 }
-export function closePanel() { if (panelEl) panelEl.closest('.settings-backdrop').classList.remove('open'); }
+export function closePanel() {
+  const backdrop = document.getElementById('settingsBackdrop')
+    || (panelEl && panelEl.closest && panelEl.closest('.settings-backdrop'));
+  if (!backdrop) return;
+  backdrop.classList.remove('open');
+  backdrop.setAttribute('aria-hidden', 'true');
+}
 
 function toggleRowHtml(def) {
   const s = getSettings();
@@ -321,27 +347,48 @@ function openChangelogPopup(version, items) {
       </div>`;
     document.body.appendChild(backdrop);
     backdrop.addEventListener('click', (e) => {
-      if (e.target === backdrop) backdrop.classList.remove('open');
+      if (e.target === backdrop) {
+        backdrop.classList.remove('open');
+        backdrop.style.display = '';
+      }
     });
-    backdrop.querySelector('#changelogPopupClose').addEventListener('click', () => {
-      backdrop.classList.remove('open');
-    });
+    const closeBtn = backdrop.querySelector('#changelogPopupClose');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        backdrop.classList.remove('open');
+        backdrop.style.display = '';
+      });
+    }
   }
-  backdrop.querySelector('#changelogPopupTitle').textContent = 'v' + version;
+  const titleEl = backdrop.querySelector('#changelogPopupTitle');
+  if (titleEl) titleEl.textContent = 'v' + version;
   const list = backdrop.querySelector('#changelogPopupList');
-  list.innerHTML = (items && items.length)
-    ? items.map((it) => `<li>${escapeHtmlLocal(it)}</li>`).join('')
-    : '<li>No details</li>';
+  if (list) {
+    list.innerHTML = (items && items.length)
+      ? items.map((it) => `<li>${escapeHtmlLocal(it)}</li>`).join('')
+      : '<li>No details</li>';
+  }
   backdrop.classList.add('open');
+  backdrop.style.display = 'flex';
+  backdrop.style.zIndex = '13000';
 }
 
 function wireChangelogButtons(panel) {
+  if (!panel) return;
   const groups = getChangelogByVersion();
   panel.querySelectorAll('.changelog-ver-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const idx = Number(btn.dataset.clIdx);
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const idx = Number(btn.getAttribute('data-cl-idx'));
       const g = groups[idx];
-      if (g) openChangelogPopup(g.version, g.items);
+      if (g) {
+        openChangelogPopup(g.version, g.items || []);
+      } else {
+        openChangelogPopup(btn.textContent.replace(/^v/i, '').trim() || '—', ['No details for this version.']);
+      }
     });
   });
 }
@@ -432,12 +479,6 @@ async function renderPanel() {
         rows.push(['In-memory products', count > 0, String(count)]);
         if (v.products != null) {
           rows.push(['Count matches version.products', count === Number(v.products), count + ' vs ' + v.products]);
-        }
-        try {
-          const r = await fetch('data/products-search.json', { method: 'HEAD', cache: 'no-store' });
-          rows.push(['products-search.json', r.ok, 'HTTP ' + r.status]);
-        } catch (e) {
-          rows.push(['products-search.json', false, e.message || 'err']);
         }
         try {
           const r = await fetch('data/products.json', { method: 'HEAD', cache: 'no-store' });

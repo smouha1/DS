@@ -1,5 +1,10 @@
-/* appStore.js — localStorage persistence for recent / favorites / theme */
-const KEYS = { RECENT: 'tm_recent_searches', FAVS: 'tm_favorites', THEME: 'tm_theme' };
+/* appStore.js — localStorage persistence for recent / favorites / theme / last Available */
+const KEYS = {
+  RECENT: 'tm_recent_searches',
+  FAVS: 'tm_favorites',
+  THEME: 'tm_theme',
+  LAST_AVAIL: 'tm_recent_last_available',
+};
 const MAX_RECENT = 20;
 
 function safeGet(key, fallback) {
@@ -33,6 +38,45 @@ export function addRecent(sku) {
 
 export function clearRecent() {
   safeSet(KEYS.RECENT, []);
+  // keep last-available history so re-adding SKU can still show old qty
+}
+
+/** Map sku -> last known Available (number). Survives refresh. */
+export function getLastAvailableMap() {
+  const m = safeGet(KEYS.LAST_AVAIL, {});
+  return m && typeof m === 'object' ? m : {};
+}
+
+export function getLastAvailable(sku) {
+  const m = getLastAvailableMap();
+  const v = m[String(sku)];
+  if (v == null || v === '') return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+export function setLastAvailable(sku, onHand) {
+  if (sku == null || sku === '') return;
+  if (onHand == null || !Number.isFinite(Number(onHand))) return;
+  const m = getLastAvailableMap();
+  m[String(sku)] = Number(onHand);
+  // cap map size loosely
+  const keys = Object.keys(m);
+  if (keys.length > 80) {
+    const recent = getRecent();
+    const keep = new Set(recent.map(String));
+    for (const k of keys) {
+      if (!keep.has(k) && keys.length > 60) delete m[k];
+    }
+  }
+  safeSet(KEYS.LAST_AVAIL, m);
+  try {
+    window.dispatchEvent(
+      new CustomEvent('smouha:last-available', {
+        detail: { sku: String(sku), available: Number(onHand) },
+      })
+    );
+  } catch (e) {}
 }
 
 export function getFavs() {
@@ -63,11 +107,13 @@ export function setTheme(t) {
   safeSet(KEYS.THEME, t);
 }
 
-/** Namespace object matching the legacy `store` IIFE API */
 export const store = {
   getRecent,
   addRecent,
   clearRecent,
+  getLastAvailable,
+  getLastAvailableMap,
+  setLastAvailable,
   getFavs,
   isFav,
   toggleFav,

@@ -140,7 +140,7 @@ const ui = (() => {
       applyTheme(next);
       store.setTheme(next);
       try { window.dispatchEvent(new CustomEvent('smouha:theme-changed', { detail: { theme: next } })); } catch (e) {}
-      setTimeout(() => { ov.classList.remove('run'); ov.className = 'theme-wipe-overlay'; }, 620);
+      setTimeout(() => { ov.classList.remove('run'); ov.className = 'theme-wipe-overlay'; }, 820);
     });
   }
 
@@ -270,8 +270,9 @@ const ui = (() => {
         if (state.moved) return;
         e.preventDefault();
         e.stopPropagation();
+        if (e.stopImmediatePropagation) e.stopImmediatePropagation();
         pickFromItem(state.item);
-      });
+      }, true);
 
       els.suggestionsBox.addEventListener('pointercancel', () => { tapState = null; });
 
@@ -512,6 +513,10 @@ function renderSuggestions(matches, query) {
       els.suggestionsBox.innerHTML = `<div class="suggestion-empty">No matches for "${escapeHtml(query)}"</div>`;
       els.suggestionsBox.classList.add('open');
       els.suggestionsBox.hidden = false;
+      try {
+        const row = document.querySelector('.search-main-row');
+        if (row) row.classList.add('suggestions-open');
+      } catch (e) {}
       els.searchInput.setAttribute('aria-expanded', 'true');
       return;
     }
@@ -537,6 +542,10 @@ function renderSuggestions(matches, query) {
     }).join('');
     els.suggestionsBox.classList.add('open');
     els.suggestionsBox.hidden = false;
+    try {
+      const row = document.querySelector('.search-main-row');
+      if (row) row.classList.add('suggestions-open');
+    } catch (e) {}
     els.searchInput.setAttribute('aria-expanded', 'true');
     els.suggestionsBox._suggestionProducts = matches.map((m) => m.product);
   }
@@ -550,6 +559,10 @@ function renderSuggestions(matches, query) {
 
   function closeSuggestions() {
     els.suggestionsBox.classList.remove('open');
+    try {
+      const row = document.querySelector('.search-main-row');
+      if (row) row.classList.remove('suggestions-open');
+    } catch (e) {}
     els.searchInput.setAttribute('aria-expanded', 'false');
     currentSuggestions = [];
     activeSuggestionIndex = -1;
@@ -1703,7 +1716,7 @@ function renderSuggestions(matches, query) {
     if (!products.length) {
       list.innerHTML = '<div class="panel-empty">No recent searches yet.</div>';
     } else {
-      list.innerHTML = products.map(p => panelItemHtml(p)).join('');
+      list.innerHTML = products.map(p => panelItemHtml(p, { showAvailable: true })).join('');
       wirePanelItems(list, products);
     }
     const clearBtn = document.getElementById('inlineClearRecent');
@@ -1761,15 +1774,29 @@ function renderSuggestions(matches, query) {
     wirePanelItems(els.favList, products);
   }
 
-  function panelItemHtml(p) {
+  function panelItemHtml(p, opts) {
     const thumb = resolveProductThumb(p);
+    const showAvail = !!(opts && opts.showAvailable);
+    let qtyHtml = '';
+    if (showAvail) {
+      let q = null;
+      try {
+        q = (typeof store.getLastAvailable === 'function') ? store.getLastAvailable(p.sku) : null;
+      } catch (e) { q = null; }
+      const has = q != null && Number.isFinite(Number(q));
+      const n = has ? Number(q) : null;
+      const cls = has ? (n > 0 ? 'is-positive' : 'is-zero') : 'is-unknown';
+      const label = has ? String(n) : '—';
+      qtyHtml = '<span class="panel-qty ' + cls + '" title="Last Available">' + label + '</span>';
+    }
     return `
-      <div class="panel-item" data-sku="${escapeAttr(p.sku)}">
+      <div class="panel-item${showAvail ? ' panel-item-with-qty' : ''}" data-sku="${escapeAttr(p.sku)}">
         <img class="panel-thumb" src="${escapeAttr(thumb)}" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${placeholderImg()}'">
         <div class="panel-text">
           <div class="panel-name">${escapeHtml(p.name)}</div>
           <div class="panel-sub">SKU ${escapeHtml(p.sku)}</div>
         </div>
+        ${qtyHtml}
       </div>`;
   }
   function wirePanelItems(container, products) {
@@ -1941,26 +1968,48 @@ function renderSuggestions(matches, query) {
   }
 
   function initSettingsTrigger() {
-    if (!els.settingsBtn) return;
+    const btn = els.settingsBtn || document.getElementById('settingsBtn');
+    if (!btn) return;
     let initialized = false;
-    els.settingsBtn.addEventListener('click', async () => {
-      const mod = await loadSettingsModule();
-      if (!initialized) {
-        mod.initSettingsPanel(
-          { panel: els.settingsPanel, openBtn: els.settingsBtn, closeBtn: els.settingsClose, backdrop: els.settingsBackdrop },
-          { onForceUpdateResult: (r) => toast(r.ok ? 'Database Updated Successfully' : 'Update failed — check your connection') }
-        );
-        initialized = true;
+    let opening = false;
+    btn.addEventListener('click', async (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (opening) return;
+      opening = true;
+      try {
+        const mod = await loadSettingsModule();
+        const panel = els.settingsPanel || document.getElementById('settingsPanel');
+        const closeBtn = els.settingsClose || document.getElementById('settingsClose');
+        const backdrop = els.settingsBackdrop || document.getElementById('settingsBackdrop');
+        if (!initialized) {
+          mod.initSettingsPanel(
+            { panel, openBtn: btn, closeBtn, backdrop },
+            { onForceUpdateResult: (r) => toast(r.ok ? 'Database Updated Successfully' : 'Update failed — check your connection') }
+          );
+          initialized = true;
+        }
+        mod.openPanel();
+      } catch (err) {
+        console.error('[settings] open failed', err);
+        try { toast('Settings failed to open', 'error'); } catch (e) {}
+      } finally {
+        opening = false;
       }
-      mod.openPanel();
     });
-    els.settingsBackdrop.addEventListener('click', (e) => {
-      if (e.target === els.settingsBackdrop) returnFocusToSearch();
-    });
+    const bd = els.settingsBackdrop || document.getElementById('settingsBackdrop');
+    if (bd) {
+      bd.addEventListener('click', (e) => {
+        if (e.target === bd) returnFocusToSearch();
+      });
+    }
 
     // When QR Code or Performance Mode is toggled, only swap the barcode
     // area — never rebuild the whole product card (that caused freezes).
     window.addEventListener('smouha:recent-layout', () => {
+      try { fillInlineRecent(); } catch (e) { /* ignore */ }
+    });
+    window.addEventListener('smouha:last-available', () => {
       try { fillInlineRecent(); } catch (e) { /* ignore */ }
     });
     window.addEventListener('smouha:settings-barcode', () => {
@@ -2036,16 +2085,36 @@ function renderSuggestions(matches, query) {
     rot.setAttribute('role', 'button');
     rot.setAttribute('tabindex', '0');
     rot.setAttribute('title', 'Open team list');
-    const open = () => {
+    const open = (e) => {
       try {
+        // Never steal taps meant for product suggestions.
+        // NOTE: closeSuggestions() removes the 'open'/'suggestions-open' classes
+        // *synchronously* the moment a suggestion is picked — before the browser
+        // dispatches the trailing ghost click/tap at the same screen coordinates.
+        // So on mobile, by the time that ghost click reaches here, both class
+        // checks below have already gone stale (classes are already removed) and
+        // fail to block it — that's exactly why tapping the first suggestion could
+        // immediately re-open Team Rotator underneath it. The time-based guard
+        // (same one used for the product image ghost-tap in image.js) is set
+        // *before* the classes are removed, so it still catches this window.
+        if (window.__smouhaIgnoreTapUntil && Date.now() < window.__smouhaIgnoreTapUntil) return;
+        if (els.suggestionsBox && els.suggestionsBox.classList.contains('open')) return;
+        if (document.querySelector('.search-main-row.suggestions-open')) return;
+        if (e) { e.preventDefault(); e.stopPropagation(); }
         if (els.teamLinkBtn) els.teamLinkBtn.click();
         else if (els.teamModal) {
           els.teamModal.classList.add('open');
           els.teamModal.removeAttribute('hidden');
         }
-      } catch (e) {}
+      } catch (err) {}
     };
-    rot.addEventListener('click', open);
+    rot.addEventListener('click', open, true);
+    rot.addEventListener('pointerup', (e) => {
+      if (els.suggestionsBox && els.suggestionsBox.classList.contains('open')) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, true);
     rot.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
     });
@@ -2391,13 +2460,6 @@ window.addEventListener('smouha:db-updated', (ev) => {
   } catch (e) {}
 });
 
-/* Soft PWA install capture (no forced UI) */
-window.addEventListener('beforeinstallprompt', (e) => {
-  try {
-    e.preventDefault();
-    window.__smouhaPwaEvent = e;
-  } catch (err) {}
-});
 
 window.addEventListener('smouha:db-update-failed', (ev) => {
   try {

@@ -6,6 +6,7 @@
    ============================================================================ */
 
 import { getSelectedId, getSelected, getDisplayName } from './warehouse.js';
+import { setLastAvailable } from './appStore.js';
 
 const ADJUST_MAX_DEFAULT = 5;
 const ADJUST_MAX_BOOST = 20;
@@ -561,6 +562,7 @@ function bindAdjustPanel(root, sku) {
 
     const applyValues = () => {
       if (d.available != null || d.reserved != null || d.price != null) {
+        try { if (d.available != null && sku) setLastAvailable(sku, d.available); } catch (e) {}
         setLiveValues(root, {
           onHand: d.available != null ? d.available : null,
           reserved: d.reserved != null ? d.reserved : null,

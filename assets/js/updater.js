@@ -45,7 +45,6 @@ function scheduleIdle(fn) {
 }
 
 const PRODUCTS_URL = 'data/products.json';
-const PRODUCTS_SEARCH_URL = 'data/products-search.json';
 
 let lastLoadSource = 'none'; // 'indexeddb' | 'network' | 'none' — for the Developer panel
 let lastVersionInfo = null;  // parsed version.json, for the Developer panel / footer
@@ -73,26 +72,6 @@ async function fetchJson(url) {
   return { text, json: JSON.parse(text) };
 }
 
-function normalizeSearchRow(row) {
-  // Slim row: [name, sku, barcode] OR already-normalized object — image always from barcode
-  if (row && typeof row === 'object' && !Array.isArray(row)) {
-    const barcodes = row.barcodes || (row.barcode ? barcode.parse(row.barcode) : []);
-    const list = Array.isArray(barcodes) ? barcodes.map(String) : [];
-    return {
-      sku: String(row.sku || ''),
-      name: row.name || 'Unnamed product',
-      barcodes: list,
-      image: barcode.imageUrlFromBarcodes(list),
-      last6: row.last6 || [...new Set(list.filter(b => b.length >= 6).map(b => b.slice(-6)))],
-    };
-  }
-  const name = row[0];
-  const sku = row[1];
-  const barcodeRaw = row[2];
-  const barcodes = barcode.parse(barcodeRaw);
-  const last6 = [...new Set(barcodes.filter(b => b.length >= 6).map(b => b.slice(-6)))];
-  return { sku: String(sku || ''), name: name || 'Unnamed product', barcodes, image: barcode.imageUrlFromBarcodes(barcodes), last6 };
-}
 
 /** Ensure every in-memory product has an image URL derived from its barcode. */
 function fillImagesFromBarcodes() {
@@ -107,22 +86,12 @@ function fillImagesFromBarcodes() {
 }
 
 async function fetchAndImportProducts() {
-  // 1) Prefer slim search catalog (no image URLs) for faster download + index
-  try {
-    const { text } = await fetchJson(PRODUCTS_SEARCH_URL);
-    const raw = JSON.parse(text);
-    const records = raw.map(normalizeSearchRow);
-    await search.buildAsync(records);
-    // Images from full file in background (non-blocking)
-    scheduleIdle(() => { try { fillImagesFromBarcodes(); } catch (e) {} });
-    return records;
-  } catch (e) {
-    console.info('[updater] products-search.json unavailable, using full products.json');
-  }
+  // Single catalog: products.json only. Image URLs derived client-side from barcodes.
   const { text } = await fetchJson(PRODUCTS_URL);
   const raw = JSON.parse(text);
   const records = raw.map(normalizeRawRow);
   await search.buildAsync(records);
+  try { fillImagesFromBarcodes(); } catch (e) {}
   return records;
 }
 

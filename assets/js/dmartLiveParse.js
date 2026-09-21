@@ -64,8 +64,9 @@ export function extractLiveFields(raw, sku) {
   const onHand = findNumericField(node, [
     'on_hand_quantity', 'onHandQuantity', 'on_hand', 'onHand',
   ]);
+  // Prefer explicit reserved_quantity only — generic "reserved" can be a flag/object
   const reserved = findNumericField(node, [
-    'reserved_quantity', 'reservedQuantity', 'reserved',
+    'reserved_quantity', 'reservedQuantity', 'reserved_qty', 'reservedQty',
   ]);
   const priceKeys = [
     'selling_price', 'sellingPrice',

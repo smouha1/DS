@@ -32,6 +32,7 @@ import {
   buildAdjustPanelHtml,
   bindAdjustPanel,
 } from './dmartAdjust.js';
+import { setLastAvailable } from './appStore.js';
 
 const ENTITY = 'HF_EG';
 const BFF_BASE = 'https://im-bff-live-me.deliveryhero.io/v2/entity';
@@ -39,7 +40,7 @@ const CACHE_TTL_MS = 30_000;
 const REQUEST_TIMEOUT_MS = 10_000;
 const BRIDGE_TIMEOUT_MS = 12_000;
 const LIVE_MAX_WAIT_MS = 60_000;
-const LIVE_RETRY_DELAYS_MS = [0, 900, 1500, 2500, 4000, 6000, 9000, 12000];
+const LIVE_RETRY_DELAYS_MS = [0, 350, 500, 700, 1000, 1500, 2500, 4000];
 const TOKEN_KEY = 'smouha_dmart_token';
 
 /* Supabase read-only mirror (anon). Written by the PC extension — never holds DMart token. */
@@ -172,11 +173,15 @@ function requestViaExtensionOnce(sku, warehouseId, timeoutMs) {
       markBridgeReady();
 
       if (data.success && data.data) {
+        const onHand = Number(data.data.available);
+        const reserved = Number(data.data.reserved);
+        const price = Number(data.data.price);
         finish({
           ok: true,
-          onHand: data.data.available != null ? data.data.available : null,
-          reserved: data.data.reserved != null ? data.data.reserved : null,
-          price: data.data.price != null ? data.data.price : null,
+          onHand: Number.isFinite(onHand) ? onHand : null,
+          // Treat negative / non-finite as missing (never invent reserved)
+          reserved: Number.isFinite(reserved) && reserved >= 0 ? reserved : null,
+          price: Number.isFinite(price) ? price : null,
           via: 'extension',
         });
         return;
@@ -257,13 +262,15 @@ async function fetchViaDirect(sku, warehouseId) {
       return { onHand: null, reserved: null, price: null, ok: false, reason: 'no-fields' };
     }
 
-    return {
+    const data = {
       onHand: fields.onHand,
       reserved: fields.reserved,
       price: fields.price,
-      ok: true,
-      via: 'direct',
     };
+    if (hasCompleteLiveData(data)) {
+      return { ...data, ok: true, via: 'direct' };
+    }
+    return { ...data, ok: false, reason: 'partial-data', via: 'direct' };
   } catch (e) {
     const status = e && e.status;
     let reason = 'fetch-failed';
@@ -328,13 +335,16 @@ async function fetchViaLiveRelay(sku, warehouseId) {
     }
     const id = row.id;
 
-    // 2) Poll for done/error (max ~9s, target <3s when PC extension is awake)
-    const deadline = Date.now() + 7000;
+    // 2) Poll for done/error — tight cadence; extension polls pending ~400ms
+    const deadline = Date.now() + 6000;
+    let pollN = 0;
     while (Date.now() < deadline) {
       if (aborted()) {
         return { ok: false, reason: 'aborted', onHand: null, reserved: null, price: null };
       }
-      await sleep(200);
+      // First probe ASAP (extension may already be mid-cycle), then ~120ms
+      if (pollN > 0) await sleep(pollN === 1 ? 100 : 120);
+      pollN += 1;
       if (aborted()) {
         return { ok: false, reason: 'aborted', onHand: null, reserved: null, price: null };
       }
@@ -425,10 +435,8 @@ export function updateBridgeStatusUi() {
   }
   // In-card status next to DMART title
   document.querySelectorAll('.dmart-conn-status').forEach((node) => {
-    node.classList.toggle('is-online', online);
-    node.classList.toggle('is-offline', !online);
-    node.textContent = online ? 'Online' : 'Offline';
-    node.setAttribute('data-state', online ? 'online' : 'offline');
+    node.hidden = true;
+    node.style.display = 'none';
   });
   // Show/hide adjust panels on live cards
   document.querySelectorAll('.dmart-adjust-panel').forEach((panel) => {
@@ -681,12 +689,30 @@ export function setLiveValues(root, data) {
   const avail = root.querySelector('[data-live="available"]');
   const res = root.querySelector('[data-live="reserved"]');
   const price = root.querySelector('[data-live="price"]');
-  if (avail) avail.textContent = formatUnits(data.onHand);
-  if (res) res.textContent = formatUnits(data.reserved);
-  if (price) price.textContent = formatPrice(data.price);
+  // Only paint stock numbers when the payload is complete + ok.
+  // Partial/error payloads used to leak a fake Reserved (1–2) until page refresh.
+  const complete = !!(data && data.ok && data.onHand != null && data.reserved != null);
+  if (complete) {
+    if (avail) avail.textContent = formatUnits(data.onHand);
+    if (res) res.textContent = formatUnits(data.reserved);
+    if (price) price.textContent = formatPrice(data.price);
+    try {
+      const sku =
+        (root && root.getAttribute && root.getAttribute('data-sku')) ||
+        (data && data.sku) ||
+        '';
+      if (sku) setLastAvailable(sku, data.onHand);
+    } catch (e) { /* ignore */ }
+  } else if (data && data.ok === false && !root.classList.contains('is-loading')) {
+    // Terminal failure: clear numbers so a stale Reserved cannot stick
+    if (avail) avail.textContent = data.onHand != null ? formatUnits(data.onHand) : '—';
+    if (res) res.textContent = '—';
+    if (price) price.textContent = data.price != null ? formatPrice(data.price) : '—';
+  }
+  // While loading / partial: leave existing "…" from setLiveLoading
   root.classList.remove('is-loading');
   root.classList.toggle('is-error', !data.ok);
-  root.classList.toggle('is-ready', !!data.ok);
+  root.classList.toggle('is-ready', !!complete);
   const status = root.querySelector('[data-live="status"]');
   if (status) {
     if (data.ok) {
@@ -743,7 +769,7 @@ export function requestLiveForProduct(sku) {
   let attempt = 0;
   let lastData = null;
   // will be set on poll function object for consecutive-read check
-  const pollState = { stable: null };
+  const pollState = { stable: null, matches: 0 };
 
   const stillCurrent = () => {
     const current = document.getElementById('dmartLiveCard');
@@ -771,23 +797,37 @@ export function requestLiveForProduct(sku) {
         // Do not replace the loading state with dashes just because the bridge
         // is waking up or returning a partial response. Keep polling instead.
         if (hasCompleteLiveData(data)) {
-          // Require two consecutive identical stock readings so transient
-          // Reserved (1–2) from a partial/racy API response is not shown as final.
+          // Consecutive identical readings. If Reserved > 0, demand 3 matches
+          // (phantom 1–2 often clears on a later poll without a full page refresh).
           const prev = pollState.stable;
           const same = prev
             && prev.onHand === data.onHand
             && prev.reserved === data.reserved;
-          pollState.stable = {
-            onHand: data.onHand,
-            reserved: data.reserved,
-            price: data.price,
-          };
-          if (!same && attempt < 4) {
-            // Keep spinner; fetch again quickly for confirmation
+          if (same) {
+            pollState.matches = (pollState.matches || 1) + 1;
+          } else {
+            pollState.matches = 1;
+            pollState.stable = {
+              onHand: data.onHand,
+              reserved: data.reserved,
+              price: data.price,
+            };
+          }
+          // live-relay (mobile via Supabase) already waited for a fresh PC→DMart
+          // round-trip — requiring 2–3 matches meant 2–3 full relay cycles (~10s+).
+          // Direct extension on PC still uses multi-match to filter phantom Reserved.
+          const viaRelay = data.via === 'live-relay';
+          const need = viaRelay ? 1 : ((data.reserved > 0) ? 3 : 2);
+          if ((pollState.matches || 0) < need && attempt < 6) {
             continue;
           }
           try { window.__smouhaLastLiveMs = Date.now() - startedAt; } catch (e) {}
-          setLiveValues(root, { ...data, ok: true });
+          setLiveValues(root, {
+            onHand: data.onHand,
+            reserved: data.reserved,
+            price: data.price,
+            ok: true,
+          });
           return;
         }
 
@@ -823,15 +863,20 @@ export function requestLiveForProduct(sku) {
 
     if (!stillCurrent()) return;
 
-    // One final state after the bounded wait. Keep the UI honest instead of
-    // showing stale/ambiguous values forever.
-    setLiveValues(root, lastData || {
-      ok: false,
-      reason: 'bridge-timeout',
-      onHand: null,
-      reserved: null,
-      price: null,
-    });
+    // Only accept a fully complete + stable pair. Never paint partial lastData
+    // (that was the main source of a phantom Reserved until refresh).
+    const stable = pollState.stable;
+    if (stable && stable.onHand != null && stable.reserved != null) {
+      setLiveValues(root, { ...stable, ok: true });
+    } else {
+      setLiveValues(root, {
+        ok: false,
+        reason: (lastData && lastData.reason) || 'bridge-timeout',
+        onHand: null,
+        reserved: null,
+        price: null,
+      });
+    }
   };
 
   poll().catch((e) => {
@@ -847,8 +892,7 @@ export function liveCardHtml(sku) {
     <div class="dmart-live-card" id="dmartLiveCard" data-sku="${safe}" aria-live="polite">
       <div class="dmart-live-title-row">
         <div class="dmart-live-title">DMart</div>
-        <span class="dmart-conn-status is-offline" data-state="offline">Offline</span>
-      </div>
+</div>
       <div class="dmart-live-row dmart-live-available-row"><span class="dmart-live-label">Available</span><span class="dmart-live-value dmart-live-available" data-live="available">…</span></div>
       <div class="dmart-live-row dmart-live-reserved-row"><span class="dmart-live-label">Reserved</span><span class="dmart-live-value dmart-live-reserved" data-live="reserved">…</span></div>
       <div class="dmart-live-row dmart-live-price-row"><span class="dmart-live-label">Price</span><span class="dmart-live-value dmart-live-price" data-live="price">…</span></div>
