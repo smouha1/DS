@@ -20,12 +20,7 @@
   flex:0 1 56%;
   min-width:200px;
 }
-.search-row-actions{
-  width:56%;
-  max-width:56%;
-  margin:0;
-  justify-content:flex-start;
-}
+
 .search-stats{
   width:56%;
   max-width:56%;
@@ -293,7 +288,7 @@
   border-color:var(--primary);
   color:var(--primary-dark);
 }
-.search-row-actions{display:none !important;} /* pelican moved inside */
+ /* pelican moved inside */
 
 /* Ashraf special glow */
 .team-rotator.is-ashraf .team-rotator-text{
@@ -345,7 +340,7 @@
 }
 @media (max-width:720px){.search-abc-btn{display:inline-flex !important;}}
 .search-abc-btn.is-letters{background:var(--primary-light);border-color:var(--primary);color:var(--primary-dark);}
-.search-row-actions{display:none !important;}
+
 .team-rotator.is-ashraf .team-rotator-text{
   background:linear-gradient(90deg,#FF6B00,#ff9a4d,#FF6B00);background-size:200% 100%;
   -webkit-background-clip:text;background-clip:text;color:transparent;
@@ -362,7 +357,7 @@
 .search-input-shell .clear-btn[hidden].visible{display:flex !important;}
 .search-input-shell .clear-btn svg{width:16px;height:16px;}
 
-.search-box-wrap{position:relative !important;}
+.search-box-wrap{position:relative;}
 .suggestions{
   position:absolute;top:calc(100% + 6px);left:0;right:0;
   display:none;z-index:80;
@@ -587,9 +582,9 @@
 /* Mobile: keep search always on screen (keyboard-safe) */
 @media (max-width:720px){
   .search-section{
-    position:sticky !important;
+    position:sticky;
     top:0;
-    z-index:60 !important;
+    z-index:60;
     background:var(--glass-bg, rgba(255,255,255,.92));
     backdrop-filter:blur(10px);
     -webkit-backdrop-filter:blur(10px);
@@ -637,8 +632,6 @@
   user-select:none;
   -webkit-user-select:none;
 }
-
-
 
 
 /* Hide empty search-stats strip (No results rectangle) */
@@ -709,7 +702,7 @@
   .search-section{
     position:sticky !important;
     top:0;
-    z-index:40 !important;
+    z-index:40;
   }
   /* Reduce sticky block height: tighter padding */
   .search-section{
@@ -815,11 +808,54 @@
 }
 
 /* Premium recent scrollbar fallback */
-.suggestions, .recent-dropdown{
-  scrollbar-width:thin;
-  scrollbar-color:rgba(80,120,150,.45) transparent;
-}
+
 
 /* icon family final */
 .search-input-shell svg{stroke-width:1.75!important;}
 .search-inline-btn svg{width:18px;height:18px;}
+
+
+.suggestions.open{z-index:120 !important;}
+}
+
+
+/* ===== FIX: suggestion taps must never hit team rotator (mobile) ===== */
+.search-box-wrap{
+  position:relative !important;
+  z-index:200 !important;
+}
+.suggestions,
+.suggestions.open{
+  position:absolute !important;
+  top:calc(100% + 6px) !important;
+  left:0 !important;
+  right:0 !important;
+  z-index:300 !important;
+  pointer-events:auto !important;
+}
+.suggestion-item{
+  pointer-events:auto !important;
+  position:relative;
+  z-index:1;
+}
+/* While suggestions are open: completely remove rotator from hit-testing + layout overlap */
+.search-main-row.suggestions-open .team-rotator{
+  display:none !important;
+}
+@media (max-width:720px){
+  .search-section{
+    z-index:200 !important;
+    overflow:visible !important;
+  }
+  .search-main-row{
+    overflow:visible !important;
+  }
+  .search-box-wrap{
+    z-index:250 !important;
+    overflow:visible !important;
+  }
+  .suggestions.open{
+    z-index:400 !important;
+    max-height:min(55vh, 360px);
+  }
+}

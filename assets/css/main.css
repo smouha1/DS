@@ -1,53 +1,101 @@
 /* ============================================================
-   DESIGN TOKENS
+   DESIGN TOKENS — Crystal Aqua Enterprise
+   (Consolidated 2024: this used to be split across THREE separate
+   :root blocks added at different times — "DESIGN TOKENS", "UI
+   POLISH v2", "UI FINAL PASS" — each redefining --primary, --text,
+   --radius, --stroke/--surface-2, etc with slightly different
+   values. That meant half the tokens were silently overridden by
+   whichever block happened to load last. Everything now lives here,
+   in one place, using the values that were actually winning before
+   this cleanup — so appearance is unchanged, but there's now exactly
+   one source of truth per token.)
    ============================================================ */
 :root{
-  /* Crystal Aqua Enterprise — Talabat orange + soft aqua surfaces */
+  /* Brand */
   --primary:#FF6B00;
   --primary-dark:#e35f00;
   --primary-light:#fff1e6;
+  --primary-soft:rgba(255,107,0,.12);
+
+  /* Aqua background family (same hues, kept under their historical
+     names since all three are still referenced around the codebase) */
   --bg:#B9DFF0;
-  --card:rgba(255,255,255,.60);
-  --text:#1b1d21;
-  --text-muted:#5c6b73;
-  --border:#D5E4E8;
-  --success:#16a34a;
-  --danger:#dc2626;
-  --radius:16px;
-  --radius-sm:12px;
-  --shadow-sm:0 1px 2px rgba(20,40,50,.04);
-  --shadow-md:0 4px 14px rgba(20,40,50,.06);
-  --shadow-lg:0 10px 28px rgba(20,40,50,.08);
-  --transition:150ms ease;
+  --bg-aqua:#A8D8EC;
+  --bg-aqua-top:#C8EAF6;
+  --bg-aqua-bot:#8EC8E0;
+  --smouha-aqua:#A8D8EC;
+  --smouha-aqua-bright:#C8EAF6;
+  --smouha-aqua-deep:#8EC8E0;
   --aqua:#E6F4F6;
   --aqua-deep:#C5E0E6;
+
+  /* Surfaces / glass */
+  --card:rgba(255,255,255,.60);
+  --surface:rgba(255,255,255,.78);
+  --surface-1:rgba(255,255,255,.72);
+  --surface-2:rgba(255,255,255,.62);
   --crystal:rgba(255,255,255,.58);
   --crystal-border:rgba(150,195,205,.40);
   --glass-bg:rgba(255,255,255,.55);
   --glass-border:var(--crystal-border);
+  --stroke:rgba(120,175,195,.38);
+  --border:#D5E4E8;
+
+  /* Text */
+  --text:#1b1d21;
+  --text-muted:#5c6b73;
+
+  /* Status */
+  --success:#16a34a;
+  --danger:#dc2626;
+
+  /* Shape */
+  --radius:16px;
+  --radius-sm:12px;
+
+  /* Shadows */
+  --shadow-sm:0 1px 2px rgba(20,40,50,.04);
+  --shadow-md:0 4px 14px rgba(20,40,50,.06);
+  --shadow-lg:0 10px 28px rgba(20,40,50,.08);
+  --shadow-1:0 2px 8px rgba(20,50,70,.06);
+  --shadow-2:0 8px 24px rgba(20,50,70,.10);
+  --shadow-card:0 4px 18px rgba(20,60,80,.07);
+
+  /* Misc */
+  --transition:150ms ease;
   --top-highlight:0 0 transparent;
   --blue-highlight:#e8f6f8;
   --blue-highlight-border:rgba(56,152,168,.22);
   --blue-highlight-text:#1d6b7a;
+  --icon-stroke:1.75;
+  --icon-sw:1.75;
 }
 [data-theme="dark"]{
   --primary:#FF7A1A;
   --primary-dark:#ff8c3d;
   --primary-light:#3a2717;
+  --primary-soft:rgba(255,122,26,.14);
+
   --bg:#0E1214;
   --card:rgba(18,28,32,.60);
-  --text:#eef0f2;
-  --text-muted:#8a9aa3;
-  --border:#2A3338;
-  --shadow-sm:0 1px 2px rgba(0,0,0,.35);
-  --shadow-md:0 4px 14px rgba(0,0,0,.4);
-  --shadow-lg:0 10px 28px rgba(0,0,0,.45);
-  --aqua:#132028;
-  --aqua-deep:#1a2e36;
+  --surface:rgba(22,30,36,.82);
+  --surface-2:rgba(18,26,32,.72);
   --crystal:rgba(18,28,32,.58);
   --crystal-border:rgba(60,80,90,.5);
   --glass-bg:rgba(18,28,32,.55);
   --glass-border:var(--crystal-border);
+  --stroke:rgba(70,95,110,.45);
+  --border:#2A3338;
+
+  --text:#eef0f2;
+  --text-muted:#9aabB4;
+
+  --shadow-sm:0 1px 2px rgba(0,0,0,.35);
+  --shadow-md:0 4px 14px rgba(0,0,0,.4);
+  --shadow-lg:0 10px 28px rgba(0,0,0,.45);
+
+  --aqua:#132028;
+  --aqua-deep:#1a2e36;
   --top-highlight:0 0 transparent;
   --blue-highlight:#132338;
   --blue-highlight-border:rgba(96,165,250,.28);
@@ -125,10 +173,7 @@ body > *{position:relative;z-index:1;}
   opacity:.2;
 }
 
-header.app-header{position:relative;z-index:40;}
-main,.toast-container,.modal-backdrop,.store-header{position:relative;z-index:1;}
-
-
+header.app-header{position:relative;z-index:300;}
 
 
 button{font-family:inherit;}
@@ -183,21 +228,7 @@ header.app-header{
    STORE HEADER (sticky) — compact secondary bar with store context.
    This one stays pinned while the Talabat brand bar above scrolls away.
    ============================================================ */
-.store-header{
-  position:sticky;top:0;z-index:40;
-  background:var(--glass-bg);
-  border-bottom:1px solid var(--crystal-border);
-  box-shadow:var(--shadow-sm);
-}
-.store-header-inner{
-  max-width:100%;margin:0;width:100%;
-  padding:0 20px;
-  height:42px;
-  display:flex;flex-direction:column;justify-content:center;
-  line-height:1.2;
-}
-.store-header .store{font-weight:600;font-size:13.5px;}
-.store-header .manager{font-size:11.5px;color:var(--text-muted);}
+
 
 /* ============================================================
    MAIN LAYOUT
@@ -274,7 +305,7 @@ main{max-width:100%;margin:0;width:100%;padding:22px 20px 60px;}
 .suggestion-highlight{background:var(--primary-light);color:var(--primary-dark);border-radius:3px;padding:0 1px;font-weight:800;}
 
 /* Quick filter chips */
-.quick-tabs{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+
 .chip{
   padding:8px 16px;border-radius:999px;border:1px solid var(--border);
   background:var(--card);color:var(--text-muted);font-size:13px;font-weight:600;
@@ -454,7 +485,7 @@ main{max-width:100%;margin:0;width:100%;padding:22px 20px 60px;}
 
 /* Search width + distinctive frame (overrides) */
 .search-box-wrap{width:56%;max-width:56%;}
-.search-section .search-row-actions{width:56%;max-width:56%;margin-left:0;margin-right:auto;justify-content:flex-start;}
+
 
 /* ========== v1.6 layout polish ========== */
 header.app-header .header-inner{
@@ -533,7 +564,6 @@ header.app-header .header-inner{padding:8px 14px 8px 12px;gap:11px;}
 }
 
 
-
 /* Soft translucent panels over photo bg (static, no animation) */
 .product-card,
 .custom-barcode-card,
@@ -545,10 +575,7 @@ header.app-header .header-inner{padding:8px 14px 8px 12px;gap:11px;}
 .suggestions.open{
   background:var(--card);
 }
-header.app-header,
-.store-header{
-  background:var(--glass-bg);
-}
+
 .search-input-shell{
   background:rgba(255,255,255,.88);
 }
@@ -599,20 +626,11 @@ header.app-header + main .search-section,
 }
 
 
-
 /* ============================================================
-   UI POLISH v2 — tokens, empty state, panels, header, surfaces
+   UI POLISH v2 — empty state, panels, header, surfaces
+   (design tokens for this section now live in the single
+   consolidated :root block at the top of the file)
    ============================================================ */
-:root{
-  --smouha-aqua:#A8D8EC;
-  --smouha-aqua-bright:#C8EAF6;
-  --smouha-aqua-deep:#8EC8E0;
-  --surface-1:rgba(255,255,255,.72);
-  --surface-2:rgba(255,255,255,.58);
-  --stroke:rgba(150,195,205,.42);
-  --shadow-card:0 4px 18px rgba(20,60,80,.07);
-  --icon-stroke:1.75;
-}
 /* Vibrant light-blue canvas (restored) */
 html,body{
   background-color:#A8D8EC;
@@ -632,7 +650,7 @@ body::after{
   opacity:.9;
   height:40vh;
 }
-#app, main, .app-shell, .page-wrap, header.app-header{position:relative;z-index:1}
+
 [data-theme="dark"] html,
 [data-theme="dark"] body{
   background-color:#0E1214;
@@ -817,12 +835,7 @@ header.app-header{
 }
 
 /* QR FAB softer */
-.qr-fab, #qrFab, button.qr-fab, .fab-qr{
-  box-shadow:0 6px 18px rgba(255,107,0,.25);
-}
-.qr-fab:hover, #qrFab:hover{
-  box-shadow:0 8px 22px rgba(255,107,0,.32);
-}
+
 
 /* Team rotator: readable on dark */
 [data-theme="dark"] .team-rotator,
@@ -850,7 +863,6 @@ header.app-header{
 }
 
 
-
 /* polish remainder */
 .state-tip{
   appearance:none;border:1px solid rgba(255,107,0,.2);
@@ -869,36 +881,11 @@ header.app-header{
 
 
 /* ============================================================
-   UI FINAL PASS — tokens, mesh, toast, icons, product hierarchy
-   (QR FAB kept separate — not merged into search)
+   UI FINAL PASS — mesh, toast, icons, product hierarchy
+   (QR FAB kept separate — not merged into search; design tokens for
+   this section now live in the single consolidated :root block at
+   the top of the file)
    ============================================================ */
-:root{
-  --primary:#FF6B00;
-  --primary-dark:#e35f00;
-  --primary-soft:rgba(255,107,0,.12);
-  --bg-aqua:#A8D8EC;
-  --bg-aqua-top:#C8EAF6;
-  --bg-aqua-bot:#8EC8E0;
-  --surface:rgba(255,255,255,.78);
-  --surface-2:rgba(255,255,255,.62);
-  --stroke:rgba(120,175,195,.38);
-  --text:#1b1d21;
-  --text-muted:#5c6b73;
-  --radius:16px;
-  --radius-sm:12px;
-  --shadow-1:0 2px 8px rgba(20,50,70,.06);
-  --shadow-2:0 8px 24px rgba(20,50,70,.10);
-  --icon-sw:1.75;
-}
-[data-theme="dark"]{
-  --surface:rgba(22,30,36,.82);
-  --surface-2:rgba(18,26,32,.72);
-  --stroke:rgba(70,95,110,.45);
-  --text:#eef0f2;
-  --text-muted:#9aabB4;
-  --primary-soft:rgba(255,122,26,.14);
-}
-
 /* Vibrant aqua + soft mesh (light, no lag) */
 html, body{
   background-color:var(--bg-aqua);
@@ -1097,7 +1084,10 @@ body::after{
 /* Avoid extra font CDN (Gemini Inter) — system stack stays fastest offline */
 
 
-/* Chrome-style circular theme fill */
+/* Premium circular theme-fill — soft glow origin + smooth expo-out easing
+   (was a flat-color Chrome-style wipe at .58s; now a gentler radial glow
+   at .78s so the transition reads as deliberate/luxurious rather than a
+   quick flash, on both light→dark and dark→light) */
 .theme-wipe-overlay{
   pointer-events:none;
   position:fixed;
@@ -1105,16 +1095,23 @@ body::after{
   z-index:99999;
   opacity:0;
   clip-path:circle(0% at 88% 10%);
+  will-change:clip-path, opacity;
 }
-.theme-wipe-overlay.theme-wipe-dark{background:#0E1214;}
-.theme-wipe-overlay.theme-wipe-light{background:#C8EAF6;}
+.theme-wipe-overlay.theme-wipe-dark{
+  background:radial-gradient(circle at 88% 10%, #1c2730 0%, #131a1f 45%, #0E1214 100%);
+}
+.theme-wipe-overlay.theme-wipe-light{
+  background:radial-gradient(circle at 88% 10%, #f2fbff 0%, #dcf1fa 45%, #C8EAF6 100%);
+}
 .theme-wipe-overlay.run{
-  animation:themeCircleFill .58s cubic-bezier(.22,.75,.28,1) forwards;
+  animation:themeCircleFill .78s cubic-bezier(.16,1,.3,1) forwards;
 }
 @keyframes themeCircleFill{
-  0%{clip-path:circle(0% at 88% 10%);opacity:.92}
-  55%{clip-path:circle(120% at 88% 10%);opacity:.55}
-  100%{clip-path:circle(160% at 88% 10%);opacity:0}
+  0%{clip-path:circle(0% at 88% 10%);opacity:0}
+  6%{opacity:.95}
+  45%{clip-path:circle(85% at 88% 10%);opacity:.8}
+  80%{clip-path:circle(140% at 88% 10%);opacity:.32}
+  100%{clip-path:circle(170% at 88% 10%);opacity:0}
 }
 
 /* ============================================================
@@ -1255,7 +1252,7 @@ input:focus:not(:focus-visible) {
   padding: 0;
 }
 .search-stats:empty {
-  display: none !important;
+  display: none;
 }
 /* Idle / empty state: no large white card under the search row */
 .state-panel {
@@ -1305,4 +1302,104 @@ main {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   box-shadow: none;
+}
+
+
+/* ---- PWA install + offline + update ---- */
+
+
+@media (max-width:520px){
+  .pwa-install-btn .pwa-install-label{display:none;}
+  .pwa-install-btn{width:34px;padding:0;}
+}
+
+.pwa-offline-banner{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:8px 12px;font-size:12.5px;font-weight:650;
+  background:#1e293b;color:#f8fafc;text-align:center;
+}
+.pwa-offline-banner[hidden]{display:none!important;}
+.pwa-offline-dot{
+  width:8px;height:8px;border-radius:50%;background:#fbbf24;
+  box-shadow:0 0 0 3px rgba(251,191,36,.25);flex-shrink:0;
+}
+html.is-offline .dmart-live-card,
+html.is-offline .dmart-adjust-panel{
+  opacity:.55;
+}
+html.is-offline .dmart-conn-status{pointer-events:none;}
+
+.pwa-update-toast{
+  position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom));
+  transform:translateX(-50%);
+  z-index:10080;
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;border-radius:14px;
+  background:#0f172a;color:#fff;
+  box-shadow:0 12px 32px rgba(0,0,0,.28);
+  font-size:13px;font-weight:650;
+}
+.pwa-update-toast button{
+  border:none;border-radius:10px;padding:8px 12px;
+  background:#FF6B00;color:#fff;font-weight:800;font-size:12px;
+  cursor:pointer;font-family:inherit;
+}
+
+.pwa-ios-tip{
+  position:fixed;inset:0;z-index:10090;
+  display:flex;align-items:flex-end;justify-content:center;
+  padding:16px;background:rgba(8,12,18,.45);
+}
+.pwa-ios-tip[hidden]{display:none!important;}
+.pwa-ios-tip-card{
+  width:min(360px,100%);
+  background:#fff;border-radius:18px;padding:18px 16px;
+  box-shadow:0 20px 40px rgba(0,0,0,.25);
+}
+[data-theme="dark"] .pwa-ios-tip-card{background:#1a2026;color:#f1f5f9;}
+.pwa-ios-tip-card p{margin:0 0 8px;font-size:14px;line-height:1.45;}
+.pwa-ios-tip-ok{
+  margin-top:10px;width:100%;height:42px;border:none;border-radius:12px;
+  background:#FF6B00;color:#fff;font-weight:800;cursor:pointer;font-family:inherit;
+}
+
+
+/* APK download — compact header icon beside warehouse */
+.apk-header-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:34px;height:34px;border-radius:10px;
+  border:1px solid rgba(34,197,94,.35);
+  background:rgba(34,197,94,.1);
+  color:#16a34a;text-decoration:none;flex-shrink:0;
+  -webkit-tap-highlight-color:transparent;
+}
+.apk-header-btn svg{width:18px;height:18px;}
+.apk-header-btn:active{transform:scale(.96);}
+[data-theme="dark"] .apk-header-btn{color:#4ade80;background:rgba(34,197,94,.15);border-color:rgba(74,222,128,.35);}
+.catalog-status-badge{display:none!important;}
+#pwaInstallBtn{display:none!important;}
+
+/* settings btn click layer */
+.site-header, .app-header, header.header, .top-bar, .header-bar {
+  position: relative;
+  z-index: 250;
+}
+#settingsBtn {
+  position: relative;
+  z-index: 260;
+  pointer-events: auto !important;
+}
+/* dead PWA install UI (removed from DOM) */
+
+
+/* SETTINGS OPEN FORCE */
+header.app-header {
+  position: relative !important;
+  z-index: 300 !important;
+}
+#settingsBtn {
+  position: relative !important;
+  z-index: 310 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
 }

@@ -19,28 +19,11 @@
 /* ============================================================
    SMART SCAN — button + camera modal
    ============================================================ */
-.search-row-actions{
-  margin-top:12px;
-  display:flex;
-  justify-content:flex-start;
-  width:56%;
-  max-width:56%;
-  margin-left:0;
-  margin-right:auto;
-  padding-left:0;
-}
+
 @media (max-width:720px){
   .search-row-actions{width:100%;max-width:100%;}
 }
 
-.btn-scan{
-  background:var(--crystal);
-  border-color:var(--primary);color:var(--primary-dark);padding:9px 20px;font-size:14px;
-  box-shadow:var(--shadow-sm);
-  border-radius:12px;
-}
-.btn-scan:hover{background:var(--primary-light);color:var(--primary-dark);}
-.btn-scan svg{width:17px;height:17px;}
 
 .scan-backdrop{
   position:fixed;inset:0;background:rgba(6,6,10,.92);

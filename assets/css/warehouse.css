@@ -42,14 +42,6 @@
   box-shadow: 0 0 0 3px var(--primary-light);
 }
 
-.wh-selector-meta {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  line-height: 1.25;
-}
 
 .wh-selector-label {
   font-size: 10px;
@@ -238,18 +230,7 @@
 }
 
 /* Host in store-header */
-.store-header-inner {
-  height: auto;
-  min-height: 48px;
-  padding: 6px 20px;
-  display: flex;
-  align-items: center;
-}
 
-.store-header .store,
-.store-header .manager {
-  display: none;
-}
 
 [data-theme="dark"] .wh-selector-btn:hover {
   border-color: #3a3c42;
@@ -259,10 +240,6 @@
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.compact-mode .store-header-inner {
-  min-height: 42px;
-  padding: 4px 16px;
-}
 
 .compact-mode .wh-selector-btn {
   padding: 6px 10px;
@@ -454,7 +431,6 @@
 }
 
 
-
 /* Header placement — warehouse then settings (settings far right) */
 .header-actions{
   display:flex;
@@ -563,7 +539,7 @@
   .wh-selector-chevron{
     width:18px;
     height:18px;
-    display:flex !important;
+    display:flex;
     align-items:center;
     justify-content:center;
     opacity:0.85;
@@ -571,7 +547,7 @@
   .wh-selector-chevron svg{
     width:16px;
     height:16px;
-    display:block !important;
+    display:block;
     stroke:currentColor;
   }
   .wh-selector.open .wh-selector-chevron{
