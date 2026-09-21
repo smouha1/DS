@@ -10,7 +10,7 @@
      • Drop old caches on activate
    ------------------------------------------------------------------------ */
 
-const CACHE_NAME = 'smouha-pick-shell-v78-1828';
+const CACHE_NAME = 'smouha-pick-shell-v96-138';
 
 /** Core shell — same-origin only. Lazy modules included so first offline
  *  open of Settings/Maintenance/DMart live still works after one online visit. */
@@ -39,13 +39,20 @@ const SHELL_FILES = [
   './assets/js/dmart.js',
   './assets/js/dmartLive.js',
   './assets/js/warehouse.js',
-        './data/warehouses.json',
+  './assets/js/pwa.js',
+  './assets/js/dmartAdjust.js',
+  './assets/js/smartScan.js',
+  './assets/js/qrcode-generator.js',
+  './assets/js/vendor/JsBarcode.all.min.js',
+  './assets/img/pwa-icon-192.png',
+  './assets/img/pwa-icon-512.png',
+  './assets/img/apple-touch-icon.png',
+  './data/warehouses.json',
 ];
 
 function isDataPath(pathname) {
   return (
     pathname.includes('/data/products.json') ||
-    pathname.includes('/data/products-search.json') ||
     pathname.includes('/data/version.json')
   );
 }
