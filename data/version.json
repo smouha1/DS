@@ -1,12 +1,59 @@
 {
-  "version": "1.9.6",
-  "build": 125,
-  "updated": "2026-09-19",
+  "version": "1.9.11",
+  "build": 138,
+  "updated": "2026-09-21",
   "products": 41125,
   "changelogByVersion": [
     {
+      "version": "1.9.11",
+      "build": 138,
+      "date": "2026-09-21",
+      "items": [
+        "Structure: split cards.css modules + external logo assets",
+        "Single catalog products.json only — removed products-search.json",
+        "Removed Bridge Online/Offline chrome + dead PWA install code",
+        "Restored barcode download button; mobile layout image|barcode|live",
+        "Settings z-index fix; dead CSS purge",
+        "Fix settings panel not opening (CSS load, openPanel, header z-index)",
+        "Fix settings.js syntax (orphaned catch after products-search removal) — Settings failed to open",
+        "Fix Previous versions changelog popup (z-index above settings + click handlers)",
+        "Recent beside (desktop): show last known Available qty per SKU; widen column slightly"
+      ]
+    },
+    {
+      "version": "1.9.9",
+      "build": 130,
+      "date": "2026-09-20",
+      "items": [
+        "Suggestion tap fix: hide team rotator while dropdown open + capture-phase select",
+        "Remove PWA install button; keep APK download beside warehouse",
+        "Hide catalog/bridge header badges clutter",
+        "APK: camera permission only when Scan Mode requests it"
+      ]
+    },
+    {
+      "version": "1.9.8",
+      "build": 129,
+      "date": "2026-09-20",
+      "items": [
+        "Fix: first suggestion tap no longer opens Smouha Team rotator (z-index + pointer-events)",
+        "APK download button in header",
+        "Android APK: runtime camera permission for scan mode"
+      ]
+    },
+    {
+      "version": "1.9.7",
+      "build": 128,
+      "date": "2026-09-20",
+      "items": [
+        "Full PWA: install button (desktop + mobile), offline banner, update toast",
+        "Offline: shell + catalog cache; barcodes via local JsBarcode (no CDN)",
+        "Icons 192/512 + apple-touch-icon; manifest standalone"
+      ]
+    },
+    {
       "version": "1.9.6",
-      "build": 125,
+      "build": 127,
       "date": "2026-09-18",
       "items": [
         "Images: generate from primary barcode (EGY_<barcode>.JPG) — no image column in catalog",
@@ -20,7 +67,9 @@
         "Premium redesign: adjust stock +/− and quantity stepper",
         "Premium center result cards after add/remove (no blur)",
         "Removed unused background image assets",
-        "Reserved fix: require onHand+reserved complete, two matching reads, no partial relay accept"
+        "Reserved fix: require onHand+reserved complete, two matching reads, no partial relay accept",
+        "Reserved phantom fix: never paint partial stock; 3 matching reads if Reserved>0; detail preferred",
+        "Mobile live-relay: accept first complete result (no multi-round), faster Supabase poll"
       ]
     },
     {
