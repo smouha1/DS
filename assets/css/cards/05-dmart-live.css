@@ -1,0 +1,208 @@
+/* Split from the original monolithic cards.css (was 3702 lines) for maintainability.
+   Order matters — loaded in numeric filename order from index.html, exactly
+   preserving the original cascade. Do not reorder without checking for
+   selector overrides across files (see project notes on !important usage). */
+
+/* ============================================================
+   DMART LIVE INFO — premium, high clarity (left of product image)
+   ============================================================ */
+.dmart-live-card{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  padding:14px 14px 12px;
+  border-radius:16px;
+  border:1.5px solid rgba(255,107,0,.35);
+  background:linear-gradient(165deg, rgba(255,255,255,.62) 0%, rgba(255,248,242,.55) 100%);
+  box-shadow:0 4px 18px rgba(255,107,0,.10), var(--shadow-sm);
+  align-self:stretch;
+}
+[data-theme="dark"] .dmart-live-card{
+  background:linear-gradient(165deg, rgba(28,32,36,.78) 0%, rgba(40,28,20,.72) 100%);
+  border-color:rgba(255,107,0,.45);
+}
+.dmart-live-title{
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#FF6B00;
+  margin-bottom:10px;
+  padding-bottom:8px;
+  border-bottom:1px solid rgba(255,107,0,.2);
+}
+.dmart-live-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:8px 0;
+  border-bottom:1px solid rgba(0,0,0,.06);
+}
+[data-theme="dark"] .dmart-live-row{border-bottom-color:rgba(255,255,255,.08);}
+.dmart-live-row:last-of-type{border-bottom:none;}
+.dmart-live-label{
+  font-size:12px;
+  font-weight:700;
+  color:var(--text-muted);
+}
+.dmart-live-value{
+  font-size:15px;
+  font-weight:900;
+  font-variant-numeric:tabular-nums;
+  color:var(--text);
+  text-align:right;
+}
+.dmart-live-card.is-loading .dmart-live-value{
+  color:var(--text-muted);
+  font-weight:700;
+}
+.dmart-live-card.is-loading .dmart-live-title::after{
+  content:"";
+  display:inline-block;
+  width:16px;
+  height:16px;
+  margin-left:10px;
+  vertical-align:-3px;
+  border-radius:50%;
+  border:2.5px solid rgba(255,107,0,.22);
+  border-top-color:#FF6B00;
+  border-right-color:#FFB067;
+  box-shadow:0 0 0 3px rgba(255,107,0,.08);
+  animation:dmartLiveSpin .65s linear infinite;
+  opacity:1;
+}
+@keyframes dmartLiveSpin{to{transform:rotate(360deg)}}
+.dmart-live-card.is-error .dmart-live-value{
+  color:var(--text-muted);
+}
+.dmart-live-card.is-ready .dmart-live-value{/* per-field colors below */}
+[data-theme="dark"] .dmart-live-card.is-ready .dmart-live-value{
+  color:#5ddea0;
+}
+.dmart-live-status{
+  margin-top:8px;
+  font-size:11px;
+  line-height:1.35;
+  color:var(--text-muted);
+  font-weight:600;
+}
+
+
+/* Recent beside barcode (settings: recentBesideBarcode) */
+.product-recent-col{
+  display:none;
+  flex:0 0 200px;
+  max-width:220px;
+  min-width:160px;
+  border-left:1px solid var(--border);
+  padding-left:10px;
+  max-height:280px;
+  overflow:hidden;
+  flex-direction:column;
+}
+/* Desktop only: Recent Beside Barcode +30% width & height */
+@media (min-width:721px){
+  html.recent-beside-barcode .product-recent-col{
+    display:flex;
+    flex:0 0 230px;   /* 200 * 1.15 */
+    width:230px;
+    min-width:184px;  /* 160 * 1.15 */
+    max-width:253px;  /* 220 * 1.15 */
+    max-height:336px; /* 280 * 1.20 */
+  }
+  html.recent-beside-barcode .product-recent-list{
+    max-height:100%;
+  }
+}
+html.recent-beside-barcode .product-recent-col{
+  display:flex;
+}
+html.recent-beside-barcode .product-recent-col[hidden]{
+  display:none !important;
+}
+html.recent-beside-barcode .product-barcodes-col{
+  flex:1 1 auto;
+  max-width:none;
+}
+html.recent-beside-barcode .product-image-col{
+  flex:0 0 28%;
+  max-width:28%;
+}
+.product-recent-head{
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:12px;font-weight:800;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:.04em;
+  margin-bottom:6px;padding:0 2px;
+}
+.product-recent-list{
+  overflow-y:auto;flex:1;min-height:0;
+}
+.product-recent-list .panel-item{
+  padding:6px 8px;gap:8px;
+}
+.product-recent-list .panel-thumb{width:28px;height:28px;}
+.product-recent-list .panel-name{font-size:12px;}
+.product-recent-list .panel-sub{font-size:10.5px;}
+/* Hide bottom Recent panel when inline recent is active (desktop) */
+@media (min-width: 721px) {
+  html.recent-beside-barcode .panels-row .panel:first-child {
+    display:none;
+  }
+  html.recent-beside-barcode .panels-row {
+    grid-template-columns:1fr;
+  }
+}
+/* recent beside mobile: allowed when class is on */
+
+
+/* Tighter barcode frame on mobile */
+@media (max-width:720px){
+  .product-top-row{padding:8px;}
+  /* mobile width overridden in 1.5.4 */
+  .barcodes-section{padding:0;}
+}
+
+
+/* live col mobile */
+@media (max-width:720px){
+  .product-top-row{flex-wrap:wrap;}
+  .product-live-col{
+    flex:1 1 100%;
+    max-width:100%;
+    min-width:0;
+    order:3; /* below image + barcode */
+  }
+  .product-image-col{flex:1 1 46%;max-width:48%;order:1;}
+  .product-barcodes-col{flex:1 1 46%;max-width:48%;order:2;}
+}
+
+
+.dmart-live-available{color:#1a7a3c;}
+.dmart-live-reserved,.dmart-live-price{color:#111;}
+[data-theme="dark"] .dmart-live-reserved,
+[data-theme="dark"] .dmart-live-price{color:#f2f5f7;}
+[data-theme="dark"] .dmart-live-available{color:#5ddea0;}
+
+.dmart-check-btn-inline{
+  margin-top:10px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  width:100%;
+  padding:7px 10px;
+  font-size:12px;
+  font-weight:700;
+  border-radius:10px;
+  border:1px solid rgba(255,107,0,.4);
+  background:rgba(255,107,0,.08);
+  color:#E85D00;
+  text-decoration:none;
+  box-sizing:border-box;
+}
+.dmart-check-btn-inline .dmart-check-icon{display:none;}
+.dmart-check-btn-inline:active{transform:scale(.98);}
+
+

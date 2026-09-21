@@ -1,0 +1,147 @@
+/* Split from the original monolithic cards.css (was 3702 lines) for maintainability.
+   Order matters — loaded in numeric filename order from index.html, exactly
+   preserving the original cascade. Do not reorder without checking for
+   selector overrides across files (see project notes on !important usage). */
+
+/* ============================================================
+   DMART CARD IDENTITY 193 — match target screenshot
+   ============================================================ */
+.dmart-live-card,
+.dmart-live-card.dmart-card-drop,
+.product-card .dmart-live-card{
+  background:#ffffff !important;
+  border:1px solid rgba(255,107,0,.38) !important;
+  border-radius:18px !important;
+  box-shadow:
+    0 0 0 1px rgba(255,107,0,.06),
+    8px 10px 22px -10px rgba(255,107,0,.28) !important;
+  padding:14px 14px 16px !important;
+  gap:10px !important;
+}
+[data-theme="dark"] .dmart-live-card{
+  background:#1a222c !important;
+  border-color:rgba(255,122,26,.4) !important;
+}
+.dmart-live-title-row{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  margin-bottom:2px !important;
+  padding-bottom:8px !important;
+  border-bottom:1px solid rgba(255,107,0,.16) !important;
+}
+.dmart-live-title{
+  font-size:11px !important;
+  font-weight:800 !important;
+  letter-spacing:.12em !important;
+  text-transform:uppercase !important;
+  color:#FF6B00 !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:none !important;
+}
+.dmart-conn-status{
+  font-size:11px !important;
+  font-weight:650 !important;
+  padding:3px 10px !important;
+  border-radius:999px !important;
+  background:#f4e8ee !important;
+  color:#8a5a6a !important;
+  border:none !important;
+}
+.dmart-conn-status.is-online{
+  background:#e5f8ee !important;
+  color:#16804a !important;
+}
+[data-theme="dark"] .dmart-conn-status{
+  background:#2a2430 !important;
+  color:#c9a0ad !important;
+}
+[data-theme="dark"] .dmart-conn-status.is-online{
+  background:#163024 !important;
+  color:#3dd68c !important;
+}
+.dmart-live-row{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  background:#F3F5F7;
+  border:none;
+  border-radius:12px;
+  padding:10px 12px !important;
+  margin:0 !important;
+}
+[data-theme="dark"] .dmart-live-row{
+  background:#24303a !important;
+}
+.dmart-live-label{
+  font-size:13px !important;
+  font-weight:600 !important;
+  color:#5b6570 !important;
+}
+[data-theme="dark"] .dmart-live-label{color:#9aa7b2 !important;}
+.dmart-live-value{
+  font-size:14px !important;
+  font-weight:750 !important;
+  color:#1b1d21 !important;
+}
+[data-theme="dark"] .dmart-live-value{color:#eef0f2 !important;}
+.dmart-live-available,
+.dmart-live-available-row .dmart-live-available,
+.dmart-live-card.is-ready .dmart-live-available{
+  color:#16a34a !important;
+  font-weight:800 !important;
+}
+.dmart-live-reserved,
+.dmart-live-price{
+  color:#1b1d21 !important;
+}
+[data-theme="dark"] .dmart-live-reserved,
+[data-theme="dark"] .dmart-live-price{color:#eef0f2 !important;}
+
+.dmart-check-btn-inline,
+.dmart-live-card .dmart-check-btn-inline,
+a.dmart-check-btn.dmart-check-btn-inline{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:100% !important;
+  transform:none !important;
+  margin-top:4px !important;
+  padding:12px 14px !important;
+  min-height:44px !important;
+  border-radius:14px !important;
+  border:none !important;
+  background:#FF6B00 !important;
+  color:#ffffff !important;
+  font-size:14px !important;
+  font-weight:750 !important;
+  box-shadow:0 6px 16px rgba(255,107,0,.28) !important;
+  text-decoration:none !important;
+}
+.dmart-check-btn-inline .dmart-check-icon{
+  display:none;
+}
+@media (hover:hover) and (pointer:fine){
+  .dmart-check-btn-inline:hover{
+    transform:none !important;
+    background:#e85f00 !important;
+    box-shadow:0 8px 18px rgba(255,107,0,.34) !important;
+    padding:12px 14px !important;
+  }
+}
+
+/* Mobile product layout stability */
+@media (max-width: 720px) {
+  .product-card {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .dmart-live-card {
+    order: 2;
+  }
+  .product-image-wrap {
+    max-width: 100%;
+  }
+}
+

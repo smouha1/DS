@@ -1,0 +1,295 @@
+/* Split from the original monolithic cards.css (was 3702 lines) for maintainability.
+   Order matters — loaded in numeric filename order from index.html, exactly
+   preserving the original cascade. Do not reorder without checking for
+   selector overrides across files (see project notes on !important usage). */
+
+/* ============================================================
+   CSS CLEANUP LAYER 195 — single source of truth for surfaces
+   (overrides older stacked !important experiments)
+   ============================================================ */
+.product-card {
+  border-radius: 18px;
+  box-shadow: 0 8px 28px rgba(20, 50, 70, 0.08);
+}
+.product-name {
+  font-weight: 650;
+  line-height: 1.35;
+  word-break: break-word;
+}
+.dmart-live-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(255, 107, 0, 0.38) !important;
+  border-radius: 18px !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 107, 0, 0.06),
+    8px 12px 24px -12px rgba(255, 107, 0, 0.28) !important;
+}
+.dmart-live-row {
+  background: #F3F5F7 !important;
+  border: none !important;
+  border-radius: 12px !important;
+}
+.dmart-check-btn-inline,
+a.dmart-check-btn.dmart-check-btn-inline {
+  width: 100% !important;
+  transform: none !important;
+  background: #FF6B00 !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 14px !important;
+  font-weight: 750 !important;
+  box-shadow: 0 6px 16px rgba(255, 107, 0, 0.28) !important;
+}
+.dmart-check-btn-inline .dmart-check-icon {
+  display: none !important;
+}
+.panel-item,
+.suggestion-item {
+  content-visibility: auto;
+  contain-intrinsic-size: 56px;
+}
+@media (max-width: 720px) {
+  .product-card {
+    gap: 12px;
+  }
+}
+
+
+/* ============================================================
+   AVAILABLE ROW NORMALIZE 111 — same box as Reserved/Price;
+   label black; value stays green
+   ============================================================ */
+.dmart-live-row.dmart-live-available-row,
+.dmart-live-row:has(.dmart-live-available) {
+  background: #F3F5F7 !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  padding: 10px 12px !important;
+  margin: 0 !important;
+}
+.dmart-live-row.dmart-live-available-row .dmart-live-label,
+.dmart-live-row:has(.dmart-live-available) .dmart-live-label {
+  color: #1b1d21 !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+}
+.dmart-live-row.dmart-live-available-row .dmart-live-available,
+.dmart-live-row:has(.dmart-live-available) .dmart-live-available,
+.dmart-live-available {
+  color: #16a34a !important;
+  font-weight: 800 !important;
+}
+[data-theme="dark"] .dmart-live-row.dmart-live-available-row,
+[data-theme="dark"] .dmart-live-row:has(.dmart-live-available) {
+  background: #24303a !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+[data-theme="dark"] .dmart-live-row.dmart-live-available-row .dmart-live-label,
+[data-theme="dark"] .dmart-live-row:has(.dmart-live-available) .dmart-live-label {
+  color: #eef0f2 !important;
+}
+
+
+/* ============================================================
+   IMG LOAD PERF 118 — reserve space, smoother decode
+   ============================================================ */
+.product-image-wrap {
+  aspect-ratio: 1 / 1;
+  background: rgba(255,255,255,.35);
+  overflow: hidden;
+}
+.product-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  content-visibility: auto;
+}
+.product-image-wrap.loading img {
+  opacity: 0.35;
+  transition: opacity 0.18s ease;
+}
+.product-image-wrap:not(.loading) img {
+  opacity: 1;
+}
+.panel-thumb,
+.suggestion-thumb {
+  content-visibility: auto;
+  background: rgba(255,255,255,.25);
+}
+
+
+/* ===== STABLE FIXES ( base + prior repairs) ===== */
+
+/* Never show Online/Offline / bridge chips */
+.dmart-conn-status,
+.bridge-status-badge,
+.bridge-status-label,
+.catalog-status-badge {
+  display: none !important;
+}
+
+/* Barcode download always visible */
+.product-details-row .sku-barcode-row #barcodeFieldDownload,
+#barcodeFieldDownload,
+.sku-barcode-row .icon-btn-sm {
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+.product-details-row .sku-barcode-row .info-field-barcode {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+/* Desktop product row */
+@media (min-width: 721px) {
+  .product-top-row {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 14px !important;
+  }
+  .product-live-col {
+    flex: 0 0 200px !important;
+    max-width: 220px !important;
+    order: 0 !important;
+  }
+  .product-image-col {
+    flex: 0 0 30% !important;
+    max-width: 30% !important;
+    order: 0 !important;
+  }
+  .product-barcodes-col {
+    flex: 1 1 auto !important;
+    order: 0 !important;
+    min-width: 0 !important;
+  }
+}
+
+/* Mobile: image left | barcode right | live full width below */
+@media (max-width: 720px) {
+  .product-top-row,
+  .product-card .product-top-row {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    padding: 8px !important;
+  }
+  .product-image-col,
+  .product-card .product-image-col {
+    order: 1 !important;
+    flex: 1 1 47% !important;
+    max-width: 48% !important;
+    width: 48% !important;
+    min-width: 0 !important;
+  }
+  .product-barcodes-col,
+  .product-card .product-barcodes-col,
+  .product-card .barcodes-section {
+    order: 2 !important;
+    flex: 1 1 47% !important;
+    max-width: 48% !important;
+    width: 48% !important;
+    min-width: 0 !important;
+  }
+  .product-live-col,
+  .product-card .product-live-col {
+    order: 3 !important;
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+  .product-recent-col {
+    order: 4 !important;
+    flex: 1 1 100% !important;
+  }
+  .product-name-under-img {
+    display: block !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .product-details-row .product-title-row {
+    display: none !important;
+  }
+  .dmart-live-card .dmart-check-btn,
+  .dmart-live-card .dmart-check-btn-inline,
+  .dmart-live-card a.dmart-check-btn {
+    display: none !important;
+  }
+  .sku-barcode-row {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+  }
+}
+
+/* Settings above sticky search */
+
+
+/* ===== Recent beside: last Available qty (desktop) ===== */
+@media (min-width: 721px) {
+  html.recent-beside-barcode .product-recent-col {
+    flex: 0 0 220px !important;
+    max-width: 240px !important;
+    min-width: 200px !important;
+    width: 220px !important;
+  }
+}
+.product-recent-list .panel-item-with-qty {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding-right: 8px !important;
+}
+.product-recent-list .panel-item-with-qty .panel-text {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+.product-recent-list .panel-qty {
+  flex: 0 0 auto;
+  min-width: 2.1em;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  line-height: 1.2;
+}
+.product-recent-list .panel-qty.is-positive {
+  color: #0d7a3f;
+  background: rgba(22, 163, 74, 0.14);
+  border: 1px solid rgba(22, 163, 74, 0.28);
+}
+.product-recent-list .panel-qty.is-zero {
+  color: #9a3412;
+  background: rgba(249, 115, 22, 0.12);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+}
+.product-recent-list .panel-qty.is-unknown {
+  color: #64748b;
+  background: rgba(100, 116, 139, 0.1);
+  border: 1px solid rgba(100, 116, 139, 0.2);
+}
+[data-theme="dark"] .product-recent-list .panel-qty.is-positive {
+  color: #4ade80;
+  background: rgba(22, 163, 74, 0.2);
+}
+[data-theme="dark"] .product-recent-list .panel-qty.is-zero {
+  color: #fdba74;
+  background: rgba(249, 115, 22, 0.18);
+}

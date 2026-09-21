@@ -1,0 +1,3287 @@
+/* cards.css — flattened cascade (build patches merged; last declaration wins) */
+
+/* Favorite — now a third info card, matching SKU/Barcode exactly */
+
+.quick-access-section {
+  margin-top: 20px;
+}
+
+.quick-access-title {
+  margin: 0 0 10px;font-size:13px;font-weight:800;
+  text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);
+}
+
+.quick-access-grid {
+  display: grid;grid-template-columns:1fr 1fr;gap:12px;
+}
+
+.quick-access-card {
+  display: flex;align-items:center;gap:12px;
+  padding:12px 18px;border-radius:var(--radius);
+  background:var(--crystal);
+  border:1px solid var(--border);
+  box-shadow:var(--shadow-sm);
+  text-decoration:none;color:var(--text);cursor:pointer;
+  transition:transform 150ms ease,box-shadow 150ms ease,border-color 150ms ease;
+}
+
+.quick-access-icon-badge {
+  width: 28px;height:28px;border-radius:8px;flex-shrink:0;
+  overflow:hidden;display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--border);
+}
+
+.quick-access-icon-badge svg {
+  width: 100%;height:100%;display:block;
+}
+
+.quick-access-label {
+  flex: 1;font-size:14.5px;font-weight:700;
+}
+
+.quick-access-arrow {
+  width: 16px;height:16px;color:var(--primary);flex-shrink:0;transition:transform var(--transition);
+}
+
+.quick-access-card:focus-visible {
+  outline: 2px solid var(--primary);outline-offset:2px;
+}
+
+.result-area {
+  margin-top: 28px;
+}
+
+.product-card {
+  background: linear-gradient(165deg, rgba(255,255,255,.58) 0%, rgba(255,250,245,.50) 100%);
+  border-color:rgba(255,107,0,.28);
+  box-shadow:0 4px 18px rgba(20,60,80,.06);
+  border-radius: 18px;
+  box-shadow: 0 8px 28px rgba(20, 50, 70, 0.08);
+}
+
+.product-top-row {
+  display: flex;gap:12px;padding:12px;flex-wrap:nowrap;
+  border-bottom:1px solid var(--border);
+  align-items:stretch;
+  gap: 14px;
+  padding:10px 10px 14px;
+  border-bottom:1px solid rgba(150,195,205,.22);
+  min-width: 0;
+  max-width:100%;
+  overflow:hidden;
+}
+
+.product-live-col {
+  flex: 0 0 200px;
+  max-width:220px;
+  min-width:160px;
+  display:flex;
+  align-items:stretch;
+}
+
+.product-image-col {
+  flex: 0 0 30%;max-width:30%;
+  display:flex;align-items:flex-start;justify-content:center;
+  display: flex;flex-direction:column;align-items:center;gap:8px;
+}
+
+.product-image-wrap {
+  width: 100%;max-width:178px;aspect-ratio:1/1;border-radius:var(--radius-sm);
+  overflow:hidden;flex-shrink:0;background:var(--bg);
+  position:relative;cursor:zoom-in;
+  border:1px solid var(--border);
+  border-radius: 16px;
+  border:1px solid rgba(150,195,205,.25);
+  background:#fff;
+  box-shadow:0 1px 4px rgba(20,40,50,.04);
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: rgba(255,255,255,.35);
+  overflow: hidden;
+}
+
+.product-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  content-visibility: auto;
+}
+
+.product-image-wrap:hover img {
+  transform: scale(1.06);
+}
+
+.product-image-wrap.loading::after {
+  content: '';position:absolute;inset:0;
+  background:linear-gradient(90deg,var(--bg) 25%,var(--border) 50%,var(--bg) 75%);
+  background-size:200% 100%;animation:shimmer 1.4s infinite;
+}
+
+.image-zoom-hint {
+  position: absolute;bottom:6px;right:6px;background:rgba(0,0,0,.55);color:#fff;
+  border-radius:8px;padding:4px 6px;font-size:10px;display:flex;align-items:center;gap:3px;
+  opacity:0;transition:opacity var(--transition);
+}
+
+.product-image-wrap:hover .image-zoom-hint {
+  opacity: 1;
+}
+
+.image-zoom-hint svg {
+  width: 11px;height:11px;
+}
+
+.product-barcodes-col {
+  flex: 1 1 65%;max-width:65%;padding:0 0 0 0;
+  overflow: visible;
+}
+
+.product-details-row {
+  padding: 14px 12px 6px;
+  gap:12px;
+}
+
+.product-title-row {
+  display: flex;align-items:flex-start;gap:10px;
+}
+
+.product-name {
+  font-size: 17px;
+  font-weight:600;
+  letter-spacing:0;
+  line-height:1.35;
+  font-weight: 650;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.info-field-fav {
+  color: var(--text);
+  flex: 0 0 auto;padding:7px 10px;
+}
+
+.info-value-fav {
+  display: flex;align-items:center;height:19px;color:var(--text-muted);
+}
+
+.info-value-fav svg {
+  width: 18px;height:18px;
+}
+
+.info-field-fav.active {
+  border-color: var(--primary);background:var(--primary-light);
+}
+
+.info-field-fav.active .info-value-fav {
+  color: var(--primary);
+}
+
+.info-field-fav.active .info-value-fav svg {
+  fill: var(--primary);
+}
+
+.info-field-fav.pulse .info-value-fav svg {
+  animation: pop 320ms ease;
+}
+
+.sku-barcode-row {
+  display: flex;
+  flex-wrap:nowrap;
+  gap:8px;
+  align-items:stretch;
+  margin-top: 0;
+}
+
+.info-field {
+  background: rgba(186,196,204,.18);
+  border:1px solid rgba(160,170,180,.28);
+  border-radius:14px;
+  padding:11px 14px;
+  min-height:54px;
+  box-shadow:none;
+  flex: 0 1 auto;
+  width:auto;
+  max-width:max-content;
+  min-width:0;
+  min-height:0;
+  padding:7px 10px;
+  border-radius:10px;
+}
+
+.info-field:hover,
+.info-field:active {
+  border-color: rgba(255,107,0,.45);
+  background:rgba(255,107,0,.06);
+}
+
+.info-field-barcode {
+  flex-direction: row;align-items:center;gap:4px;padding:5px 6px 5px 0;
+  flex: 0 1 auto;
+  width:auto;
+  max-width:max-content;
+  padding:5px 6px 5px 0;
+}
+
+.info-field-copy {
+  flex: 1 1 auto;display:flex;flex-direction:column;gap:1px;background:none;border:none;
+  padding:7px 8px 7px 12px;cursor:pointer;text-align:left;font-family:inherit;min-width:0;
+  align-items:flex-start;
+  padding: 6px 8px 6px 10px;
+}
+
+.info-label {
+  font-size: 9px;
+}
+
+.info-value {
+  font-size: 12.5px;font-weight:600;
+}
+
+.dmart-check-btn {
+  flex: 1;display:flex;align-items:center;justify-content:center;gap:9px;
+  padding:9px 16px;border-radius:12px;text-decoration:none;
+  background:var(--crystal);
+  border:1px solid var(--crystal-border);
+  color:var(--primary-dark);font-size:14px;font-weight:700;
+  box-shadow:var(--shadow-sm);
+  transition:transform 150ms ease,border-color 150ms ease,box-shadow 150ms ease;
+}
+
+.dmart-check-icon {
+  width: 20px;height:20px;border-radius:6px;overflow:hidden;flex-shrink:0;display:flex;border:1px solid var(--border);
+}
+
+.dmart-check-icon svg {
+  width: 100%;height:100%;display:block;
+}
+
+.dmart-check-btn:active {
+  transform: scale(.98);
+}
+
+.dmart-check-btn:focus-visible {
+  outline: 2px solid var(--primary);outline-offset:2px;
+}
+
+.barcodes-section {
+  padding: 2px 0;display:flex;flex-direction:column;gap:2px;
+}
+
+.barcode-block {
+  display: flex;flex-direction:column;align-items:center;
+  padding:0;background:transparent;border-radius:var(--radius-sm);border:none;
+}
+
+.barcode-128-wrap {
+  background: #ffffff;
+  padding:1px 2px;
+  border-radius:4px;
+  box-shadow:none;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  width:60%;
+  max-width:60%;
+  box-sizing:border-box;
+  padding: 6px 8px;
+  box-sizing:border-box;
+  background:#fff;
+  border-radius:6px;
+  width: 100%;
+  max-width:100%;
+  margin:0;
+  padding:12px 14px;
+  box-sizing:border-box;
+  background:#ffffff;
+  border-radius:8px;
+  border:1px solid rgba(160,170,180,.25);
+  display:flex !important;
+  align-items:center;
+  justify-content:center;
+  align-self: flex-start;
+  position: relative !important;
+}
+
+.barcode-128-wrap svg {
+  display: block;
+  width:100%;
+  height:auto;
+  max-width:100%;
+}
+
+.barcode-128-wrap.is-qr {
+  padding: 10px;
+  width: min(220px, 100%);
+  max-width:min(220px, 100%);
+  aspect-ratio:1 / 1;
+  padding:14px;
+  align-self:flex-start;
+}
+
+.barcode-128-wrap.is-qr svg {
+  width: 100%;
+  height:100%;
+  display:block;
+}
+
+.barcode-numbers-list {
+  display: flex;flex-direction:column;
+  width: 100%;
+  max-width:100%;
+  box-sizing:border-box;
+}
+
+.barcode-number-item {
+  border: 1px solid rgba(160,170,180,.35);
+  border-radius:8px;
+  padding:6px 10px;
+  margin:2px 0;
+  background:rgba(186,196,204,.08);
+  gap:10px;
+  display: flex !important;
+  align-items:center;
+  justify-content:flex-start;
+  gap:8px;
+  width:100%;
+  box-sizing:border-box;
+  padding:8px 12px;
+  margin:0;
+  border:1px solid rgba(160,170,180,.3);
+  border-radius:8px;
+  background:rgba(186,196,204,.1);
+  justify-content: flex-start;
+}
+
+.barcode-number-item:last-child {
+  border-bottom: none;
+}
+
+.barcode-number-item:hover {
+  background: rgba(186,196,204,.14);
+}
+
+.barcode-number-label {
+  font-weight: 600;color:#8a969e;
+  font-size: 11px;
+  font-weight:600;
+  color:#8a969e;
+  flex-shrink:0;
+  min-width:0;
+  flex: 0 0 auto;
+  white-space:nowrap;
+}
+
+.barcode-number-value {
+  font-weight: 600;text-align:left;
+  font-size: 12.5px;
+  font-weight:600;
+  text-align:left;
+  flex:1 1 auto;
+  flex: 1 1 auto;
+  text-align:left;
+  text-align: right;margin-left:auto;font-variant-numeric:tabular-nums;
+}
+
+.icon-btn-sm {
+  width: 32px;height:32px;border-radius:8px;border:1px solid var(--border);
+  background:var(--crystal);display:flex;align-items:center;justify-content:center;
+  color:var(--text-muted);cursor:pointer;flex-shrink:0;transition:background-color var(--transition),border-color var(--transition),color var(--transition);
+}
+
+.icon-btn-sm svg {
+  width: 15px;height:15px;
+}
+
+.icon-btn-sm:hover {
+  border-color: var(--primary);color:var(--primary);
+}
+
+.team-modal-box {
+  max-width: 600px;min-width:520px;width:100%;
+  border-radius:16px;
+  transition:transform 180ms ease,opacity 180ms ease;
+}
+
+.team-modal-box .modal-header {
+  align-items: flex-start;
+}
+
+.team-modal-subtitle {
+  display: block;margin-top:3px;font-size:11.5px;font-weight:500;color:var(--text-muted);
+}
+
+.team-modal-body {
+  padding: 20px 22px 22px;
+}
+
+.team-section {
+  display: flex;flex-direction:column;gap:10px;
+}
+
+.team-section-title {
+  margin: 0;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--text-muted);
+}
+
+.team-divider {
+  height: 1px;background:var(--border);margin:16px 0;
+}
+
+.team-leader {
+  display: flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+}
+
+.team-leader-name {
+  font-size: 19px;font-weight:800;
+}
+
+.team-leader-role {
+  font-size: 13px;color:var(--text-muted);font-weight:600;
+}
+
+.team-outstanding {
+  display: flex;flex-direction:column;gap:6px;
+  background:var(--blue-highlight);
+  border:1px solid var(--blue-highlight-border);
+  border-radius:12px;padding:14px 16px;
+}
+
+.team-outstanding-message {
+  margin: 0;font-size:13px;line-height:1.6;color:var(--text);font-weight:400;
+}
+
+.team-outstanding-highlight {
+  font-weight: 700;color:var(--blue-highlight-text);
+}
+
+.team-members-list {
+  list-style: none;margin:0;padding:0;
+  column-count:2;column-gap:20px;
+}
+
+.team-members-list li {
+  position: relative;padding:4px 0 4px 16px;font-size:13.5px;
+  break-inside:avoid;-webkit-column-break-inside:avoid;
+}
+
+.team-members-list li::before {
+  content: '';position:absolute;left:0;top:11px;
+  width:5px;height:5px;border-radius:50%;background:var(--primary);
+}
+
+.team-thanks-text {
+  margin: 0;font-size:13.5px;line-height:1.6;color:var(--text-muted);
+}
+
+.choice-item {
+  display: flex;align-items:center;gap:14px;padding:12px;border-radius:14px;
+  cursor:pointer;transition:background var(--transition);border:1px solid transparent;
+}
+
+.choice-item:hover {
+  background: var(--primary-light);border-color:var(--primary);
+}
+
+.choice-thumb {
+  width: 52px;height:52px;border-radius:10px;object-fit:cover;background:var(--bg);flex-shrink:0;
+}
+
+.choice-info {
+  flex: 1;min-width:0;
+}
+
+.choice-name {
+  font-weight: 700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+
+.choice-sub {
+  font-size: 12px;color:var(--text-muted);margin-top:2px;
+}
+
+.zoom-backdrop {
+  position: fixed;inset:0;background:rgba(0,0,0,.9);
+  display:flex;align-items:center;justify-content:center;z-index:95;
+  opacity:0;pointer-events:none;transition:opacity 180ms ease;padding:30px;
+}
+
+.zoom-backdrop.open {
+  opacity: 1;pointer-events:auto;
+}
+
+.zoom-backdrop img {
+  max-width: 90vw;max-height:85vh;object-fit:contain;border-radius:12px;
+  transform:scale(.9);opacity:0;
+  transition:transform 180ms ease,opacity 180ms ease;
+}
+
+.zoom-backdrop.open img {
+  transform: scale(1);opacity:1;
+}
+
+.zoom-close {
+  position: absolute;top:20px;right:20px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.12);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+
+.zoom-close svg {
+  width: 20px;height:20px;
+}
+
+.panels-row {
+  display: grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px;
+}
+
+.panel {
+  background: var(--crystal);border:1px solid var(--crystal-border);border-radius:var(--radius);box-shadow:var(--shadow-sm);overflow:hidden;
+}
+
+.panel-header {
+  padding: 12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;
+}
+
+.panel-header h3 {
+  margin: 0;font-size:14.5px;font-weight:800;display:flex;align-items:center;gap:8px;
+}
+
+.panel-header h3 svg {
+  width: 17px;height:17px;color:var(--primary);
+}
+
+.panel-clear {
+  font-size: 12px;color:var(--text-muted);background:none;border:none;cursor:pointer;font-weight:600;
+}
+
+.panel-clear:hover {
+  color: var(--danger);
+}
+
+.panel-list {
+  max-height: 220px;overflow-y:auto;contain:layout paint style;
+}
+
+.panel-item {
+  display: flex;align-items:center;gap:12px;padding:8px 20px;cursor:pointer;
+  transition:background-color var(--transition);border-bottom:1px solid var(--border);
+  content-visibility:auto;contain-intrinsic-size:0 52px;
+  max-width: 100%;
+  overflow:hidden;
+  min-width:0;
+}
+
+.panel-item:last-child {
+  border-bottom: none;
+}
+
+.panel-item:hover {
+  background: var(--primary-light);
+}
+
+.panel-thumb {
+  width: 32px;height:32px;border-radius:8px;object-fit:cover;background:var(--bg);flex-shrink:0;
+}
+
+.panel-text {
+  flex: 1 1 auto;
+  min-width:0;
+  overflow:hidden;
+}
+
+.panel-name {
+  font-size: 13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:100%;
+  display:block !important;
+}
+
+.panel-sub {
+  font-size: 11.5px;color:var(--text-muted);
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:100%;
+}
+
+.panel-empty {
+  padding: 24px 20px;text-align:center;color:var(--text-muted);font-size:13px;
+}
+
+.dmart-live-card {
+  width: 100%;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  padding:14px 14px 12px;
+  border-radius:16px;
+  border:1.5px solid rgba(255,107,0,.35);
+  background:linear-gradient(165deg, rgba(255,255,255,.62) 0%, rgba(255,248,242,.55) 100%);
+  box-shadow:0 4px 18px rgba(255,107,0,.10), var(--shadow-sm);
+  align-self:stretch;
+  border-radius: 18px;
+  border:1px solid rgba(255,107,0,.28);
+  background:linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(255,248,242,.94) 100%);
+  box-shadow:0 2px 10px rgba(255,107,0,.07);
+  padding:14px 14px 12px;
+  border-color: rgba(255,107,0,.40);
+  box-shadow:
+    0 0 0 1px rgba(255,107,0,.12),
+    0 4px 22px rgba(255,107,0,.155),
+    0 2px 8px rgba(255,107,0,.12);
+  overflow: visible;
+  box-shadow:
+    10px 8px 18px -6px rgba(255,90,31,.42),
+    14px 14px 28px -10px rgba(255,90,31,.28);
+  background: #ffffff !important;
+  border: 1px solid rgba(255, 107, 0, 0.38) !important;
+  border-radius: 18px !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 107, 0, 0.06),
+    8px 12px 24px -12px rgba(255, 107, 0, 0.28) !important;
+}
+
+[data-theme="dark"] .dmart-live-card {
+  border-color: rgba(255,107,0,.52);
+  box-shadow:
+    0 0 0 1px rgba(255,107,0,.18),
+    0 4px 24px rgba(255,107,0,.22),
+    0 2px 10px rgba(255,107,0,.16);
+  box-shadow: 10px 8px 18px -6px rgba(255,120,60,.38),
+    14px 14px 28px -10px rgba(255,120,60,.25);
+  background: #1a222c !important;
+  border-color:rgba(255,122,26,.4) !important;
+}
+
+.dmart-live-title {
+  font-size: 11px !important;
+  font-weight:800 !important;
+  letter-spacing:.12em !important;
+  text-transform:uppercase !important;
+  color:#FF6B00 !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:none !important;
+}
+
+.dmart-live-row {
+  display: flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  background:#F3F5F7 !important;
+  border:none !important;
+  border-radius:12px !important;
+  padding:10px 12px !important;
+  margin:0 !important;
+  background: #F3F5F7 !important;
+  border: none !important;
+  border-radius: 12px !important;
+}
+
+[data-theme="dark"] .dmart-live-row {
+  border-bottom-color: rgba(255,255,255,.08);
+  background: #24303a !important;
+}
+
+.dmart-live-row:last-of-type {
+  border-bottom: none;
+}
+
+.dmart-live-label {
+  font-size: 13px !important;
+  font-weight:600 !important;
+  color:#5b6570 !important;
+}
+
+.dmart-live-value {
+  font-weight: 500;
+  font-size: 14px !important;
+  font-weight:750 !important;
+  color:#1b1d21 !important;
+}
+
+.dmart-live-card.is-loading .dmart-live-value {
+  color: var(--text-muted);
+  font-weight:700;
+}
+
+.dmart-live-card.is-loading .dmart-live-title::after {
+  content: "";
+  display:inline-block;
+  width:16px;
+  height:16px;
+  margin-left:10px;
+  vertical-align:-3px;
+  border-radius:50%;
+  border:2.5px solid rgba(255,107,0,.22);
+  border-top-color:#FF6B00;
+  border-right-color:#FFB067;
+  box-shadow:0 0 0 3px rgba(255,107,0,.08);
+  animation:dmartLiveSpin .65s linear infinite;
+  opacity:1;
+}
+
+.dmart-live-card.is-error .dmart-live-value {
+  color: var(--text-muted);
+}
+
+[data-theme="dark"] .dmart-live-card.is-ready .dmart-live-value {
+  color: #5ddea0;
+}
+
+.dmart-live-status {
+  margin-top: 8px;
+  font-size:11px;
+  line-height:1.35;
+  color:var(--text-muted);
+  font-weight:600;
+}
+
+.product-recent-col {
+  display: none;
+  flex:0 0 200px;
+  max-width:220px;
+  min-width:160px;
+  border-left:1px solid var(--border);
+  padding-left:10px;
+  max-height:280px;
+  overflow:hidden;
+  flex-direction:column;
+  overflow: hidden;
+  flex-shrink:1;
+  flex: 0 0 230px;
+  width:230px;
+  min-width:184px;
+  max-width:253px;
+  max-height:336px;
+}
+
+html.recent-beside-barcode .product-recent-col {
+  display: flex !important;
+  flex-direction:column;
+  visibility:visible !important;
+}
+
+html.recent-beside-barcode .product-recent-col[hidden] {
+  display: none !important;
+}
+
+html.recent-beside-barcode .product-barcodes-col {
+  flex: 1 1 auto;
+  max-width:none;
+}
+
+html.recent-beside-barcode .product-image-col {
+  flex: 0 0 28%;
+  max-width:28%;
+}
+
+.product-recent-head {
+  display: flex;align-items:center;justify-content:space-between;
+  font-size:12px;font-weight:800;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:.04em;
+  margin-bottom:6px;padding:0 2px;
+}
+
+.product-recent-list {
+  overflow-y: auto;flex:1;min-height:0;
+  overflow-x: hidden;
+  overflow-y:auto;
+  max-width:100%;
+}
+
+.product-recent-list .panel-item {
+  padding: 6px 8px;gap:8px;
+  width: 100%;
+  max-width:100%;
+  box-sizing:border-box;
+}
+
+.product-recent-list .panel-thumb {
+  width: 28px;height:28px;
+}
+
+.product-recent-list .panel-name {
+  font-size: 12px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.product-recent-list .panel-sub {
+  font-size: 10.5px;
+}
+
+.dmart-live-available {
+  color: #1a7a3c;
+  font-weight: 700;
+}
+
+.dmart-live-reserved,
+.dmart-live-price {
+  color: #1b1d21 !important;
+}
+
+[data-theme="dark"] .dmart-live-reserved,
+[data-theme="dark"] .dmart-live-price {
+  color: #eef0f2 !important;
+}
+
+[data-theme="dark"] .dmart-live-available {
+  color: #5ddea0;
+}
+
+.dmart-check-btn-inline {
+  margin-top: 10px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  width:100%;
+  padding:7px 10px;
+  font-size:12px;
+  font-weight:700;
+  border-radius:10px;
+  border:1px solid rgba(255,107,0,.4);
+  background:rgba(255,107,0,.08);
+  color:#E85D00;
+  text-decoration:none;
+  box-sizing:border-box;
+  border-radius: 12px;
+  margin-top:12px;
+  padding:8px 12px;
+  font-size:12.5px;
+  display: inline-flex !important;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  width:auto;
+  min-width:0;
+  padding:5px 10px;
+  font-size:11px;
+  font-weight:700;
+  border-radius:10px;
+  border:1px solid rgba(255,107,0,.45);
+  background:#fff;
+  color:#E85D00;
+  transform:scale(0.7);
+  transform-origin:center center;
+  transition:transform 180ms ease, box-shadow 180ms ease, padding 180ms ease;
+  text-decoration:none;
+  box-sizing:border-box;
+}
+
+.dmart-check-btn-inline .dmart-check-icon {
+  display: none !important;
+}
+
+.dmart-check-btn-inline:active {
+  transform: scale(0.95);
+}
+
+[data-theme="dark"] .product-card {
+  background: linear-gradient(165deg, rgba(28,32,36,.62) 0%, rgba(40,28,20,.55) 100%);
+}
+
+[data-theme="dark"] .product-top-row {
+  border-bottom-color: rgba(60,80,90,.4);
+}
+
+[data-theme="dark"] .product-image-wrap {
+  background: rgba(12,16,18,.9);
+  border-color:rgba(60,80,90,.4);
+}
+
+[data-theme="dark"] .info-field {
+  background: rgba(40,52,58,.55);
+  border-color:rgba(70,90,100,.4);
+}
+
+.state-panel {
+  background: rgba(255,255,255,.78);
+  border:1px solid rgba(150,195,205,.28);
+  border-radius:20px;
+  padding:36px 24px;
+  box-shadow:0 2px 10px rgba(20,40,50,.04);
+  text-align:center;
+}
+
+[data-theme="dark"] .state-panel {
+  background: rgba(18,28,32,.78);
+  border-color:rgba(60,80,90,.45);
+}
+
+.state-title {
+  font-size: 16px;
+  font-weight:500;
+  color:#8a969e;
+  letter-spacing:0;
+}
+
+.state-sub {
+  font-size: 13.5px;
+  color:var(--text-muted);
+  margin-top:6px;
+  font-weight: 400;color:var(--text-muted);
+}
+
+.team-rotator {
+  border-radius: 16px;
+  border:1px solid rgba(150,195,205,.28);
+  background:rgba(255,255,255,.72);
+  box-shadow:0 1px 4px rgba(20,40,50,.03);
+}
+
+[data-theme="dark"] .team-rotator {
+  background: rgba(18,28,32,.72);
+  border-color:rgba(60,80,90,.45);
+}
+
+#searchInput {
+  border-radius: 16px;
+  font-weight:600;
+}
+
+.app-header {
+  backdrop-filter: none;
+}
+
+.performance-mode .product-card,
+.performance-mode .dmart-live-card,
+.performance-mode .info-field,
+.performance-mode .state-panel {
+  box-shadow: none;
+  transition:none;
+}
+
+.performance-mode .product-image-wrap:hover img {
+  transform: none;
+}
+
+[data-theme="dark"] .state-title {
+  color: #9aa5ad;
+}
+
+html.large-barcode .barcode-numbers-list {
+  width: 92%;
+  max-width:92%;
+}
+
+html.large-barcode .barcode-128-wrap {
+  width: 100%;
+  max-width:100%;
+  padding:16px 18px;
+}
+
+html.large-barcode .barcode-128-wrap.is-qr {
+  width: 200px;
+  height:200px;
+  max-width:min(200px, 100%);
+}
+
+html.large-barcode.compact-mode .barcode-128-wrap {
+  width: 85%;
+  max-width:85%;
+}
+
+.barcode-block,
+.barcode-block-128 {
+  display: flex !important;
+  flex-direction:column;
+  align-items:stretch;
+  width:100%;
+  gap:6px;
+}
+
+.product-name-under-img {
+  width: 100%;max-width:178px;font-size:13.5px;font-weight:600;line-height:1.3;text-align:center;color:var(--text);
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;word-break:break-word;
+  white-space: normal;
+  overflow:visible;
+  text-overflow:clip;
+  display:block !important;
+  -webkit-line-clamp:unset;
+  line-clamp:unset;
+  max-height:none;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+  line-height:1.35;
+}
+
+.product-details-row .product-title-row {
+  display: none;
+}
+
+.barcode-block-128 {
+  display: flex;
+  flex-direction:column;
+  align-items:flex-start;
+  width:fit-content;
+  max-width:100%;
+}
+
+.barcode-block-128 .barcode-numbers-list {
+  width: 100%;
+  max-width:100%;
+  align-self:stretch;
+  box-sizing:border-box;
+  display: flex !important;
+  flex-direction:column;
+  gap:4px;
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  align-self:flex-start;
+}
+
+html.hide-dmart-live .product-live-col,
+html.hide-dmart-live .dmart-live-card {
+  display: none !important;
+}
+
+html.hide-dmart-live .product-top-row {
+  gap: 16px;
+}
+
+html.hide-dmart-live .product-image-col {
+  flex: 0 0 34%;max-width:34%;
+}
+
+html.hide-dmart-live .product-barcodes-col {
+  flex: 1 1 66%;max-width:66%;
+}
+
+.dmart-confirm-box {
+  min-width: 220px;padding:14px 16px;
+  padding: 10px 12px;
+  min-width:200px;
+  max-width:min(260px, 92vw);
+}
+
+.changelog-latest {
+  padding: 10px 12px;border-radius:12px;background:rgba(255,107,0,.08);border:1px solid rgba(255,107,0,.22);margin-bottom:10px;
+}
+
+.changelog-latest p {
+  margin: 0;font-size:13px;font-weight:600;line-height:1.4;
+}
+
+.custom-barcode-card {
+  background: var(--card);
+}
+
+.custom-barcode-card h3 {
+  margin: 0 0 12px;font-size:14px;font-weight:700;color:var(--text-muted);
+}
+
+.custom-barcode-wrap {
+  display: inline-flex !important;
+  align-items:center;
+  justify-content:center;
+  background:#ffffff;
+  min-width:160px;
+  min-height:80px;
+  padding:12px;
+  box-sizing:border-box;
+}
+
+.custom-barcode-value {
+  margin-top: 10px;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;
+}
+
+.barcode-block-128 .barcode-128-wrap {
+  width: auto;
+  max-width:100%;
+  margin:0;
+  align-self:center;
+  box-sizing:border-box;
+  flex: 0 0 auto;
+  box-sizing:border-box;
+}
+
+.barcode-block-128 .barcode-number-item {
+  max-width: 100%;
+  width:100%;
+  width: 100%;
+  max-width:100%;
+  box-sizing:border-box;
+  justify-content:space-between;
+  display: flex !important;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+  padding:6px 8px;
+  margin:0;
+}
+
+.barcode-block-128 .barcode-number-value {
+  text-align: right;
+  margin-left:auto;
+  flex: 1 1 auto;
+  min-width:0;
+  text-align:right;
+  font-size:11px;
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.dmart-check-btn-inline .dmart-check-icon svg {
+  width: 100%;height:100%;display:block;
+}
+
+.custom-barcode-wrap.is-clickable {
+  cursor: zoom-in;
+  transition:transform 140ms ease, box-shadow 140ms ease;
+}
+
+.custom-barcode-wrap.is-clickable:hover {
+  transform: scale(1.02);
+  box-shadow:0 4px 14px rgba(20,40,50,.1);
+}
+
+.custom-barcode-fallback {
+  font-size: 18px;font-weight:700;font-variant-numeric:tabular-nums;
+  padding:12px 16px;word-break:break-all;
+}
+
+.dmart-confirm-title {
+  font-size: 13px;
+  margin-bottom:8px;
+  padding-bottom:4px;
+}
+
+.dmart-confirm-actions {
+  gap: 8px;
+  margin-top:4px;
+}
+
+.dmart-confirm-btn {
+  padding: 8px 12px;
+  font-size:13px;
+  min-height:36px;
+}
+
+.barcode-block.barcode-block-128,
+.barcode-block-128 {
+  display: inline-flex !important;
+  flex-direction:column;
+  align-items:stretch;
+  width:max-content;
+  max-width:100%;
+  box-sizing:border-box;
+  gap:6px;
+}
+
+.barcode-block-128 .barcode-128-wrap.is-qr {
+  width: 160px;
+  height:160px;
+  max-width:100%;
+}
+
+.barcode-block-128 .barcode-128-wrap svg {
+  display: block !important;
+  width:auto;
+  max-width:100%;
+  height:auto;
+  margin:0 auto;
+}
+
+.barcode-block-128 .barcode-number-label {
+  flex: 0 0 auto;
+  font-size:10px;
+  white-space:nowrap;
+}
+
+.barcode-block-128 .barcode-128-wrap.is-qr,
+.barcode-128-wrap.is-qr {
+  display: flex !important;
+  align-items:center;
+  justify-content:center;
+  width:160px;
+  height:160px;
+  max-width:min(160px, 100%);
+  min-width:120px;
+  min-height:120px;
+  aspect-ratio:1 / 1;
+  padding:10px;
+  box-sizing:border-box;
+  background:#fff;
+  visibility:visible !important;
+  opacity:1;
+}
+
+.barcode-block-128 .barcode-128-wrap.is-qr svg,
+.barcode-128-wrap.is-qr svg,
+.barcode-128-wrap.is-qr #c128-0 {
+  display: block !important;
+  width:100%;
+  height:100%;
+  max-width:100%;
+  max-height:100%;
+  visibility:visible !important;
+  opacity:1;
+}
+
+.barcode-block.barcode-block-128 {
+  max-width: 100%;
+  width:max-content;
+  position: relative !important;
+  display: flex !important;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:6px;
+  width:max-content;
+  max-width:100%;
+}
+
+.product-barcodes-col .barcode-block-128 {
+  display: flex !important;
+  flex-direction:column;
+  align-items:stretch;
+  width:160px;
+  max-width:100%;
+  box-sizing:border-box;
+}
+
+.product-barcodes-col .barcode-block-128 .barcode-128-wrap.is-qr {
+  width: 160px;
+  height:160px;
+  max-width:100%;
+  box-sizing:border-box;
+}
+
+.product-barcodes-col .barcode-block-128 .barcode-numbers-list {
+  width: 160px;
+  max-width:100%;
+  box-sizing:border-box;
+}
+
+.product-barcodes-col .barcode-block-128 .barcode-number-item {
+  width: 100%;
+  max-width:100%;
+  box-sizing:border-box;
+  padding:5px 6px;
+  gap:4px;
+}
+
+html.large-barcode .product-barcodes-col .barcode-block-128,
+html.large-barcode .product-barcodes-col .barcode-block-128 .barcode-128-wrap.is-qr,
+html.large-barcode .product-barcodes-col .barcode-block-128 .barcode-numbers-list {
+  width: 200px;
+}
+
+.product-barcodes-col .barcode-block-128:not(:has(.is-qr)) {
+  width: max-content;
+}
+
+.custom-barcode-wrap.is-qr {
+  width: 180px;
+  height:180px;
+  min-width:180px;
+  min-height:180px;
+  padding:12px;
+}
+
+.custom-barcode-wrap svg,
+.custom-barcode-wrap.is-qr svg {
+  display: block !important;
+  width:100%;
+  height:auto;
+  max-width:100%;
+  background:#fff;
+}
+
+.custom-barcode-wrap.is-qr svg {
+  width: 100%;
+  height:100%;
+}
+
+.dmart-check-btn-inline,
+a.dmart-check-btn.dmart-check-btn-inline {
+  transform: none;
+  scale:none;
+  width:100%;
+  min-width:0;
+  padding:10px 14px;
+  font-size:14.4px; 
+  font-weight:700;
+  border-radius:12px;
+  gap:8px;
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+  position: relative !important;
+  overflow:hidden;
+  isolation:isolate;
+  padding:9px 14px;
+  font-size:11.5px;
+  font-weight:560;
+  letter-spacing:.01em;
+  background:#ffffff;
+  color:#FF6B00;
+  border:1px solid rgba(255,107,0,.55);
+  box-shadow:0 2px 8px rgba(255,107,0,.12);
+  transition:color .28s ease, box-shadow .28s ease, border-color .28s ease;
+  z-index:0 !important;
+  width: 100% !important;
+  transform: none !important;
+  background: #FF6B00 !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 14px !important;
+  font-weight: 750 !important;
+  box-shadow: 0 6px 16px rgba(255, 107, 0, 0.28) !important;
+}
+
+.dmart-check-btn-inline,
+a.dmart-check-btn.dmart-check-btn-inline,
+.dmart-live-card .dmart-check-btn {
+  transform: none;
+  min-height:52px; 
+  padding:14px 16px;
+  font-size:14.4px;
+  font-weight:800;
+  border-radius:14px;
+  transition:background-color 180ms ease, color 180ms ease, border-color 180ms ease,
+    box-shadow 180ms ease, transform 180ms ease;
+  min-height: 51px;
+  padding:12px 14px;
+  font-size:13.5px;
+}
+
+.dmart-check-btn-inline:active,
+a.dmart-check-btn.dmart-check-btn-inline:active {
+  transform: scale(.98);
+}
+
+.barcode-format-switch {
+  flex: 0 0 auto;
+  align-self:flex-start;
+  margin-top:2px;
+  min-width:36px;
+  height:28px;
+  padding:0 8px;
+  border-radius:999px;
+  border:1px solid rgba(255,107,0,.45);
+  background:#fff;
+  color:#E85D00;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.02em;
+  cursor:pointer;
+  box-shadow:0 1px 4px rgba(255,107,0,.12);
+  z-index:2 !important;
+  display: inline-flex !important;
+  visibility:visible !important;
+  opacity:1;
+  flex:0 0 auto;
+  align-items:center;
+  justify-content:center;
+  align-self:flex-start;
+  margin:0;
+  min-width:40px;
+  height:28px;
+  padding:0 10px;
+  border-radius:999px;
+  border:1.5px solid rgba(255,107,0,.55);
+  background:#fff;
+  color:#E85D00;
+  font-size:11px;
+  font-weight:800;
+  cursor:pointer;
+  box-shadow:0 2px 8px rgba(255,107,0,.16);
+  z-index:5 !important;
+  pointer-events:auto !important;
+  position:relative !important;
+  position: absolute !important;
+  top:4px;
+  right:4px;
+  left:auto;
+  margin:0;
+  min-width:34px;
+  height:26px;
+  padding:0 8px;
+  z-index:6 !important;
+  box-shadow:0 2px 10px rgba(0,0,0,.12), 0 0 0 1px rgba(255,107,0,.2);
+}
+
+.barcode-format-switch:active {
+  transform: scale(.96);
+}
+
+[data-theme="dark"] .barcode-format-switch {
+  background: rgba(28,32,36,.98);
+  color:#FF9A4D;
+  border-color:rgba(255,154,77,.55);
+}
+
+.barcode-block-128 .barcode-128-wrap:not(.is-qr) {
+  width: auto;
+  max-width:100%;
+  padding:4px 6px;
+  max-width: 100%;
+  width:auto;
+  padding:4px 6px;
+}
+
+.barcode-block-128 .barcode-128-wrap:not(.is-qr) svg {
+  width: auto;
+  max-width:100%;
+  height:auto;
+  max-width: none;
+  width:auto;
+  height:auto;
+}
+
+.dmart-check-btn-inline::before,
+a.dmart-check-btn.dmart-check-btn-inline::before {
+  content: "" !important;
+  position:absolute !important;
+  inset:0;
+  background:linear-gradient(180deg, #FF8A33 0%, #FF6B00 100%);
+  transform:scaleY(0);
+  transform-origin:bottom center;
+  transition:transform .38s cubic-bezier(.22,.61,.36,1);
+  z-index:-1 !important;
+  pointer-events:none !important;
+}
+
+.dmart-check-btn-inline[data-fill-from="top"]::before,
+a.dmart-check-btn.dmart-check-btn-inline[data-fill-from="top"]::before {
+  transform-origin: top center;
+}
+
+.dmart-check-btn-inline[data-fill-from="bottom"]::before,
+a.dmart-check-btn.dmart-check-btn-inline[data-fill-from="bottom"]::before {
+  transform-origin: bottom center;
+}
+
+.dmart-check-btn-inline .dmart-check-icon,
+a.dmart-check-btn.dmart-check-btn-inline .dmart-check-icon {
+  color: inherit;
+  border-color:transparent;
+  position:relative !important;
+  z-index:1 !important;
+}
+
+.dmart-check-btn-inline > *,
+a.dmart-check-btn.dmart-check-btn-inline > * {
+  position: relative !important;
+  z-index:1 !important;
+}
+
+.product-image-col,
+.product-barcodes-col,
+.product-live-col,
+.product-recent-col {
+  min-width: 0;
+  box-sizing:border-box;
+}
+
+.product-image-col .product-name-under-img {
+  white-space: normal;
+  overflow:visible;
+  text-overflow:clip;
+  max-height:none;
+  -webkit-line-clamp:unset;
+  line-clamp:unset;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+  max-width:100%;
+  width:100%;
+  box-sizing:border-box;
+}
+
+.product-title-row .product-name,
+.product-details-row .product-name,
+.product-name:not(.product-name-under-img) {
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:100%;
+  display:block !important;
+  -webkit-line-clamp:unset;
+  line-clamp:unset;
+}
+
+.barcode-format-switch .bfs-label {
+  display: inline !important;
+}
+
+.dmart-live-row:has(.dmart-live-available),
+.dmart-live-row.dmart-live-available-row {
+  display: flex !important;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-top:4px;
+  margin-bottom:4px;
+  padding:6px 10px;
+  border-radius:10px;
+  border:1px solid rgba(255,107,0,.45);
+  background:#fff;
+  box-shadow:0 2px 8px rgba(255,107,0,.10);
+  box-sizing:border-box;
+  border: 1px solid rgba(255,107,0,.45);
+}
+
+.dmart-live-row:has(.dmart-live-available) .dmart-live-label,
+.dmart-live-available-row .dmart-live-label {
+  color: #E85D00;
+  font-weight:700;
+  font-size:11px;
+}
+
+.dmart-live-row:has(.dmart-live-available) .dmart-live-available,
+.dmart-live-available-row .dmart-live-available {
+  color: #1a7a3c;
+  font-weight:700;
+  font-size:13px;
+  font-size: 15px;
+  font-weight:750;
+}
+
+[data-theme="dark"] .dmart-live-row:has(.dmart-live-available),
+[data-theme="dark"] .dmart-live-available-row {
+  background: rgba(28,32,36,.95);
+  border-color:rgba(255,154,77,.45);
+}
+
+[data-theme="dark"] .dmart-live-row:has(.dmart-live-available) .dmart-live-available,
+[data-theme="dark"] .dmart-live-available-row .dmart-live-available {
+  color: #5ddea0;
+}
+
+.dmart-live-reserved-row,
+.dmart-live-price-row {
+  display: flex !important;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-top:4px;
+  margin-bottom:4px;
+  padding:6px 10px;
+  border-radius:10px;
+  border:1px solid rgba(17,17,17,.28);
+  background:#fff;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+  box-sizing:border-box;
+  border: 1px solid rgba(17,17,17,.22);
+}
+
+.dmart-live-reserved-row .dmart-live-label,
+.dmart-live-price-row .dmart-live-label {
+  color: #111;
+  font-weight:700;
+  font-size:11px;
+}
+
+.dmart-live-reserved-row .dmart-live-reserved,
+.dmart-live-price-row .dmart-live-price {
+  color: #111;
+  font-weight:600;
+  font-size:13px;
+}
+
+[data-theme="dark"] .dmart-live-reserved-row,
+[data-theme="dark"] .dmart-live-price-row {
+  border-color: rgba(242,245,247,.28);
+}
+
+[data-theme="dark"] .dmart-live-reserved-row .dmart-live-label,
+[data-theme="dark"] .dmart-live-price-row .dmart-live-label,
+[data-theme="dark"] .dmart-live-reserved-row .dmart-live-reserved,
+[data-theme="dark"] .dmart-live-price-row .dmart-live-price {
+  color: #f2f5f7;
+}
+
+.barcode-format-switch.is-floating,
+#barcodeFormatSwitch.is-floating {
+  position: fixed !important;
+  top:auto;
+  left:auto;
+  right:12px;
+  bottom:96px;
+  z-index:9999 !important;
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+  min-width:48px;
+  height:40px;
+  padding:0 14px;
+  margin:0;
+  border-radius:999px;
+  border:1.5px solid rgba(255,107,0,.6);
+  background:#fff;
+  color:#E85D00;
+  font-size:13px;
+  font-weight:800;
+  cursor:grab;
+  box-shadow:0 4px 18px rgba(255,107,0,.28), 0 2px 8px rgba(0,0,0,.12);
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
+  pointer-events:auto !important;
+  visibility:visible !important;
+  opacity:1;
+}
+
+.barcode-format-switch.is-floating.is-dragging,
+#barcodeFormatSwitch.is-floating.is-dragging {
+  cursor: grabbing;
+  box-shadow:0 8px 24px rgba(255,107,0,.35), 0 4px 12px rgba(0,0,0,.18);
+  transform:scale(1.06);
+}
+
+[data-theme="dark"] .barcode-format-switch.is-floating,
+[data-theme="dark"] #barcodeFormatSwitch.is-floating {
+  background: rgba(28,32,36,.98);
+  color:#FF9A4D;
+  border-color:rgba(255,154,77,.6);
+}
+
+button#barcodeFormatSwitch.barcode-format-switch.is-floating,
+#barcodeFormatSwitch.is-floating,
+body > #barcodeFormatSwitch {
+  position: fixed !important;
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1;
+  pointer-events: auto !important;
+  z-index: 2147483646 !important;
+  min-width: 52px;
+  height: 44px;
+  padding: 0 16px;
+  margin: 0;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 107, 0, 0.7);
+  background: #ffffff;
+  color: #E85D00;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: grab;
+  box-shadow: 0 6px 20px rgba(255, 107, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.15);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  transform: none;
+}
+
+button#barcodeFormatSwitch.barcode-format-switch.is-floating.is-dragging,
+#barcodeFormatSwitch.is-floating.is-dragging {
+  cursor: grabbing;
+  transform: scale(1.08);
+  box-shadow: 0 10px 28px rgba(255, 107, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] button#barcodeFormatSwitch.barcode-format-switch.is-floating,
+[data-theme="dark"] #barcodeFormatSwitch.is-floating {
+  background: rgba(28, 32, 36, 0.98);
+  color: #FF9A4D;
+  border-color: rgba(255, 154, 77, 0.7);
+}
+
+#resultArea > .product-card {
+  animation: productCardIn 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+#resultArea > .product-card@media (prefers-reduced-motion: reduce) {
+  #resultarea > .product-card {
+    animation: none;
+  };
+}
+
+.performance-mode #resultArea > .product-card {
+  animation: none;
+}
+
+.dmart-adjust-panel {
+  margin: 10px 0 6px;
+  padding:12px 12px 10px;
+  border-radius:16px;
+  border:1px solid rgba(15,23,42,.08);
+  background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);
+  box-shadow:0 1px 0 rgba(255,255,255,.8) inset, 0 4px 14px rgba(15,23,42,.06);
+}
+
+[data-theme="dark"] .dmart-adjust-panel {
+  background: linear-gradient(180deg,#1c2329 0%,#151a1f 100%);
+  border-color:rgba(255,255,255,.08);
+  box-shadow:none;
+}
+
+.dmart-adjust-title {
+  display: flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;gap:8px;
+}
+
+.dmart-adjust-title-text {
+  font-size: 11px;font-weight:800;letter-spacing:.05em;
+  text-transform:uppercase;color:#FF6B00;
+}
+
+.dmart-adjust-title-hint {
+  font-size: 10px;font-weight:600;color:#94a3b8;text-transform:none;letter-spacing:0;
+}
+
+.dmart-adjust-row {
+  display: flex;align-items:center;justify-content:center;gap:12px;
+}
+
+.dmart-adjust-btn {
+  width: 44px;height:44px;border-radius:14px;
+  border:1px solid rgba(15,23,42,.1);
+  background:#fff;
+  color:#0f172a;
+  cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
+  transition:transform .1s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease;
+  -webkit-tap-highlight-color:transparent;
+  box-shadow:0 2px 6px rgba(15,23,42,.06);
+}
+
+.dmart-adjust-btn svg {
+  display: block;
+}
+
+[data-theme="dark"] .dmart-adjust-btn {
+  background: #1e252c;color:#f1f5f9;border-color:rgba(255,255,255,.1);
+  box-shadow:none;
+}
+
+.dmart-adjust-btn:hover {
+  transform: translateY(-1px);box-shadow:0 4px 12px rgba(15,23,42,.1);
+}
+
+.dmart-adjust-btn:active {
+  transform: scale(.96);
+}
+
+.dmart-adjust-minus {
+  color: #dc2626;border-color:rgba(220,38,38,.28);
+}
+
+.dmart-adjust-minus:hover {
+  background: rgba(220,38,38,.08);
+}
+
+.dmart-adjust-plus {
+  color: #059669;border-color:rgba(5,150,105,.3);
+}
+
+.dmart-adjust-plus:hover {
+  background: rgba(5,150,105,.08);
+}
+
+[data-theme="dark"] .dmart-adjust-minus {
+  color: #f87171;border-color:rgba(248,113,113,.35);
+}
+
+[data-theme="dark"] .dmart-adjust-plus {
+  color: #34d399;border-color:rgba(52,211,153,.35);
+}
+
+.dmart-adjust-qty-wrap {
+  min-width: 72px;
+  display:flex;align-items:center;justify-content:center;
+}
+
+.dmart-adjust-qty {
+  width: 72px;height:44px;
+  text-align:center;
+  font-size:18px;font-weight:800;
+  font-variant-numeric:tabular-nums;
+  border:1.5px solid rgba(255,107,0,.35);
+  border-radius:14px;
+  padding:0 6px;
+  background:#fff;
+  color:#0f172a;
+  outline:none;
+  box-shadow:0 0 0 3px rgba(255,107,0,.08);
+  -moz-appearance:textfield;
+}
+
+.dmart-adjust-qty::-webkit-outer-spin-button,
+.dmart-adjust-qty::-webkit-inner-spin-button {
+  -webkit-appearance: none;margin:0;
+}
+
+.dmart-adjust-qty:focus {
+  border-color: #FF6B00;
+  box-shadow:0 0 0 3px rgba(255,107,0,.18);
+}
+
+[data-theme="dark"] .dmart-adjust-qty {
+  background: #12171c;color:#f8fafc;border-color:rgba(255,140,50,.4);
+  box-shadow:0 0 0 3px rgba(255,107,0,.12);
+}
+
+.dmart-adjust-msg {
+  margin-top: 8px;font-size:11px;font-weight:650;text-align:center;
+}
+
+.dmart-adjust-msg.is-ok {
+  color: #059669;
+}
+
+.dmart-adjust-msg.is-err {
+  color: #dc2626;
+}
+
+.dmart-adjust-panel.is-busy {
+  opacity: .65;pointer-events:none;
+}
+
+.dmart-live-title-row {
+  display: flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  margin-bottom:2px !important;
+  padding-bottom:8px !important;
+  border-bottom:1px solid rgba(255,107,0,.16) !important;
+}
+
+.dmart-live-title-row .dmart-live-title {
+  margin-bottom: 0;
+  padding-bottom:0;
+  border-bottom:none;
+}
+
+.dmart-conn-status {
+  font-size: 11px !important;
+  font-weight:650 !important;
+  padding:3px 10px !important;
+  border-radius:999px !important;
+  background:#f4e8ee !important;
+  color:#8a5a6a !important;
+  border:none !important;
+}
+
+.dmart-conn-status.is-online {
+  border-color: rgba(31,157,85,.4);
+  background:rgba(31,157,85,.12);
+  color:#146c38;
+  background: #e5f8ee !important;
+  color:#16804a !important;
+}
+
+.dmart-conn-status.is-offline {
+  border-color: rgba(180,80,80,.35);
+  background:rgba(180,80,80,.1);
+  color:#a33;
+}
+
+[data-theme="dark"] .dmart-conn-status.is-online {
+  color: #7ddea8;background:rgba(31,157,85,.18);
+  background: #163024 !important;
+  color:#3dd68c !important;
+}
+
+[data-theme="dark"] .dmart-conn-status.is-offline {
+  color: #f0a0a0;background:rgba(180,80,80,.18);
+}
+
+.dmart-live-card.dmart-card-shake {
+  animation: dmartShake .65s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+body.dmart-modal-open {
+  overflow: hidden;
+}
+
+.dmart-adjust-modal {
+  position: fixed;inset:0;z-index:10050;
+  display:flex;align-items:center;justify-content:center;
+  padding:max(12px,env(safe-area-inset-top)) 14px max(12px,env(safe-area-inset-bottom));
+}
+
+.dmart-adjust-modal[hidden] {
+  display: none!important;
+}
+
+.dmart-adjust-modal-backdrop {
+  position: absolute;inset:0;
+  background:rgba(6,10,16,.62);
+  
+  opacity:0;
+  transition:opacity .3s ease;
+}
+
+.dmart-adjust-modal.is-open .dmart-adjust-modal-backdrop {
+  opacity: 1;
+}
+
+.dmart-adjust-modal.is-closing .dmart-adjust-modal-backdrop {
+  opacity: 0;transition-duration:.22s;
+}
+
+.dmart-adjust-modal-card {
+  position: relative;z-index:1;
+  width:min(380px,100%);
+  border-radius:28px;
+  overflow:hidden;
+  background:rgba(255,255,255,.92);
+  border:1px solid rgba(255,255,255,.55);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.7) inset,
+    0 32px 64px rgba(8,12,20,.28),
+    0 12px 24px rgba(8,12,20,.12);
+  opacity:0;
+  transform:translateY(36px) scale(.9);
+  will-change:transform,opacity;
+}
+
+[data-theme="dark"] .dmart-adjust-modal-card {
+  background: rgba(22,28,34,.94);
+  border-color:rgba(255,255,255,.08);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.06) inset,
+    0 36px 72px rgba(0,0,0,.55);
+}
+
+.dmart-adjust-modal.is-open .dmart-adjust-modal-card {
+  animation: dmartModalIn .52s cubic-bezier(.22,1.2,.36,1) both;
+}
+
+.dmart-adjust-modal.is-closing .dmart-adjust-modal-card {
+  animation: dmartModalOut .26s cubic-bezier(.4,0,.2,1) both;
+}
+
+.dmart-adj-glow {
+  position: absolute;left:50%;top:-40%;
+  width:140%;height:70%;
+  transform:translateX(-50%);
+  pointer-events:none;
+  background:radial-gradient(ellipse at center,
+    rgba(255,107,0,.22) 0%,
+    rgba(255,107,0,.06) 40%,
+    transparent 70%);
+  opacity:.9;
+}
+
+.dmart-adjust-modal-card.is-inc .dmart-adj-glow {
+  background: radial-gradient(ellipse at center,
+    rgba(16,185,129,.28) 0%,
+    rgba(16,185,129,.06) 42%,
+    transparent 72%);
+}
+
+.dmart-adjust-modal-card.is-dec .dmart-adj-glow {
+  background: radial-gradient(ellipse at center,
+    rgba(239,68,68,.26) 0%,
+    rgba(239,68,68,.06) 42%,
+    transparent 72%);
+}
+
+.dmart-adj-shell {
+  position: relative;z-index:1;
+  padding:22px 20px 18px;
+}
+
+.dmart-adj-head {
+  display: flex;flex-direction:column;align-items:center;
+  text-align:center;gap:8px;margin-bottom:6px;
+}
+
+.dmart-adj-badge {
+  display: inline-flex;align-items:center;justify-content:center;
+  padding:4px 12px;border-radius:999px;
+  font-size:11px;font-weight:800;letter-spacing:.06em;
+  text-transform:uppercase;
+  background:rgba(255,107,0,.12);color:#e85d00;
+  border:1px solid rgba(255,107,0,.2);
+}
+
+.dmart-adj-badge.is-inc {
+  background: rgba(16,185,129,.14);color:#047857;
+  border-color:rgba(16,185,129,.25);
+}
+
+.dmart-adj-badge.is-dec {
+  background: rgba(239,68,68,.12);color:#b91c1c;
+  border-color:rgba(239,68,68,.22);
+}
+
+[data-theme="dark"] .dmart-adj-badge {
+  color: #ffb067;
+}
+
+[data-theme="dark"] .dmart-adj-badge.is-inc {
+  color: #6ee7b7;
+}
+
+[data-theme="dark"] .dmart-adj-badge.is-dec {
+  color: #fca5a5;
+}
+
+.dmart-adj-title {
+  margin: 0;font-size:1.2rem;font-weight:800;
+  letter-spacing:-.03em;color:#0f172a;line-height:1.25;
+}
+
+[data-theme="dark"] .dmart-adj-title {
+  color: #f8fafc;
+}
+
+.dmart-adj-hero {
+  text-align: center;
+  padding:10px 8px 16px;
+}
+
+.dmart-adj-hero-delta {
+  font-size: 3.4rem;font-weight:900;line-height:1;
+  letter-spacing:-.04em;
+  font-variant-numeric:tabular-nums;
+  color:#FF6B00;
+  text-shadow:0 4px 24px rgba(255,107,0,.25);
+}
+
+.dmart-adj-hero-delta.is-inc {
+  color: #059669;
+  text-shadow:0 4px 24px rgba(5,150,105,.28);
+}
+
+.dmart-adj-hero-delta.is-dec {
+  color: #dc2626;
+  text-shadow:0 4px 24px rgba(220,38,38,.28);
+}
+
+.dmart-adj-hero-label {
+  margin-top: 6px;font-size:13px;font-weight:650;
+  color:#64748b;
+}
+
+[data-theme="dark"] .dmart-adj-hero-label {
+  color: #94a3b8;
+}
+
+.dmart-adj-product {
+  display: flex;align-items:center;gap:14px;
+  padding:12px;
+  margin-bottom:12px;
+  border-radius:18px;
+  background:rgba(15,23,42,.03);
+  border:1px solid rgba(15,23,42,.06);
+}
+
+[data-theme="dark"] .dmart-adj-product {
+  background: rgba(255,255,255,.04);
+  border-color:rgba(255,255,255,.07);
+}
+
+.dmart-adj-img-wrap {
+  position: relative;
+  width:64px;height:64px;flex-shrink:0;
+  border-radius:16px;overflow:hidden;
+  background:#fff;
+  border:1px solid rgba(15,23,42,.08);
+  box-shadow:0 6px 16px rgba(15,23,42,.1);
+  cursor:zoom-in;
+}
+
+[data-theme="dark"] .dmart-adj-img-wrap {
+  background: #0c1014;border-color:rgba(255,255,255,.08);
+}
+
+.dmart-adj-img-wrap img {
+  position: relative;z-index:1;
+  width:100%;height:100%;object-fit:cover;display:block;
+}
+
+.dmart-adj-img-fallback {
+  position: absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  color:#94a3b8;z-index:0;
+}
+
+.dmart-adj-product-meta {
+  flex: 1;min-width:0;
+}
+
+.dmart-adj-name {
+  font-size: 13.5px;font-weight:700;line-height:1.35;color:#0f172a;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+
+[data-theme="dark"] .dmart-adj-name {
+  color: #f1f5f9;
+}
+
+.dmart-adj-sku-line {
+  margin-top: 4px;font-size:11.5px;font-weight:600;color:#94a3b8;
+}
+
+.dmart-adj-sku-line span {
+  color: #475569;font-weight:700;font-variant-numeric:tabular-nums;
+}
+
+[data-theme="dark"] .dmart-adj-sku-line span {
+  color: #cbd5e1;
+}
+
+.dmart-adj-meta {
+  list-style: none;margin:0 0 12px;padding:0;
+  border-radius:16px;
+  border:1px solid rgba(15,23,42,.07);
+  overflow:hidden;
+  background:rgba(255,255,255,.55);
+}
+
+[data-theme="dark"] .dmart-adj-meta {
+  background: rgba(0,0,0,.2);
+  border-color:rgba(255,255,255,.07);
+}
+
+.dmart-adj-meta li {
+  display: flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:11px 14px;
+  border-bottom:1px solid rgba(15,23,42,.06);
+}
+
+[data-theme="dark"] .dmart-adj-meta li {
+  border-bottom-color: rgba(255,255,255,.06);
+}
+
+.dmart-adj-meta li:last-child {
+  border-bottom: none;
+}
+
+.dmart-adj-k {
+  font-size: 12px;font-weight:600;color:#64748b;
+}
+
+.dmart-adj-v {
+  font-size: 13px;font-weight:750;color:#0f172a;
+  text-align:right;font-variant-numeric:tabular-nums;
+  max-width:58%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+
+[data-theme="dark"] .dmart-adj-v {
+  color: #f1f5f9;
+}
+
+.dmart-adj-warn {
+  display: flex;align-items:flex-start;gap:8px;
+  margin:0 0 14px;padding:11px 12px;
+  border-radius:14px;
+  background:linear-gradient(135deg,rgba(251,191,36,.12),rgba(245,158,11,.08));
+  border:1px solid rgba(245,158,11,.22);
+  color:#92400e;font-size:11.5px;line-height:1.5;font-weight:600;
+}
+
+[data-theme="dark"] .dmart-adj-warn {
+  color: #fde68a;background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.2);
+}
+
+.dmart-adj-warn-icon {
+  flex-shrink: 0;margin-top:1px;color:#d97706;
+}
+
+[data-theme="dark"] .dmart-adj-warn-icon {
+  color: #fbbf24;
+}
+
+.dmart-adj-actions {
+  display: flex;gap:10px;
+}
+
+.dmart-adj-btn {
+  flex: 1;height:48px;border-radius:16px;
+  font-weight:800;font-size:14px;font-family:inherit;
+  border:1px solid transparent;cursor:pointer;
+  transition:transform .12s ease,box-shadow .18s ease,background .15s ease,filter .15s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.dmart-adj-btn:active {
+  transform: scale(.97);
+}
+
+.dmart-adj-btn:focus-visible {
+  outline: 2px solid #FF6B00;outline-offset:2px;
+}
+
+.dmart-adj-cancel {
+  background: rgba(15,23,42,.04);
+  border-color:rgba(15,23,42,.1);
+  color:#334155;
+}
+
+.dmart-adj-cancel:hover {
+  background: rgba(15,23,42,.07);
+}
+
+[data-theme="dark"] .dmart-adj-cancel {
+  background: rgba(255,255,255,.06);color:#e2e8f0;border-color:rgba(255,255,255,.1);
+}
+
+.dmart-adj-confirm {
+  background: linear-gradient(180deg,#ff8f47 0%,#FF6B00 55%,#f05a00 100%);
+  color:#fff;
+  box-shadow:0 10px 24px rgba(255,107,0,.35),0 1px 0 rgba(255,255,255,.25) inset;
+}
+
+.dmart-adj-confirm:hover {
+  filter: brightness(1.05);
+}
+
+.dmart-adjust-modal-card.is-inc .dmart-adj-confirm {
+  background: linear-gradient(180deg,#34d399 0%,#10b981 50%,#059669 100%);
+  box-shadow:0 10px 24px rgba(5,150,105,.35),0 1px 0 rgba(255,255,255,.2) inset;
+}
+
+.dmart-adjust-modal-card.is-dec .dmart-adj-confirm {
+  background: linear-gradient(180deg,#f87171 0%,#ef4444 50%,#dc2626 100%);
+  box-shadow:0 10px 24px rgba(220,38,38,.35),0 1px 0 rgba(255,255,255,.18) inset;
+}
+
+.dmart-adj-confirm:disabled {
+  opacity: .5;cursor:not-allowed;box-shadow:none;filter:none;
+}
+
+.dmart-adjust-modal.is-open .dmart-adj-head {
+  animation: dmartAdjFadeUp .4s cubic-bezier(.22,1,.36,1) .04s both;
+}
+
+.dmart-adjust-modal.is-open .dmart-adj-hero {
+  animation: dmartAdjFadeUp .45s cubic-bezier(.22,1,.36,1) .08s both;
+}
+
+.dmart-adjust-modal.is-open .dmart-adj-product {
+  animation: dmartAdjFadeUp .42s cubic-bezier(.22,1,.36,1) .12s both;
+}
+
+.dmart-adjust-modal.is-open .dmart-adj-meta {
+  animation: dmartAdjFadeUp .42s cubic-bezier(.22,1,.36,1) .16s both;
+}
+
+.dmart-adjust-modal.is-open .dmart-adj-warn {
+  animation: dmartAdjFadeUp .4s cubic-bezier(.22,1,.36,1) .2s both;
+}
+
+.dmart-adjust-modal.is-open .dmart-adj-actions {
+  animation: dmartAdjFadeUp .4s cubic-bezier(.22,1,.36,1) .24s both;
+}
+
+.dmart-adj-hover-preview {
+  position: fixed;z-index:10060;width:240px;height:240px;
+  border-radius:18px;overflow:hidden;
+  box-shadow:0 20px 48px rgba(0,0,0,.32);
+  border:2px solid rgba(255,107,0,.35);
+  pointer-events:none;background:#fff;
+}
+
+.dmart-adj-hover-preview img {
+  width: 100%;height:100%;object-fit:contain;
+}
+
+.dmart-adj-img-big {
+  position: fixed;inset:0;z-index:10070;
+  background:rgba(0,0,0,.8);
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;
+}
+
+.dmart-adj-img-big[hidden] {
+  display: none!important;
+}
+
+.dmart-adj-img-big img {
+  max-width: min(420px,92vw);max-height:80vh;
+  border-radius:18px;background:#fff;
+  box-shadow:0 24px 56px rgba(0,0,0,.45);
+}
+
+.dmart-adj-img-big-close {
+  position: absolute;top:16px;right:16px;
+  width:44px;height:44px;border-radius:50%;
+  border:none;background:rgba(255,255,255,.94);font-size:24px;cursor:pointer;
+  box-shadow:0 6px 16px rgba(0,0,0,.25);
+}
+
+.dmart-center-toast {
+  position: fixed;left:50%;top:42%;
+  transform:translate(-50%,-50%) scale(.94);
+  z-index:10040;
+  text-align:center;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .16s ease, transform .16s ease;
+}
+
+.dmart-center-toast.is-visible {
+  opacity: 1;
+  transform:translate(-50%,-50%) scale(1);
+}
+
+.dmart-toast-card {
+  min-width: min(200px,78vw);
+  padding:22px 28px 18px;
+  border-radius:22px;
+  background:#fff;
+  border:1px solid rgba(15,23,42,.08);
+  box-shadow:0 16px 40px rgba(15,23,42,.18);
+}
+
+[data-theme="dark"] .dmart-toast-card {
+  background: #1a2026;
+  border-color:rgba(255,255,255,.1);
+  box-shadow:0 20px 48px rgba(0,0,0,.45);
+}
+
+.dmart-toast-card.is-inc {
+  border-color: rgba(5,150,105,.28);
+}
+
+.dmart-toast-card.is-dec {
+  border-color: rgba(220,38,38,.28);
+}
+
+.dmart-toast-card.is-fail {
+  border-color: rgba(220,38,38,.3);
+}
+
+.dmart-toast-card.is-boost {
+  border-color: rgba(5,150,105,.3);
+}
+
+.dmart-toast-delta {
+  font-size: 3.2rem;font-weight:900;line-height:1;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-.03em;
+}
+
+.dmart-toast-card.is-inc .dmart-toast-delta,
+.dmart-toast-delta.is-inc {
+  color: #059669;
+}
+
+.dmart-toast-card.is-dec .dmart-toast-delta,
+.dmart-toast-delta.is-dec {
+  color: #dc2626;
+}
+
+.dmart-toast-label {
+  margin-top: 8px;font-size:14px;font-weight:750;
+  color:#475569;
+}
+
+[data-theme="dark"] .dmart-toast-label {
+  color: #cbd5e1;
+}
+
+.dmart-toast-card.is-inc .dmart-toast-label {
+  color: #047857;
+}
+
+.dmart-toast-card.is-dec .dmart-toast-label {
+  color: #b91c1c;
+}
+
+.dmart-toast-on {
+  font-size: 2.4rem;font-weight:900;color:#059669;
+  letter-spacing:.04em;display:block;
+}
+
+.dmart-toast-fail {
+  color: #dc2626;display:flex;justify-content:center;
+}
+
+.dmart-toast-card.is-fail .dmart-toast-label {
+  color: #dc2626;margin-top:6px;
+}
+
+.dmart-avail-blink-off {
+  opacity: 0;transition:opacity .2s linear;
+}
+
+.dmart-live-available-row {
+  transition: opacity .2s linear;
+}
+
+.dmart-live-card.dmart-card-avail-pop .dmart-live-available-row {
+  animation: dmartAvailPop .22s ease;
+}
+
+.dmart-live-card.dmart-card-drop {
+  animation: dmartCardDrop .65s cubic-bezier(.2,.8,.2,1);
+  transform-origin:center top;
+}
+
+55% {
+  transform: translateY(6px) scale(.99);
+}
+
+75% {
+  transform: translateY(-3px) scale(1.01);
+}
+
+100% {
+  transform: translateY(0) scale(1);opacity:1;
+}
+
+  /* Typewriter / stroke-draw card reveal */ .dmart-live-card.dmart-card-type {
+  animation: dmartCardType .75s cubic-bezier(.2,.7,.2,1) both;
+}
+
+.dmart-adjust-qty.is-shake {
+  animation: dmartQtyShake .45s ease;
+}
+
+.product-card,
+.dmart-live-card,
+.app-header,
+.search-section,
+.panel {
+  backdrop-filter: none;
+  -webkit-backdrop-filter:none;
+}
+
+.panel,
+.quick-access-card {
+  background: rgba(255,255,255,.55);
+}
+
+[data-theme="dark"] .panel,
+[data-theme="dark"] .quick-access-card {
+  background: rgba(18,28,32,.55);
+}
+
+.dmart-source-badge {
+  position: absolute;top:8px;left:8px;z-index:2;
+  font-size:10px;font-weight:700;letter-spacing:.04em;
+  padding:3px 7px;border-radius:999px;
+  background:rgba(255,90,31,.92);color:#fff;
+  box-shadow:0 1px 4px rgba(0,0,0,.18);
+  pointer-events:none;user-select:none;
+}
+
+[data-theme="dark"] .dmart-source-badge {
+  background: rgba(255,110,50,.95);
+}
+
+.dmart-live-row:has(.dmart-live-available),
+.dmart-live-row.dmart-live-available-row,
+.dmart-live-reserved-row,
+.dmart-live-price-row {
+  background: #D2EEF7;
+  box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+
+[data-theme="dark"] .dmart-live-row:has(.dmart-live-available),
+[data-theme="dark"] .dmart-live-available-row,
+[data-theme="dark"] .dmart-live-reserved-row,
+[data-theme="dark"] .dmart-live-price-row {
+  background: rgba(40,52,64,.55);
+}
+
+.dmart-live-card::before,
+.dmart-live-card::after {
+  box-shadow: none;
+}
+
+.product-name,
+.product-title,
+#prodName {
+  font-weight: 600;
+  letter-spacing:-.01em;
+  line-height:1.35;
+}
+
+.dmart-live-card,
+.dmart-live-card.dmart-card-drop,
+.product-card .dmart-live-card {
+  background: #ffffff !important;
+  border:1px solid rgba(255,107,0,.38) !important;
+  border-radius:18px !important;
+  box-shadow:
+    0 0 0 1px rgba(255,107,0,.06),
+    8px 10px 22px -10px rgba(255,107,0,.28) !important;
+  padding:14px 14px 16px !important;
+  gap:10px !important;
+}
+
+[data-theme="dark"] .dmart-conn-status {
+  background: #2a2430 !important;
+  color:#c9a0ad !important;
+}
+
+[data-theme="dark"] .dmart-live-label {
+  color: #9aa7b2 !important;
+}
+
+[data-theme="dark"] .dmart-live-value {
+  color: #eef0f2 !important;
+}
+
+.dmart-live-available,
+.dmart-live-available-row .dmart-live-available,
+.dmart-live-card.is-ready .dmart-live-available {
+  color: #16a34a !important;
+  font-weight:800 !important;
+}
+
+.dmart-check-btn-inline,
+.dmart-live-card .dmart-check-btn-inline,
+a.dmart-check-btn.dmart-check-btn-inline {
+  display: flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:100% !important;
+  transform:none !important;
+  margin-top:4px !important;
+  padding:12px 14px !important;
+  min-height:44px !important;
+  border-radius:14px !important;
+  border:none !important;
+  background:#FF6B00 !important;
+  color:#ffffff !important;
+  font-size:14px !important;
+  font-weight:750 !important;
+  box-shadow:0 6px 16px rgba(255,107,0,.28) !important;
+  text-decoration:none !important;
+}
+
+.panel-item,
+.suggestion-item {
+  content-visibility: auto;
+  contain-intrinsic-size: 56px;
+}
+
+.dmart-live-row.dmart-live-available-row,
+.dmart-live-row:has(.dmart-live-available) {
+  background: #F3F5F7 !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  padding: 10px 12px !important;
+  margin: 0 !important;
+}
+
+.dmart-live-row.dmart-live-available-row .dmart-live-label,
+.dmart-live-row:has(.dmart-live-available) .dmart-live-label {
+  color: #1b1d21 !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+}
+
+.dmart-live-row.dmart-live-available-row .dmart-live-available,
+.dmart-live-row:has(.dmart-live-available) .dmart-live-available,
+.dmart-live-available {
+  color: #16a34a !important;
+  font-weight: 800 !important;
+}
+
+[data-theme="dark"] .dmart-live-row.dmart-live-available-row,
+[data-theme="dark"] .dmart-live-row:has(.dmart-live-available) {
+  background: #24303a !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] .dmart-live-row.dmart-live-available-row .dmart-live-label,
+[data-theme="dark"] .dmart-live-row:has(.dmart-live-available) .dmart-live-label {
+  color: #eef0f2 !important;
+}
+
+.product-image-wrap.loading img {
+  opacity: 0.35;
+  transition: opacity 0.18s ease;
+}
+
+.product-image-wrap:not(.loading) img {
+  opacity: 1;
+}
+
+.panel-thumb,
+.suggestion-thumb {
+  content-visibility: auto;
+  background: rgba(255,255,255,.25);
+}
+
+@keyframes cardIn {from{opacity:0;transform:scale(.99);}to{opacity:1;transform:scale(1);}}
+
+@keyframes shimmer {0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+
+@keyframes pop {0%{transform:scale(1);}45%{transform:scale(1.35);}100%{transform:scale(1);}}
+
+@keyframes dmartLiveSpin {to{transform:rotate(360deg)}}
+
+@keyframes productCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dmartFadeOut {
+  from{opacity:1;transform:scale(1);}
+  to{opacity:0;transform:scale(.97);}
+}
+
+@keyframes dmartRedraw {
+  0%{opacity:0;transform:scale(.96);box-shadow:0 0 0 0 rgba(255,107,0,0);}
+  35%{opacity:1;transform:scale(1.02);box-shadow:0 0 0 3px rgba(255,107,0,.35);}
+  70%{transform:scale(1);box-shadow:0 0 0 2px rgba(31,157,85,.35);}
+  100%{opacity:1;transform:scale(1);box-shadow:0 4px 18px rgba(255,107,0,.10);}
+}
+
+@keyframes dmartShake {
+  0%,100%{transform:translateX(0);}
+  10%{transform:translateX(-12px) rotate(-0.5deg);}
+  20%{transform:translateX(12px) rotate(0.5deg);}
+  30%{transform:translateX(-10px);}
+  40%{transform:translateX(10px);}
+  50%{transform:translateX(-8px);}
+  60%{transform:translateX(8px);}
+  70%{transform:translateX(-5px);}
+  80%{transform:translateX(5px);}
+  90%{transform:translateX(-2px);}
+}
+
+@keyframes dmartModalIn {
+  0%{opacity:0;transform:translateY(28px) scale(.94);}
+  70%{opacity:1;transform:translateY(-2px) scale(1.01);}
+  100%{opacity:1;transform:none;}
+}
+
+@keyframes dmartModalOut {
+  0%{opacity:1;transform:scale(1);}
+  100%{opacity:0;transform:translateY(18px) scale(.94);}
+}
+
+@keyframes dmartAdjFadeUp {
+  from{opacity:0;transform:translateY(12px);}
+  to{opacity:1;transform:none;}
+}
+
+@keyframes dmartAvailPop {
+  0%{transform:scale(.92);opacity:.5;}
+  100%{transform:scale(1);opacity:1;}
+}
+
+@keyframes dmartCardDrop {
+  0%{transform:translateY(-18px) scale(1.03);opacity:.85;}
+  55%{transform:translateY(4px) scale(.99);}
+  100%{transform:none;opacity:1;}
+}
+
+@keyframes dmartCardType {
+  0%{
+    clip-path:inset(0 100% 0 0);
+    opacity:.35;
+    filter:saturate(.8);
+    box-shadow:0 0 0 0 rgba(255,107,0,0);
+  }
+  35%{
+    clip-path:inset(0 40% 0 0);
+    opacity:.85;
+  }
+  70%{
+    clip-path:inset(0 0 0 0);
+    box-shadow:0 0 0 3px rgba(255,107,0,.35);
+  }
+  100%{
+    clip-path:inset(0 0 0 0);
+    opacity:1;
+    filter:none;
+    box-shadow:0 4px 18px rgba(255,107,0,.12);
+  }
+}
+
+@keyframes dmartQtyShake {
+  0%,100%{transform:translateX(0);}
+  20%{transform:translateX(-6px);}
+  40%{transform:translateX(6px);}
+  60%{transform:translateX(-4px);}
+  80%{transform:translateX(4px);}
+}
+
+@media (max-width:640px) {
+
+.quick-access-grid {
+  grid-template-columns: 1fr;
+}
+
+.team-modal-box {
+  min-width: 0;width:90%;
+}
+
+.team-members-list {
+  column-count: 1;
+}
+
+}
+
+@media (hover:hover) and (pointer:fine) {
+
+.quick-access-card:hover {
+  transform: translateY(-1px);
+    border-color:var(--primary);
+    box-shadow:var(--shadow-md);
+}
+
+.quick-access-card:hover .quick-access-arrow {
+  transform: translate(1px,-1px);
+}
+
+.dmart-check-btn:hover {
+  transform: translateY(-1px);border-color:var(--primary);box-shadow:var(--shadow-md);
+}
+
+.product-card {
+  box-shadow: var(--shadow-sm);
+    transition:box-shadow 160ms ease,border-color 160ms ease;
+}
+
+.product-card:hover {
+  box-shadow: var(--shadow-md);
+    border-color:var(--crystal-border);
+}
+
+.product-card:hover .product-image-wrap img {
+  transform: scale(1.03);
+}
+
+.product-image-wrap img {
+  transition: transform 180ms ease;
+}
+
+.dmart-check-btn-inline:hover {
+  transform: none !important;
+    background:#e85f00 !important;
+    box-shadow:0 8px 18px rgba(255,107,0,.34) !important;
+    padding:12px 14px !important;
+}
+
+.dmart-check-btn-inline:hover,
+a.dmart-check-btn.dmart-check-btn-inline:hover,
+.dmart-live-card .dmart-check-btn:hover {
+  background: #FF6B00;
+    color:#fff;
+    border-color:#FF6B00;
+    box-shadow:0 8px 22px rgba(255,107,0,.35);
+    transform:translateY(-2px) scale(1.03);
+}
+
+.dmart-check-btn-inline:hover .dmart-check-icon,
+.dmart-live-card .dmart-check-btn:hover .dmart-check-icon {
+  color: #fff;
+}
+
+.dmart-check-btn-inline:hover,
+a.dmart-check-btn.dmart-check-btn-inline:hover {
+  color: #ffffff;
+    border-color:#FF6B00;
+    box-shadow:0 6px 18px rgba(255,107,0,.32);
+    background:#ffffff;
+}
+
+.dmart-check-btn-inline:hover::before,
+a.dmart-check-btn.dmart-check-btn-inline:hover::before {
+  transform: scaleY(1);
+}
+
+}
+
+@media (max-width:480px) {
+
+.team-modal-box {
+  width: 95%;
+}
+
+}
+
+@media (max-width:720px) {
+
+/* mobile width overridden in 1.5.4 */
+
+/* compact DMart live: 3 numbers only, no Check in Dmart */
+
+/* hide duplicate big title row name on mobile if under-img exists */
+
+/* Hide Check in Dmart on mobile inside live card */
+
+/* download button restored */
+
+.product-details-row .product-title-row {
+  display: none !important;
+}
+
+html.recent-beside-barcode .product-recent-col {
+  display: flex !important;
+    flex:1 1 100%;
+    max-width:100%;
+    max-height:200px;
+    border-left:none;
+    border-top:1px solid var(--border);
+    padding-left:0;
+    padding-top:8px;
+  max-width: 100%;
+}
+
+.product-card .product-top-row {
+  display: flex !important;
+    flex-direction:row;
+    flex-wrap:wrap;
+}
+
+.product-card .product-image-col {
+  order: 1;
+    flex:1 1 47%;
+    max-width:48%;
+    width:48%;
+}
+
+.product-card .product-barcodes-col,
+.product-card .barcodes-section {
+  order: 2;
+    flex:1 1 47%;
+    max-width:48%;
+    width:48%;
+}
+
+.product-card .product-live-col {
+  order: 3;
+    flex:1 1 100%;
+    max-width:100%;
+    width:100%;
+}
+
+.product-card .product-recent-col {
+  order: 4;
+}
+
+.dmart-live-card .dmart-check-btn,
+.dmart-live-card a.dmart-check-btn,
+.dmart-live-card .dmart-check-btn-inline {
+  display: none !important;
+}
+
+.product-details-row .sku-barcode-row {
+  display: flex !important;
+    flex-direction:row;
+    flex-wrap:nowrap;
+    align-items:stretch;
+    justify-content:space-between;
+    gap:6px;
+    width:100%;
+    max-width:100%;
+    box-sizing:border-box;
+}
+
+.product-details-row .sku-barcode-row .info-field,
+.product-details-row .sku-barcode-row .info-field-barcode,
+.product-details-row .sku-barcode-row .info-field-fav {
+  flex: 1 1 0;
+    min-width:0;
+    max-width:none;
+    padding:5px 6px;
+    box-sizing:border-box;
+}
+
+.product-details-row .sku-barcode-row .info-field-barcode {
+  flex: 1.2 1 0;
+    padding:5px 4px;
+}
+
+.product-details-row .sku-barcode-row .info-field-fav {
+  flex: 0 0 auto;
+    padding:5px 8px;
+}
+
+.product-details-row .sku-barcode-row .info-label {
+  font-size: 9px;
+    letter-spacing:.02em;
+  display: block !important;
+    font-size:9px;
+    line-height:1.1;
+    margin:0;
+}
+
+.product-details-row .sku-barcode-row .info-value {
+  font-size: 11px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  display: block !important;
+    font-size:11px;
+    font-weight:700;
+    line-height:1.2;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    word-break:normal;
+    max-width:100%;
+}
+
+.product-details-row .sku-barcode-row .info-field-copy {
+  min-width: 0;
+    flex:1 1 auto;
+  display: flex !important;
+    flex-direction:column;
+    flex:1 1 auto;
+    min-width:0;
+    max-width:100%;
+    padding:6px 6px 6px 8px;
+}
+
+.product-details-row .sku-barcode-row .icon-btn-sm {
+  width: 28px;
+    height:28px;
+    flex-shrink:0;
+}
+
+.product-details-row .sku-barcode-row .info-value-fav svg {
+  width: 16px;
+    height:16px;
+}
+
+.product-details-row {
+  padding: 10px 10px 8px;
+}
+
+.product-details-row .sku-barcode-row > .info-field,
+.product-details-row .sku-barcode-row > .info-field-barcode,
+.product-details-row .sku-barcode-row > .info-field-fav {
+  display: flex !important;
+    flex-direction:column;
+    justify-content:center;
+    flex:1 1 0;
+    width:auto;
+    max-width:none;
+    min-width:0;
+    min-height:44px;
+    padding:6px 8px;
+    margin:0;
+    box-sizing:border-box;
+}
+
+.product-details-row .sku-barcode-row > .info-field-barcode {
+  flex: 1.4 1 0;
+    flex-direction:row;
+    align-items:center;
+    padding:4px 4px 4px 0;
+}
+
+.product-details-row .sku-barcode-row > .info-field-fav {
+  flex: 0 0 52px;
+    width:52px;
+    max-width:52px;
+    align-items:center;
+    text-align:center;
+    padding:6px 4px;
+}
+
+.product-details-row .sku-barcode-row #barcodeFieldDownload,
+.product-details-row .sku-barcode-row .icon-btn-sm {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--border, rgba(0,0,0,.12));
+  background: rgba(255,255,255,.85);
+  color: var(--text, #222);
+  cursor: pointer;
+}
+
+.product-details-row .sku-barcode-row .info-value-fav {
+  display: flex !important;
+    justify-content:center;
+    height:auto;
+}
+
+.product-details-row .sku-barcode-row .info-field-fav .info-label {
+  font-size: 8px;
+}
+
+.sku-barcode-row .info-field,
+.sku-barcode-row .info-field-barcode {
+  max-width: none;
+    width:auto;
+}
+
+.barcode-block-128 .barcode-128-wrap:not(.is-qr) {
+  max-width: 100%;
+}
+
+.barcode-format-switch {
+  top: 2px;
+    right:2px;
+    min-width:36px;
+    height:28px;
+    font-size:11px;
+  min-width: 42px;
+    height:32px;
+}
+
+.barcode-br-row .barcode-format-switch,
+.barcode-format-switch {
+  min-width: 42px;
+    height:32px;
+    font-size:12px;
+}
+
+.barcode-format-switch.is-floating,
+#barcodeFormatSwitch.is-floating {
+  min-width: 52px;
+    height:44px;
+    right:10px;
+    bottom:88px;
+    font-size:13px;
+}
+
+}
+
+@media (min-width:721px) {
+
+html.recent-beside-barcode .product-recent-col {
+  flex: 0 0 230px;
+    max-width:253px;
+    width:230px;
+  display: flex !important;
+    flex:0 0 230px;
+    width:230px;
+    min-width:184px;
+    max-width:253px;
+    max-height:336px;
+}
+
+html.recent-beside-barcode .product-recent-list {
+  max-height: 100%;
+}
+
+.barcode-block-128 .barcode-number-value {
+  font-size: 12px;
+}
+
+.barcode-block-128 .barcode-number-label {
+  font-size: 11px;
+}
+
+html.recent-beside-barcode .product-barcodes-col {
+  flex: 1 1 auto;
+    max-width:none;
+}
+
+}
+
+@media (min-width: 721px) {
+
+html.recent-beside-barcode .panels-row .panel:first-child {
+  display: none;
+}
+
+html.recent-beside-barcode .panels-row {
+  grid-template-columns: 1fr;
+}
+
+}
+
+@media (max-width:899px) {
+
+.dmart-adjust-panel {
+  display: none !important;
+}
+
+}
+
+@media (prefers-reduced-motion:reduce) {
+
+.dmart-adjust-modal-card,
+.dmart-adjust-modal.is-open .dmart-adj-head,
+.dmart-adjust-modal.is-open .dmart-adj-hero,
+.dmart-adjust-modal.is-open .dmart-adj-product,
+.dmart-adjust-modal.is-open .dmart-adj-meta,
+.dmart-adjust-modal.is-open .dmart-adj-warn,
+.dmart-adjust-modal.is-open .dmart-adj-actions {
+  animation: none!important;transition:opacity .12s ease!important;
+}
+
+.dmart-adjust-modal.is-open .dmart-adjust-modal-card {
+  opacity: 1;transform:none;filter:none;
+}
+
+}
+
+@media (max-width: 720px) {
+
+.product-card {
+  display: flex !important;
+    flex-direction: column !important;
+  gap: 12px;
+}
+
+.dmart-live-card {
+  order: 2;
+}
+
+.product-image-wrap {
+  max-width: 100%;
+}
+
+}
+
+
+/* ===== EMERGENCY LAYOUT RESTORE (post-flatten) =====
+   Desktop rules must NOT override mobile: this block is last. */
+
+/* Desktop product row */
+@media (min-width: 721px) {
+  .product-top-row {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 14px !important;
+    padding: 10px 10px 14px !important;
+    overflow: visible !important;
+  }
+  .product-live-col {
+    flex: 0 0 200px !important;
+    max-width: 220px !important;
+    min-width: 160px !important;
+    order: 0 !important;
+    width: auto !important;
+  }
+  .product-image-col {
+    flex: 0 0 30% !important;
+    max-width: 30% !important;
+    order: 0 !important;
+    width: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+  .product-barcodes-col,
+  .product-card .barcodes-section {
+    flex: 1 1 auto !important;
+    max-width: none !important;
+    width: auto !important;
+    order: 0 !important;
+    min-width: 0 !important;
+  }
+  .dmart-live-card .dmart-check-btn,
+  .dmart-live-card .dmart-check-btn-inline,
+  .dmart-live-card a.dmart-check-btn {
+    display: inline-flex !important;
+  }
+}
+
+/* Mobile: image left | barcode right | live full-width below */
+@media (max-width: 720px) {
+  .product-top-row,
+  .product-card .product-top-row {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    padding: 8px !important;
+    overflow: visible !important;
+  }
+  .product-image-col,
+  .product-card .product-image-col {
+    order: 1 !important;
+    flex: 1 1 47% !important;
+    max-width: 48% !important;
+    width: 48% !important;
+    min-width: 0 !important;
+  }
+  .product-barcodes-col,
+  .product-card .product-barcodes-col,
+  .product-card .barcodes-section {
+    order: 2 !important;
+    flex: 1 1 47% !important;
+    max-width: 48% !important;
+    width: 48% !important;
+    min-width: 0 !important;
+  }
+  .product-live-col,
+  .product-card .product-live-col {
+    order: 3 !important;
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .product-recent-col,
+  .product-card .product-recent-col {
+    order: 4 !important;
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+  }
+  .product-name-under-img {
+    display: block !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 1.25 !important;
+    margin-top: 6px !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .product-details-row .product-title-row {
+    display: none !important;
+  }
+  /* Hide Check in Dmart on mobile */
+  .dmart-live-card .dmart-check-btn,
+  .dmart-live-card .dmart-check-btn-inline,
+  .dmart-live-card a.dmart-check-btn {
+    display: none !important;
+  }
+  /* SKU / Barcode / Fav one row */
+  .sku-barcode-row {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+    align-items: stretch !important;
+  }
+  .sku-barcode-row .info-field,
+  .sku-barcode-row .info-field-barcode,
+  .sku-barcode-row .info-field-fav {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+  }
+}
+
+/* Never show Offline/Online chip on live card */
+.dmart-conn-status {
+  display: none !important;
+}
+
+
+/* ===== DOWNLOAD BTN RESTORE ===== */
+.product-details-row .sku-barcode-row #barcodeFieldDownload,
+#barcodeFieldDownload,
+.sku-barcode-row .icon-btn-sm {
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+.product-details-row .sku-barcode-row .info-field-barcode {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
