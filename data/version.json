@@ -1,12 +1,12 @@
 {
   "version": "1.9.11",
-  "build": 138,
+  "build": 142,
   "updated": "2026-09-21",
   "products": 41125,
   "changelogByVersion": [
     {
       "version": "1.9.11",
-      "build": 138,
+      "build": 142,
       "date": "2026-09-21",
       "items": [
         "Structure: split cards.css modules + external logo assets",
@@ -17,7 +17,11 @@
         "Fix settings panel not opening (CSS load, openPanel, header z-index)",
         "Fix settings.js syntax (orphaned catch after products-search removal) — Settings failed to open",
         "Fix Previous versions changelog popup (z-index above settings + click handlers)",
-        "Recent beside (desktop): show last known Available qty per SKU; widen column slightly"
+        "Recent beside (desktop): show last known Available qty per SKU; widen column slightly",
+        "Deploy fix: bundle cards/*.css → cards.css (Vercel was 404 on split CSS paths)",
+        "Restore split cards/*.css for maintainability; SW precache lists split files (no monolith)",
+        "Fix Code128 render (clear noise, wait JsBarcode, canvas fallback); APK minSdk 21 + new launcher icon",
+        "Cleanup: embed APK in downloads/; remove unused folders (icons, images, tools, docs, bg images, dead workflows); single products.json"
       ]
     },
     {
