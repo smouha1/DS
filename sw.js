@@ -10,7 +10,7 @@
      • Drop old caches on activate
    ------------------------------------------------------------------------ */
 
-const CACHE_NAME = 'smouha-pick-shell-v96-138';
+const CACHE_NAME = 'smouha-pick-shell-v100-142';
 
 /** Core shell — same-origin only. Lazy modules included so first offline
  *  open of Settings/Maintenance/DMart live still works after one online visit. */
@@ -19,7 +19,16 @@ const SHELL_FILES = [
   './index.html',
   './manifest.json',
   './assets/css/main.css',
-  './assets/css/cards.css',
+  './assets/css/cards/01-quick-access.css',
+  './assets/css/cards/02-product-card.css',
+  './assets/css/cards/03-team-modal.css',
+  './assets/css/cards/04-panels.css',
+  './assets/css/cards/05-dmart-live.css',
+  './assets/css/cards/06a-visual-polish-base.css',
+  './assets/css/cards/06b-barcode-switch-saga.css',
+  './assets/css/cards/07-anim-and-stock-modal.css',
+  './assets/css/cards/08-dmart-identity.css',
+  './assets/css/cards/09-latest-overrides.css',
   './assets/css/buttons.css',
   './assets/css/search.css',
   './assets/css/settings.css',
