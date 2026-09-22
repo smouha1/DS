@@ -1069,20 +1069,34 @@ function renderSuggestions(matches, query) {
     wrap.classList.remove('is-qr');
     const liveSvg = ensureBarcodeSvg(wrap);
     if (!liveSvg) return;
-    const ok = barcodeLib.renderCode128(liveSvg, bc);
-    if (ok) {
-      wireBarcodeZoom(wrap);
-      try {
-        const block = wrap.closest('.barcode-block-128');
-        if (block) {
-          const w = Math.ceil(wrap.getBoundingClientRect().width);
-          if (w > 0) block.style.setProperty('--bc-track-width', w + 'px');
-        }
-        // Align Br row to exact CODE128 width (same path as QR)
-        syncBarcodeTrackWidth();
-      } catch (e) { /* ignore */ }
+    // Clear any previous QR/noise markup before drawing bars
+    try {
+      liveSvg.innerHTML = '';
+      liveSvg.removeAttribute('viewBox');
+    } catch (e) {}
+    const applyOk = (ok) => {
+      if (gen !== barcodeRenderGen) return;
+      if (ok) {
+        wireBarcodeZoom(wrap);
+        try {
+          const block = wrap.closest('.barcode-block-128');
+          if (block) {
+            const w = Math.ceil(wrap.getBoundingClientRect().width);
+            if (w > 0) block.style.setProperty('--bc-track-width', w + 'px');
+          }
+          syncBarcodeTrackWidth();
+        } catch (e) { /* ignore */ }
+      } else {
+        try {
+          const el = ensureBarcodeSvg(wrap);
+          if (el) el.outerHTML = '<span style="color:#9aa0aa;font-size:11px;">Invalid barcode for Code128</span>';
+        } catch (e) {}
+      }
+    };
+    if (typeof barcodeLib.renderCode128WhenReady === 'function') {
+      barcodeLib.renderCode128WhenReady(liveSvg, bc, 3000).then(applyOk).catch(() => applyOk(false));
     } else {
-      try { const el = ensureBarcodeSvg(wrap); if (el) el.outerHTML = '<span style="color:#9aa0aa;font-size:11px;">Invalid barcode for Code128</span>'; } catch (e) {}
+      applyOk(barcodeLib.renderCode128(liveSvg, bc));
     }
   }
 

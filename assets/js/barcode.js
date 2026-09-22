@@ -63,37 +63,127 @@ const barcodeSvgCache = new Map();
  *  rendered (invalid barcode / library missing) — the caller decides what
  *  fallback UI to show. */
 export function renderCode128(svgEl, value) {
-  if (!value || !svgEl || !window.JsBarcode) return false;
-  try {
+  if (!value || !svgEl) return false;
+  const raw = String(value).trim();
+  if (!raw) return false;
+
+  // Prefer real JsBarcode when available
+  const draw = () => {
     const large = typeof document !== 'undefined'
       && document.documentElement.classList.contains('large-barcode');
-    const cacheKey = (large ? 'L:' : 'N:') + value;
+    const cacheKey = (large ? 'L:' : 'N:') + raw;
+    const barW = large ? 2.5 : 1.8;
+    const barH = large ? 110 : 64;
+    const margin = large ? 6 : 4;
+
+    // Always reset node so stale QR/noise markup cannot stick
+    try {
+      while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
+      svgEl.removeAttribute('viewBox');
+      svgEl.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      svgEl.setAttribute('role', 'img');
+      svgEl.setAttribute('aria-label', 'Barcode ' + raw);
+      svgEl.style.display = 'block';
+      svgEl.style.width = '100%';
+      svgEl.style.height = 'auto';
+      svgEl.style.maxWidth = '100%';
+      svgEl.style.background = '#ffffff';
+    } catch (e) {}
+
     const cached = barcodeSvgCache.get(cacheKey);
-    if (cached) {
+    if (cached && cached.innerHTML && cached.viewBox) {
       svgEl.setAttribute('viewBox', cached.viewBox);
-      svgEl.setAttribute('width', cached.width);
-      svgEl.setAttribute('height', cached.height);
+      if (cached.width) svgEl.setAttribute('width', cached.width);
+      if (cached.height) svgEl.setAttribute('height', cached.height);
       svgEl.innerHTML = cached.innerHTML;
-    } else {
-      window.JsBarcode(svgEl, value, {
-        format: 'CODE128',
-        width: large ? 3 : 2,
-        height: large ? 120 : 70,
-        displayValue: false,
-        margin: large ? 8 : 6,
-        background: '#ffffff'
-      });
-      barcodeSvgCache.set(cacheKey, {
-        viewBox: svgEl.getAttribute('viewBox'),
-        width: svgEl.getAttribute('width'),
-        height: svgEl.getAttribute('height'),
-        innerHTML: svgEl.innerHTML
-      });
+      return true;
     }
-    return true;
-  } catch (e) {
+
+    if (typeof window !== 'undefined' && window.JsBarcode) {
+      try {
+        window.JsBarcode(svgEl, raw, {
+          format: 'CODE128',
+          lineColor: '#000000',
+          width: barW,
+          height: barH,
+          displayValue: false,
+          margin: margin,
+          background: '#ffffff',
+          xmlDocument: document,
+        });
+        // Guard against empty/noise render
+        if (!svgEl.innerHTML || svgEl.innerHTML.length < 20) {
+          throw new Error('empty-svg');
+        }
+        barcodeSvgCache.set(cacheKey, {
+          viewBox: svgEl.getAttribute('viewBox') || '',
+          width: svgEl.getAttribute('width') || '',
+          height: svgEl.getAttribute('height') || '',
+          innerHTML: svgEl.innerHTML,
+        });
+        return true;
+      } catch (e1) {
+        // Canvas fallback (some WebViews mishandle SVG targets)
+        try {
+          const canvas = document.createElement('canvas');
+          window.JsBarcode(canvas, raw, {
+            format: 'CODE128',
+            lineColor: '#000000',
+            width: barW,
+            height: barH,
+            displayValue: false,
+            margin: margin,
+            background: '#ffffff',
+          });
+          const dataUrl = canvas.toDataURL('image/png');
+          const w = canvas.width || 200;
+          const h = canvas.height || barH;
+          svgEl.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+          svgEl.setAttribute('width', String(w));
+          svgEl.setAttribute('height', String(h));
+          svgEl.innerHTML =
+            '<image href="' + dataUrl + '" xlink:href="' + dataUrl +
+            '" x="0" y="0" width="' + w + '" height="' + h +
+            '" preserveAspectRatio="xMidYMid meet"/>';
+          barcodeSvgCache.set(cacheKey, {
+            viewBox: svgEl.getAttribute('viewBox'),
+            width: String(w),
+            height: String(h),
+            innerHTML: svgEl.innerHTML,
+          });
+          return true;
+        } catch (e2) {
+          return false;
+        }
+      }
+    }
     return false;
+  };
+
+  return draw();
+}
+
+/** Wait briefly for JsBarcode global (defer race on slow devices). */
+export function renderCode128WhenReady(svgEl, value, timeoutMs) {
+  if (typeof window !== 'undefined' && window.JsBarcode) {
+    return Promise.resolve(renderCode128(svgEl, value));
   }
+  const ms = timeoutMs == null ? 2500 : timeoutMs;
+  return new Promise((resolve) => {
+    const t0 = Date.now();
+    const tick = () => {
+      if (window.JsBarcode) {
+        resolve(renderCode128(svgEl, value));
+        return;
+      }
+      if (Date.now() - t0 > ms) {
+        resolve(false);
+        return;
+      }
+      setTimeout(tick, 50);
+    };
+    tick();
+  });
 }
 
 /** Rasterizes an inline barcode/QR SVG to a PNG data URL, for zoom preview
