@@ -1,0 +1,474 @@
+{
+  "version": "1.9.11",
+  "build": 142,
+  "updated": "2026-09-21",
+  "products": 41125,
+  "changelogByVersion": [
+    {
+      "version": "1.9.11",
+      "build": 142,
+      "date": "2026-09-21",
+      "items": [
+        "Structure: split cards.css modules + external logo assets",
+        "Single catalog products.json only — removed products-search.json",
+        "Removed Bridge Online/Offline chrome + dead PWA install code",
+        "Restored barcode download button; mobile layout image|barcode|live",
+        "Settings z-index fix; dead CSS purge",
+        "Fix settings panel not opening (CSS load, openPanel, header z-index)",
+        "Fix settings.js syntax (orphaned catch after products-search removal) — Settings failed to open",
+        "Fix Previous versions changelog popup (z-index above settings + click handlers)",
+        "Recent beside (desktop): show last known Available qty per SKU; widen column slightly",
+        "Deploy fix: bundle cards/*.css → cards.css (Vercel was 404 on split CSS paths)",
+        "Restore split cards/*.css for maintainability; SW precache lists split files (no monolith)",
+        "Fix Code128 render (clear noise, wait JsBarcode, canvas fallback); APK minSdk 21 + new launcher icon",
+        "Cleanup: embed APK in downloads/; remove unused folders (icons, images, tools, docs, bg images, dead workflows); single products.json"
+      ]
+    },
+    {
+      "version": "1.9.9",
+      "build": 130,
+      "date": "2026-09-20",
+      "items": [
+        "Suggestion tap fix: hide team rotator while dropdown open + capture-phase select",
+        "Remove PWA install button; keep APK download beside warehouse",
+        "Hide catalog/bridge header badges clutter",
+        "APK: camera permission only when Scan Mode requests it"
+      ]
+    },
+    {
+      "version": "1.9.8",
+      "build": 129,
+      "date": "2026-09-20",
+      "items": [
+        "Fix: first suggestion tap no longer opens Smouha Team rotator (z-index + pointer-events)",
+        "APK download button in header",
+        "Android APK: runtime camera permission for scan mode"
+      ]
+    },
+    {
+      "version": "1.9.7",
+      "build": 128,
+      "date": "2026-09-20",
+      "items": [
+        "Full PWA: install button (desktop + mobile), offline banner, update toast",
+        "Offline: shell + catalog cache; barcodes via local JsBarcode (no CDN)",
+        "Icons 192/512 + apple-touch-icon; manifest standalone"
+      ]
+    },
+    {
+      "version": "1.9.6",
+      "build": 127,
+      "date": "2026-09-18",
+      "items": [
+        "Images: generate from primary barcode (EGY_<barcode>.JPG) — no image column in catalog",
+        "products.json slimmed (name, sku, barcode only)",
+        "DMart Live: force fresh request on every product selection (no stale stock cache)",
+        "Catalog replaced from new products.json (41125 products, no image column)",
+        "Confirm add/remove popup fully redesigned (modern premium UI)",
+        "Confirm modal: premium enter/exit animation with staggered content",
+        "Stock adjust confirm modal redesigned from scratch (glass premium, hero quantity)",
+        "Removed modal blur (less lag)",
+        "Premium redesign: adjust stock +/− and quantity stepper",
+        "Premium center result cards after add/remove (no blur)",
+        "Removed unused background image assets",
+        "Reserved fix: require onHand+reserved complete, two matching reads, no partial relay accept",
+        "Reserved phantom fix: never paint partial stock; 3 matching reads if Reserved>0; detail preferred",
+        "Mobile live-relay: accept first complete result (no multi-round), faster Supabase poll"
+      ]
+    },
+    {
+      "version": "1.9.5",
+      "date": "2026-09-17",
+      "items": [
+        "Slim search index: Worker builds without image URLs; images merged after on main thread (faster index + less memory)",
+        "Catalog image map (getCatalogImage); DMart image updates fill the map",
+        "Live Relay (Supabase): AbortController + abort when SKU/warehouse changes mid-poll",
+        "CSS cleanup layer: unified product/DMart surfaces, button, and list containment",
+        "Restore original Talabat header logo",
+        "IndexedDB-first load: serve cache immediately, background refresh when build/count differs",
+        "Developer panel: recent 20 logs, index build ms, last Live fetch ms",
+        "Settings → Run Smoke Test (products, maps, SKU/last6, warehouse DOM)",
+        "DMart image cache prune (max 400 entries)",
+        "Product image loading skeleton; soft PWA beforeinstallprompt capture",
+        "Toast on background catalog update (smouha:db-updated)",
+        "products-search.json slim catalog (no images) for faster index download",
+        "Full products.json used in background only to fill catalog images",
+        "Toast when background catalog update fails (data may be outdated)",
+        "Clearer Live status: branch vs relay fetching messages",
+        "Developer: Bridge last seen",
+        "Export / Import Settings & Recent (and favorites + theme)",
+        "tools/generate-search-catalog.py — regenerate products-search.json after products update",
+        "Catalog status badge: Updating… / may be outdated / brief OK",
+        "Session auth banner when DMart session missing or expired",
+        "Smoke Test: Live probe when bridge online + products-search HEAD check",
+        "Deploy Checklist in Settings (version, counts, data files, SW, bridge)",
+        "dmartLiveParse.js: pure field/URL helpers extracted from dmartLive.js",
+        "GitHub Action: auto-regenerate products-search.json when products.json changes",
+        "docs/DAILY_OPS.md — daily ops + mandatory deploy checklist",
+        "Bridge silence watchdog (3 min) → session banner if extension goes quiet",
+        "Remove white slab under search / Smouha Team rotator (transparent empty state)",
+        "Available row: same box as Reserved/Price; black label; green value only",
+        "app.js split: appStore.js, appSettingsQuick.js, appCatalogUi.js",
+        "Removed unused legacy productIndex + searchEngine from app.js",
+        "GitHub Action hardened for DS repo (write products-search.json on products change)",
+        "smartScan.js extracted from app.js (Pelican Mode factory + search callback)",
+        "dmartAdjust.js extracted from dmartLive.js (stock adjust UI + Ctrl+Y boost)",
+        "CSS: gradual !important reduction in historical layers (kept display/position/z-index/a11y + final design layers)",
+        "Fix: app.js corruption from smartScan extract (SyntaxError blocked all UI)",
+        "Fix: loadInitial catch unlocks search if catalog fetch fails",
+        "Fix: selectSearchAfterProduct uses #searchInput (no els leak)",
+        "Perf: lighter SW install (lazy-cache Settings/Pelican/Adjust/QR)",
+        "Perf: never SW-cache products-search.json (updater owns freshness)",
+        "Perf: fewer modulepreloads; dns-prefetch for image/CDN hosts",
+        "Perf: mobile disables backdrop-filter; content-visibility on cards",
+        "Perf: catalog image fill + recent preload on requestIdleCallback",
+        "Faster images: preconnect dhmedia, deduped warm cache, concurrency-limited preload",
+        "Connection-aware preload limits (2g/save-data fewer images)",
+        "Main product image: fetchpriority high + async decode + skip reload if same URL",
+        "Reserve image box (aspect-ratio) to reduce layout shift while loading"
+      ]
+    },
+    {
+      "version": "1.9.4",
+      "date": "2026-09-17",
+      "items": [
+        "Web Worker (+ chunked fallback) for product index build — UI stays responsive during load",
+        "Live requests: abort stale bridge responses when switching SKU/warehouse",
+        "Shared leveled logger (utils.log); stronger Performance Mode + prefers-reduced-motion",
+        "Skeleton shine, focus-visible rings, fetchpriority on product image",
+        "Recent list renders latest 40 for smoother mobile scroll",
+        "Service worker precaches search-worker; cache bump"
+      ]
+    },
+    {
+      "version": "1.9.3",
+      "date": "2026-09-17",
+      "items": [
+        "Faster first load: minify products.json (~1MB smaller)",
+        "Remove 500KB+ embedded logo PNG; lightweight SVG brand mark",
+        "Defer ZXing + Tesseract until camera opens (not on every page load)",
+        "JsBarcode defer; modulepreload critical JS; settings.css non-blocking",
+        "Fix Dark Mode switch inverted state (apply theme immediately with toggle)",
+        "Chrome-style circular dark-mode fill animation",
+        "DMart live card restyle: white rows, orange identity, solid Check in Dmart button"
+      ]
+    },
+    {
+      "version": "1.9.2",
+      "date": "2026-09-17",
+      "items": [
+        "Kept current JS/feature set; no extra logic merge from external redesign package",
+        "Did not replace feature CSS (adjust animations, warehouse dropdown, empty state, QR FAB)",
+        "Did not adopt stripped index.html (kept existing DOM ids)",
+        "Did not add extra web-font CDN (faster first paint + offline)",
+        "Safe perf only: content-visibility on list rows"
+      ]
+    },
+    {
+      "version": "1.9.1",
+      "date": "2026-09-12",
+      "items": [
+        "Fix mobile Recent/Favorites visibility (accordion init + taller open panel)",
+        "DMart image loading placeholder instead of broken image",
+        "Recent/Favorites thumbs use DMart image cache; refresh when image arrives"
+      ]
+    },
+    {
+      "version": "1.9.0",
+      "date": "2026-09-12",
+      "items": [
+        "Full UI final pass: design tokens, soft mesh aqua, unified icon stroke",
+        "Premium toast redesign; product card hierarchy polish",
+        "Available success pulse on stock adjust; surfaces/dark polish",
+        "QR FAB kept separate (not merged into search bar)"
+      ]
+    },
+    {
+      "version": "1.8.2",
+      "date": "2026-09-12",
+      "items": [
+        "Fix warehouse dropdown stacking (fixed position + z-index) so branches are selectable on mobile",
+        "Empty-state tips are tappable (focus search / camera)",
+        "UI polish remainder: press feedback on list items; header overflow visible"
+      ]
+    },
+    {
+      "version": "1.8.1",
+      "date": "2026-09-12",
+      "items": [
+        "UI polish pass: empty state, tokens/surfaces, header cluster",
+        "Default warehouse label: Friendly Names (Settings can switch to Official)",
+        "Mobile accordion for Recent & Favorites; brighter aqua background restored"
+      ]
+    },
+    {
+      "version": "1.8.0",
+      "items": [
+        "Mobile Recent/Favorites accordion; header action cluster; softer QR FAB",
+        "Warehouse display default Friendly (Original still in Settings)",
+        "UI polish: vibrant aqua bg, unified surfaces, premium empty state",
+        "Live boxes ~20% lighter aqua; DMart glow right+bottom only (no top/left)",
+        "Live stat boxes: softer aqua fill (lighter), borders restored to normal weight",
+        "Live Price/Available/Reserved keep borders, fill = page aqua",
+        "Inline Recent clear confirm; lighter aqua bg for less lag",
+        "Dark mode wipe animation top→bottom",
+        "Deeper aqua background waves; transparent live stats; DMart glow BR only",
+        "Premium recent UI; faster adjust modal; clear Recent/Favs confirm",
+        "Hybrid product images (file then DMart) + no image flash race",
+        "Smouha Team rotator opens team list; leadership roster update",
+        "DMart badge on lookup products; Clear DMart Cache in Settings",
+        "Product images from DMart only (image.url); browser image cache",
+        "Recent includes DMart-cached products; image URL from BFF saved in browser cache",
+        "DMart lookup only after 6+ chars; search generation guards race (no flash disappear)",
+        "Fix DMart catalog lookup auth (sessionManager); min query length 5 for remote lookup",
+        "DMart live catalog lookup on local miss (SKU first, last-6); browser cache until cleared",
+        "Full-page aqua wave background layers; more transparent cards over waves",
+        "Background option 1 aqua waves with slightly deeper light-blue",
+        "Solid light-blue background; Recent +15% width +20% height; less modal blur; larger ±N toast box",
+        "Version 1.8.0 — stock adjust UX + landscape background",
+        "Landscape photo site background (cover, all screens) + glass-style cards",
+        "Custom stock-adjust confirm modal: product image, name (SKU), Available, warehouse",
+        "Action colors: Increase green / Decrease red; Enter confirm / Esc cancel",
+        "Arabic safety note: adjust exclusive to Smouha DS60",
+        "Success: center +N/−N in translucent box + Added/Removed labels",
+        "Fail: center icon + strong card shake",
+        "DMart card typewriter draw + stronger drop animation after adjust",
+        "Available label blink ×4 (longer duration)",
+        "Confirm modal full-page blur + smoother open animation",
+        "Qty limited to 1–5 (input shake if invalid)",
+        "Ctrl+Y boost max 20 for 30 seconds then auto Off (desktop)",
+        "Bridge status Online/Offline inside DMart card (not header)",
+        "Removed PC · Bridge label from adjust panel",
+        "Service worker cache bump for this release",
+        "Glass cards over landscape bg; mobile bg scroll; longer Available blink transitions",
+        "Landscape photo background (cover, all screens) + softer glass cards",
+        "Stronger DMart card drop + typewriter draw animation after stock adjust",
+        "Available blink 4× longer; center ±N in translucent box",
+        "Confirm modal: full-page blur + smoother open animation",
+        "Qty locked 1–5 (shake on invalid); Ctrl+Y boost to 20 auto-off after 30s",
+        "Custom stock-adjust modal (image, name+SKU, Available, warehouse, green/red action)",
+        "Bridge Online/Offline inside DMart card; remove PC·Bridge label; DS60 safety warning",
+        "Custom stock-adjust modal (image/name/SKU/Available); center +N/−N overlays; Available blink×4; card drop; max 5 + Ctrl+Y boost 20 once",
+        "DMart card Online/Offline; remove PC Bridge label; Smouha DS60 adjust warning; success redraw + fail shake animations",
+        "Clearer stock-adjust error when extension was reloaded (refresh page); bridge content re-inject on update",
+        "Fix intermittent live price: dual-channel bridge messaging, no false offline on port blip, clearer errors (not Add token)",
+        "Fix: Bridge Online detection (markBridgeReady recursion broke status + live price)"
+      ]
+    },
+    {
+      "version": "1.7.8",
+      "items": [
+        "Glass cards over landscape bg; mobile bg scroll; longer Available blink transitions",
+        "Landscape photo background (cover, all screens) + softer glass cards",
+        "Stronger DMart card drop + typewriter draw animation after stock adjust",
+        "Available blink 4× longer; center ±N in translucent box",
+        "Confirm modal: full-page blur + smoother open animation",
+        "Qty locked 1–5 (shake on invalid); Ctrl+Y boost to 20 auto-off after 30s",
+        "Custom stock-adjust modal (image, name+SKU, Available, warehouse, green/red action)",
+        "Center overlays: Added/Removed text; fail icon; Enter/Esc on confirm",
+        "Bridge Online/Offline inside DMart card; remove PC·Bridge label; DS60 safety warning",
+        "Custom stock-adjust modal (image/name/SKU/Available); center +N/−N overlays; Available blink×4; card drop; max 5 + Ctrl+Y boost 20 once",
+        "DMart card Online/Offline; remove PC Bridge label; Smouha DS60 adjust warning; success redraw + fail shake animations",
+        "Clearer stock-adjust error when extension was reloaded (refresh page); bridge content re-inject on update",
+        "Fix intermittent live price: dual-channel bridge messaging, no false offline on port blip, clearer errors (not Add token)",
+        "Fix: Bridge Online detection (markBridgeReady recursion broke status + live price)",
+        "Stock adjust UI on site (desktop + Bridge); extension is executor only; Bridge Online/Offline badge",
+        "Products catalog updated: 39994 items (+533 vs previous 39461)",
+        "Warehouse Display radio: custom white ring + orange fill (no black frame)",
+        "Fix: tapping suggestion no longer opens product image underneath",
+        "Mobile: do not open keyboard after product appears",
+        "Check in Dmart height reduced 35%",
+        "Service worker cache v8",
+        "Camera: never open front camera — rear-only stream before ZXing",
+        "ABC button floats above mobile keyboard (right), only while keyboard open",
+        "Settings: Intensive Auto Focus (default OFF) — keep select-on-tap and first-open focus",
+        "Check in Dmart frame height +50%",
+        "Service worker cache v9",
+        "Fix: closing product/barcode zoom no longer focuses search or opens keyboard when Intensive Auto Focus is OFF",
+        "Service worker cache v10",
+        "Dark mode: Smouha Team rotator high-contrast readable colors",
+        "Updated products.json catalog",
+        "Service worker cache v11",
+        "Force products reload: build bump so IndexedDB re-imports products.json (catalog count 39134)",
+        "Products catalog updated: 39461 items (+327 vs previous)",
+        "Ashraf Amin role: Store Supervisor (rotator reads DOM dynamically)",
+        "Barcode format switch (session toggle QR↔128; settings default unchanged)",
+        "Br row width locks to CODE128 as well as QR",
+        "Barcode labels shortened to Br",
+        "Product name wraps fully on mobile and desktop",
+        "Check in Dmart: shorter frame, brighter color, larger type",
+        "DMart Live card glow +15%",
+        "Service worker cache v14"
+      ]
+    },
+    {
+      "version": "1.7.7",
+      "items": [
+        "Fix mobile SKU + Barcode + Favorite broken layout — forced single row",
+        "Hide barcode download button on mobile row to fit width",
+        "Service worker cache v7"
+      ]
+    },
+    {
+      "version": "1.7.6",
+      "items": [
+        "Search auto-select on focus and after product show (type to replace)",
+        "Mobile: SKU + Barcode + Favorite forced on one row",
+        "DMart Live loading spinner larger and restyled",
+        "Warehouse Display default Friendly Names on mobile",
+        "Service worker cache bust v6",
+        "Full changelog version list restored"
+      ]
+    },
+    {
+      "version": "1.7.5",
+      "items": [
+        "Mobile layout: image+name left, barcode right, DMart Live below",
+        "Recent Beside mobile default OFF (opt-in); PC default ON",
+        "Dmart Confirm Popup mobile default OFF",
+        "Play Scan Sound default ON",
+        "Disabled sticky barcode strip on scroll",
+        "Search panel white background with rounded bottom corners",
+        "Check in Dmart 2x height + hover/touch animation",
+        "Service worker cache bust"
+      ]
+    },
+    {
+      "version": "1.7.4",
+      "items": [
+        "Dark mode default OFF on PC and mobile",
+        "Auto Copy SKU / Barcode default OFF",
+        "Mobile DMart Live compact (Price / Available / Reserved)",
+        "Check in Dmart hidden on mobile live card"
+      ]
+    },
+    {
+      "version": "1.7.3",
+      "items": [
+        "Remove No results strip under search",
+        "Camera prefers rear/environment (fix first-open front camera)",
+        "Scan sound + vibration on successful camera detect",
+        "Suggestions: whole row tappable; no select-on-scroll",
+        "Always restore last viewed product after reopen",
+        "Recent Beside +30% on desktop",
+        "Custom Barcode QR fix; barcode width matches QR",
+        "Solid aqua background #DCEEF2"
+      ]
+    },
+    {
+      "version": "1.7.2",
+      "items": [
+        "Revert suggestions list size change",
+        "Recent Beside Barcode +30% width & height on PC only",
+        "Keep solid aqua background #DCEEF2"
+      ]
+    },
+    {
+      "version": "1.7.1",
+      "items": [
+        "Background: solid explicit aqua #DCEEF2",
+        "Suggestions list width/height experiments"
+      ]
+    },
+    {
+      "version": "1.7.0",
+      "items": [
+        "Custom hero background support",
+        "Fix Custom Barcode QR black/empty render",
+        "Soft translucent UI panels over background"
+      ]
+    },
+    {
+      "version": "1.6.9",
+      "items": [
+        "Removed animated crystal layers and glass blur (performance)",
+        "Simple solid aqua background; opaque UI cards"
+      ]
+    },
+    {
+      "version": "1.6.8",
+      "items": [
+        "Crystal water background experiments",
+        "UI panels translucent with glass blur",
+        "Barcode/QR stay solid white for scanning"
+      ]
+    },
+    {
+      "version": "1.6.7",
+      "items": [
+        "Scrolling suggestions no longer auto-selects a product"
+      ]
+    },
+    {
+      "version": "1.6.6",
+      "items": [
+        "Mobile sticky search when keyboard is open",
+        "Barcode 1 row width lock to QR/128 frame"
+      ]
+    },
+    {
+      "version": "1.6.5",
+      "items": [
+        "Barcode 1 nested inside QR block for equal width"
+      ]
+    },
+    {
+      "version": "1.6.4",
+      "items": [
+        "QR visible again (fixed collapsed SVG size)",
+        "Search spinner only during load",
+        "Confirm popup docks to the right of Smouha Team rotator"
+      ]
+    },
+    {
+      "version": "1.6.3",
+      "items": [
+        "Developer panel Loading fix (tokenInput ReferenceError)",
+        "Search bar icons clean flex layout",
+        "Barcode 1 alignment improvements"
+      ]
+    },
+    {
+      "version": "1.6.0",
+      "items": [
+        "Multi-warehouse + DMart Live polling",
+        "Pelican Mode camera scanning (ZXing + OCR)",
+        "QR code mode, large barcode, hover preview",
+        "Settings panel, favorites, recent, team rotator",
+        "PWA offline product index"
+      ]
+    }
+  ],
+  "changelog": [
+    "v1.8.0 — Version 1.8.0 — stock adjust UX + landscape background",
+    "v1.8.0 — Landscape photo site background (cover, all screens) + glass-style cards",
+    "v1.8.0 — Custom stock-adjust confirm modal: product image, name (SKU), Available, warehouse",
+    "v1.8.0 — Action colors: Increase green / Decrease red; Enter confirm / Esc cancel",
+    "v1.8.0 — Arabic safety note: adjust exclusive to Smouha DS60",
+    "v1.8.0 — Success: center +N/−N in translucent box + Added/Removed labels",
+    "v1.8.0 — Fail: center icon + strong card shake",
+    "v1.8.0 — DMart card typewriter draw + stronger drop animation after adjust",
+    "v1.8.0 — Available label blink ×4 (longer duration)",
+    "v1.8.0 — Confirm modal full-page blur + smoother open animation",
+    "v1.8.0 — Qty limited to 1–5 (input shake if invalid)",
+    "v1.8.0 — Ctrl+Y boost max 20 for 30 seconds then auto Off (desktop)",
+    "v1.7.8 — rear-only camera, ABC float, intensive autofocus option, dmart height",
+    "v1.7.7 — Fix mobile SKU/Barcode/Favorite single row",
+    "v1.7.6 — Auto-select search, mobile SKU row, spinner, friendly WH",
+    "v1.7.5 — Mobile layout, sticky off, defaults, cache",
+    "v1.7.4 — Dark/auto-copy defaults, compact live card",
+    "v1.7.3 — Camera, suggestions, restore last product",
+    "v1.7.2 — Recent Beside desktop size",
+    "v1.7.1 — Aqua solid background",
+    "v1.7.0 — Custom bg + custom QR fix",
+    "v1.6.9 — Remove heavy bg animations",
+    "v1.6.8 — Crystal water experiments",
+    "v1.6.7 — Suggestions scroll fix",
+    "v1.6.6 — Sticky search + barcode width",
+    "v1.6.5 — Barcode structure fix",
+    "v1.6.4 — QR restore + popup position",
+    "v1.6.3 — Developer panel + search icons",
+    "v1.6.0 — Core multi-warehouse scanner"
+  ],
+  "productsHash": "a09a268d6a452614b2ce5ce3d0724dce"
+}
