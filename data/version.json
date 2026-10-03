@@ -1,9 +1,19 @@
 {
-  "version": "1.9.14",
-  "build": 145,
+  "version": "1.9.15",
+  "build": 146,
   "updated": "2026-10-03",
   "products": 41125,
   "changelogByVersion": [
+    {
+      "version": "1.9.15",
+      "build": 146,
+      "date": "2026-10-03",
+      "items": [
+        "Mobile: force result area + suggestions visible (z-index/overflow)",
+        "Mobile: touchend selects suggestion; faster search for 6+ digit SKUs",
+        "Stronger last-product restore with retries; Recent panel stays visible on mobile"
+      ]
+    },
     {
       "version": "1.9.14",
       "build": 145,

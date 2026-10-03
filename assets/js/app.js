@@ -277,6 +277,13 @@ const ui = (() => {
       els.suggestionsBox.addEventListener('pointercancel', () => { tapState = null; });
 
       // Fallback click for accessibility / desktop
+            els.suggestionsBox.addEventListener('touchend', (e) => {
+        const item = itemFromEvent(e);
+        if (!item) return;
+        e.preventDefault();
+        e.stopPropagation();
+        pickFromItem(item);
+      }, { passive: false });
       els.suggestionsBox.addEventListener('click', (e) => {
         const item = itemFromEvent(e);
         if (!item) return;
@@ -444,11 +451,13 @@ const ui = (() => {
     // they can never lag behind or appear to "disappear" while typing.
     updateSuggestions(val);
 
-    // The full product-card render (skeleton + barcode generation) stays
-    // debounced — that's a heavier, separate operation from the dropdown.
+    // Full product-card render: short debounce; exact SKU-like (6+) almost immediate
+    // so mobile users see data without waiting or fighting the keyboard.
+    const qlen = val.length;
+    const delay = qlen >= 6 ? 40 : (qlen >= 4 ? 80 : 120);
     debounceTimer = setTimeout(() => {
       runSearch(val);
-    }, 120);
+    }, delay);
   }
 
   function onKeydown(e) {
@@ -1754,27 +1763,41 @@ function renderSuggestions(matches, query) {
 
   /** On startup: always restore last scanned/viewed product when data is ready. */
   function restoreLastRecentProduct() {
-    try {
-      if (lastRenderedProduct) return;
-      let sku = null;
-      try { sku = localStorage.getItem('smouha_last_sku'); } catch (e) { sku = null; }
-      if (!sku) {
+    const tryRestore = () => {
+      try {
+        if (lastRenderedProduct) return true;
+        let sku = null;
+        try { sku = localStorage.getItem('smouha_last_sku'); } catch (e) { sku = null; }
+        if (!sku) {
+          const skus = store.getRecent();
+          if (skus && skus.length) sku = skus[0];
+        }
+        if (!sku) return false;
+        const products = search.getBySkuList([sku]);
+        if (products && products[0]) {
+          renderProduct(products[0]);
+          return true;
+        }
         const skus = store.getRecent();
-        if (skus && skus.length) sku = skus[0];
-      }
-      if (!sku) return;
-      const products = search.getBySkuList([sku]);
-      if (products && products[0]) {
-        renderProduct(products[0]);
-        return;
-      }
-      // Fallback: first resolvable recent
-      const skus = store.getRecent();
-      if (skus && skus.length) {
-        const list = search.getBySkuList(skus);
-        if (list && list[0]) renderProduct(list[0]);
-      }
-    } catch (e) { /* ignore */ }
+        if (skus && skus.length) {
+          const list = search.getBySkuList(skus);
+          if (list && list[0]) {
+            renderProduct(list[0]);
+            return true;
+          }
+        }
+        // Direct index lookup fallback
+        try {
+          const p = search.findBySku && search.findBySku(String(sku));
+          if (p) { renderProduct(p); return true; }
+        } catch (e2) {}
+        return false;
+      } catch (e) { return false; }
+    };
+    if (tryRestore()) return;
+    // Index may still be settling on slow mobile — retry briefly
+    setTimeout(() => { tryRestore(); }, 200);
+    setTimeout(() => { tryRestore(); }, 800);
   }
 
   function renderFavorites() {
@@ -2192,6 +2215,12 @@ function renderSuggestions(matches, query) {
     renderFavorites();
     preloadRecentImages();
     restoreLastRecentProduct();
+    try {
+      if (els.resultArea) {
+        els.resultArea.style.display = '';
+        els.resultArea.removeAttribute('hidden');
+      }
+    } catch (e) {}
     if (shouldAutoFocus()) {
       els.searchInput.focus();
       els.searchInput.classList.add('ready-flash');
