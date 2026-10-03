@@ -1,0 +1,1281 @@
+/* Split from the original monolithic cards.css (was 3702 lines) for maintainability.
+   Order matters — loaded in numeric filename order from index.html, exactly
+   preserving the original cascade. Do not reorder without checking for
+   selector overrides across files (see project notes on !important usage). */
+
+/* ========== Barcode 1 width == QR/128 symbol width ========== */
+.barcode-block.barcode-block-128,
+.barcode-block-128{
+  display:inline-flex !important;
+  flex-direction:column;
+  align-items:stretch;
+  width:max-content;
+  max-width:100%;
+  box-sizing:border-box;
+  gap:6px;
+}
+.barcode-block-128 .barcode-128-wrap{
+  width:auto;
+  max-width:100%;
+  margin:0;
+  align-self:center;
+  box-sizing:border-box;
+}
+.barcode-block-128 .barcode-128-wrap.is-qr{
+  width:auto;
+  max-width:min(200px, 100%);
+}
+.barcode-block-128 .barcode-128-wrap svg{
+  display:block !important;
+  width:auto;
+  max-width:100%;
+  height:auto;
+  margin:0 auto;
+}
+.barcode-block-128 .barcode-numbers-list{
+  display:flex;
+  flex-direction:column;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  align-self:stretch;
+}
+.barcode-block-128 .barcode-number-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  width:100%;
+  box-sizing:border-box;
+  padding:6px 8px;
+  margin:0;
+}
+.barcode-block-128 .barcode-number-label{
+  flex:0 0 auto;
+  white-space:nowrap;
+}
+.barcode-block-128 .barcode-number-value{
+  flex:1 1 auto;
+  text-align:right;
+  margin:0;
+  min-width:0;
+  word-break:break-all;
+}
+
+
+/* QR must have explicit size — width:auto collapses SVGs without width attr */
+.barcode-block-128 .barcode-128-wrap.is-qr,
+.barcode-128-wrap.is-qr{
+  display:flex !important;
+  align-items:center;
+  justify-content:center;
+  width:160px;
+  height:160px;
+  max-width:min(160px, 100%);
+  min-width:120px;
+  min-height:120px;
+  aspect-ratio:1 / 1;
+  padding:10px;
+  box-sizing:border-box;
+  background:#fff;
+  visibility:visible !important;
+  opacity:1;
+}
+.barcode-block-128 .barcode-128-wrap.is-qr svg,
+.barcode-128-wrap.is-qr svg,
+.barcode-128-wrap.is-qr #c128-0{
+  display:block !important;
+  width:100%;
+  height:100%;
+  max-width:100%;
+  max-height:100%;
+  visibility:visible !important;
+  opacity:1;
+}
+html.large-barcode .barcode-128-wrap.is-qr{
+  width:200px;
+  height:200px;
+  max-width:min(200px, 100%);
+}
+
+
+/* Barcode 1 INSIDE block — same width as QR frame */
+.barcode-block.barcode-block-128{
+  display:inline-flex;
+  flex-direction:column;
+  align-items:stretch;
+  width:max-content;
+  max-width:100%;
+  gap:6px;
+  box-sizing:border-box;
+}
+.barcode-block-128 .barcode-128-wrap{
+  flex:0 0 auto;
+  box-sizing:border-box;
+}
+.barcode-block-128 .barcode-128-wrap.is-qr{
+  width:160px;
+  height:160px;
+  max-width:100%;
+}
+.barcode-block-128 .barcode-numbers-list{
+  display:flex;
+  flex-direction:column;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+.barcode-block-128 .barcode-number-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+  padding:6px 8px;
+  overflow:hidden;
+}
+.barcode-block-128 .barcode-number-label{
+  flex:0 0 auto;
+  font-size:10px;
+  white-space:nowrap;
+}
+.barcode-block-128 .barcode-number-value{
+  flex:1 1 auto;
+  min-width:0;
+  text-align:right;
+  font-size:11px;
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+@media (min-width:721px){
+  .barcode-block-128 .barcode-number-value{font-size:12px;}
+  .barcode-block-128 .barcode-number-label{font-size:11px;}
+}
+
+
+/* Final barcode align: block width = QR frame only */
+.product-barcodes-col .barcode-block-128{
+  display:flex !important;
+  flex-direction:column;
+  align-items:stretch;
+  width:160px;
+  max-width:100%;
+  box-sizing:border-box;
+}
+.product-barcodes-col .barcode-block-128 .barcode-128-wrap.is-qr{
+  width:160px;
+  height:160px;
+  max-width:100%;
+  box-sizing:border-box;
+}
+.product-barcodes-col .barcode-block-128 .barcode-numbers-list{
+  width:160px;
+  max-width:100%;
+  box-sizing:border-box;
+}
+.product-barcodes-col .barcode-block-128 .barcode-number-item{
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+  padding:5px 6px;
+  gap:4px;
+}
+html.large-barcode .product-barcodes-col .barcode-block-128,
+html.large-barcode .product-barcodes-col .barcode-block-128 .barcode-128-wrap.is-qr,
+html.large-barcode .product-barcodes-col .barcode-block-128 .barcode-numbers-list{
+  width:200px;
+}
+/* Code128 mode: width follows symbol via JS inline style on block */
+.product-barcodes-col .barcode-block-128:not(:has(.is-qr)){
+  width:max-content;
+}
+
+/* Custom barcode QR must have explicit size (prevents black empty box) */
+.custom-barcode-wrap{
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+  background:#ffffff;
+  min-width:160px;
+  min-height:80px;
+  padding:12px;
+  box-sizing:border-box;
+}
+.custom-barcode-wrap.is-qr{
+  width:180px;
+  height:180px;
+  min-width:180px;
+  min-height:180px;
+  padding:12px;
+}
+.custom-barcode-wrap svg,
+.custom-barcode-wrap.is-qr svg{
+  display:block !important;
+  width:100%;
+  height:auto;
+  max-width:100%;
+  background:#fff;
+}
+.custom-barcode-wrap.is-qr svg{
+  width:100%;
+  height:100%;
+}
+.custom-barcode-card{
+  background:var(--card);
+}
+
+
+/* Check in Dmart — restore natural size, font +20% */
+.dmart-check-btn-inline,
+a.dmart-check-btn.dmart-check-btn-inline{
+  transform:none;
+  scale:none;
+  width:100%;
+  min-width:0;
+  padding:10px 14px;
+  font-size:14.4px; /* ~12px * 1.2 */
+  font-weight:700;
+  border-radius:12px;
+  gap:8px;
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+}
+.dmart-check-btn-inline .dmart-check-icon{
+  display:inline-flex;
+  width:18px;
+  height:18px;
+}
+@media (hover:hover) and (pointer:fine){
+  .dmart-check-btn-inline:hover{
+    transform:translateY(-1px);
+    box-shadow:0 4px 14px rgba(255,107,0,.18);
+  }
+}
+
+
+/* ===== Mobile product layout: image+name left, barcode right, live below ===== */
+@media (max-width:720px){
+  .product-top-row{
+    display:flex !important;
+    flex-wrap:wrap;
+    align-items:flex-start;
+    gap:8px;
+  }
+  .product-image-col{
+    order:1;
+    flex:1 1 46%;
+    max-width:48%;
+    min-width:0;
+  }
+  .product-barcodes-col{
+    order:2;
+    flex:1 1 46%;
+    max-width:48%;
+    min-width:0;
+  }
+  .product-live-col{
+    order:3;
+    flex:1 1 100%;
+    max-width:100%;
+    width:100%;
+  }
+  .product-recent-col{
+    order:4;
+  }
+  .product-name-under-img{
+    display:block !important;
+    font-size:12px;
+    font-weight:600;
+    line-height:1.25;
+    margin-top:6px;
+    max-height:2.5em;
+    overflow:hidden;
+  }
+  /* compact DMart live: 3 numbers only, no Check in Dmart */
+  .dmart-live-card{
+    padding:8px 10px;
+    border-radius:12px;
+  }
+  .dmart-live-title{
+    font-size:11px;
+    margin-bottom:4px;
+  }
+  .dmart-live-row{
+    padding:2px 0;
+    font-size:12px;
+  }
+  .dmart-live-card .dmart-check-btn,
+  .dmart-live-card .dmart-check-btn-inline,
+  .dmart-live-card a.dmart-check-btn{
+    display:none !important;
+  }
+  /* hide duplicate big title row name on mobile if under-img exists */
+  .product-details-row .product-title-row{
+    display:none !important;
+  }
+}
+
+/* Recent Beside: allow on mobile when class present (user enabled) */
+@media (max-width:720px){
+  html.recent-beside-barcode .product-recent-col{
+    display:flex !important;
+    flex:1 1 100%;
+    max-width:100%;
+    max-height:200px;
+    border-left:none;
+    border-top:1px solid var(--border);
+    padding-left:0;
+    padding-top:8px;
+  }
+}
+
+
+/* ===== FORCE mobile layout (image left, barcode right, live below) ===== */
+@media (max-width:720px){
+  .product-card .product-top-row{
+    display:flex !important;
+    flex-direction:row;
+    flex-wrap:wrap;
+  }
+  .product-card .product-image-col{
+    order:1;
+    flex:1 1 47%;
+    max-width:48%;
+    width:48%;
+  }
+  .product-card .product-barcodes-col,
+  .product-card .barcodes-section{
+    order:2;
+    flex:1 1 47%;
+    max-width:48%;
+    width:48%;
+  }
+  .product-card .product-live-col{
+    order:3;
+    flex:1 1 100%;
+    max-width:100%;
+    width:100%;
+  }
+  .product-card .product-recent-col{
+    order:4;
+  }
+  /* Hide Check in Dmart on mobile inside live card */
+  .dmart-live-card .dmart-check-btn,
+  .dmart-live-card a.dmart-check-btn,
+  .dmart-live-card .dmart-check-btn-inline{
+    display:none !important;
+  }
+}
+
+/* Check in Dmart — 2x height, rich hover/touch animation (desktop / when visible) */
+.dmart-check-btn-inline,
+a.dmart-check-btn.dmart-check-btn-inline,
+.dmart-live-card .dmart-check-btn{
+  transform:none;
+  min-height:52px; /* ~2x previous ~26px */
+  padding:14px 16px;
+  font-size:14.4px;
+  font-weight:800;
+  border-radius:14px;
+  transition:background-color 180ms ease, color 180ms ease, border-color 180ms ease,
+    box-shadow 180ms ease, transform 180ms ease;
+}
+@media (hover:hover) and (pointer:fine){
+  .dmart-check-btn-inline:hover,
+  a.dmart-check-btn.dmart-check-btn-inline:hover,
+  .dmart-live-card .dmart-check-btn:hover{
+    background:#FF6B00;
+    color:#fff;
+    border-color:#FF6B00;
+    box-shadow:0 8px 22px rgba(255,107,0,.35);
+    transform:translateY(-2px) scale(1.03);
+  }
+  .dmart-check-btn-inline:hover .dmart-check-icon,
+  .dmart-live-card .dmart-check-btn:hover .dmart-check-icon{
+    color:#fff;
+  }
+}
+.dmart-check-btn-inline:active,
+a.dmart-check-btn.dmart-check-btn-inline:active{
+  transform:scale(0.97);
+  background:#e35f00;
+  color:#fff;
+}
+
+
+/* Mobile: SKU + Barcode + Favorite on one row, no wrap */
+@media (max-width:720px){
+  .product-details-row .sku-barcode-row{
+    display:flex;
+    flex-wrap:nowrap;
+    align-items:stretch;
+    gap:4px;
+    width:100%;
+  }
+  .product-details-row .sku-barcode-row .info-field,
+  .product-details-row .sku-barcode-row .info-field-barcode,
+  .product-details-row .sku-barcode-row .info-field-fav{
+    flex:1 1 0;
+    min-width:0;
+    max-width:none;
+    padding:5px 6px;
+    box-sizing:border-box;
+  }
+  .product-details-row .sku-barcode-row .info-field-barcode{
+    flex:1.2 1 0;
+    padding:5px 4px;
+  }
+  .product-details-row .sku-barcode-row .info-field-fav{
+    flex:0 0 auto;
+    padding:5px 8px;
+  }
+  .product-details-row .sku-barcode-row .info-label{
+    font-size:9px;
+    letter-spacing:.02em;
+  }
+  .product-details-row .sku-barcode-row .info-value{
+    font-size:11px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .product-details-row .sku-barcode-row .info-field-copy{
+    min-width:0;
+    flex:1 1 auto;
+  }
+  .product-details-row .sku-barcode-row .icon-btn-sm{
+    width:28px;
+    height:28px;
+    flex-shrink:0;
+  }
+  .product-details-row .sku-barcode-row .info-value-fav svg{
+    width:16px;
+    height:16px;
+  }
+}
+
+
+/* ===== MOBILE SKU/BARCODE/FAV — one tight row (force) ===== */
+@media (max-width:720px){
+  .product-details-row{
+    padding:10px 10px 8px;
+  }
+  .product-details-row .sku-barcode-row{
+    display:flex !important;
+    flex-direction:row;
+    flex-wrap:nowrap;
+    align-items:stretch;
+    justify-content:space-between;
+    gap:6px;
+    width:100%;
+    max-width:100%;
+    box-sizing:border-box;
+  }
+  .product-details-row .sku-barcode-row > .info-field,
+  .product-details-row .sku-barcode-row > .info-field-barcode,
+  .product-details-row .sku-barcode-row > .info-field-fav{
+    display:flex !important;
+    flex-direction:column;
+    justify-content:center;
+    flex:1 1 0;
+    width:auto;
+    max-width:none;
+    min-width:0;
+    min-height:44px;
+    padding:6px 8px;
+    margin:0;
+    box-sizing:border-box;
+  }
+  .product-details-row .sku-barcode-row > .info-field-barcode{
+    flex:1.4 1 0;
+    flex-direction:row;
+    align-items:center;
+    padding:4px 4px 4px 0;
+  }
+  .product-details-row .sku-barcode-row > .info-field-fav{
+    flex:0 0 52px;
+    width:52px;
+    max-width:52px;
+    align-items:center;
+    text-align:center;
+    padding:6px 4px;
+  }
+  .product-details-row .sku-barcode-row .info-field-copy{
+    display:flex !important;
+    flex-direction:column;
+    flex:1 1 auto;
+    min-width:0;
+    max-width:100%;
+    padding:6px 6px 6px 8px;
+  }
+  /* Hide download in the row on mobile — saves width so one line fits */
+  .product-details-row .sku-barcode-row #barcodeFieldDownload,
+  .product-details-row .sku-barcode-row .icon-btn-sm{
+    display:none !important;
+  }
+  .product-details-row .sku-barcode-row .info-label{
+    display:block !important;
+    font-size:9px;
+    line-height:1.1;
+    margin:0;
+  }
+  .product-details-row .sku-barcode-row .info-value{
+    display:block !important;
+    font-size:11px;
+    font-weight:700;
+    line-height:1.2;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    word-break:normal;
+    max-width:100%;
+  }
+  .product-details-row .sku-barcode-row .info-value-fav{
+    display:flex !important;
+    justify-content:center;
+    height:auto;
+  }
+  .product-details-row .sku-barcode-row .info-field-fav .info-label{
+    font-size:8px;
+  }
+}
+
+/* Neutralize older max-content that breaks mobile row */
+@media (max-width:720px){
+  .sku-barcode-row .info-field,
+  .sku-barcode-row .info-field-barcode{
+    max-width:none;
+    width:auto;
+  }
+}
+
+
+/* Check in Dmart height -35% from previous 2x size */
+.dmart-check-btn-inline,
+a.dmart-check-btn.dmart-check-btn-inline,
+.dmart-live-card .dmart-check-btn{
+  min-height:34px;
+  padding:8px 14px;
+  font-size:13px;
+}
+
+
+/* Check in Dmart height +50% from previous reduced size (~34px → ~51px) */
+.dmart-check-btn-inline,
+a.dmart-check-btn.dmart-check-btn-inline,
+.dmart-live-card .dmart-check-btn{
+  min-height:51px;
+  padding:12px 14px;
+  font-size:13.5px;
+}
+
+
+/* ===== v1.7.8 build 61 — UI polish ===== */
+
+/* Format switch next to barcode */
+
+.barcode-format-switch{
+  flex:0 0 auto;
+  align-self:flex-start;
+  margin-top:2px;
+  min-width:36px;
+  height:28px;
+  padding:0 8px;
+  border-radius:999px;
+  border:1px solid rgba(255,107,0,.45);
+  background:#fff;
+  color:#E85D00;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.02em;
+  cursor:pointer;
+  box-shadow:0 1px 4px rgba(255,107,0,.12);
+  z-index:2;
+}
+.barcode-format-switch:active{transform:scale(.96);}
+[data-theme="dark"] .barcode-format-switch{
+  background:rgba(28,32,36,.95);
+  color:#FF9A4D;
+  border-color:rgba(255,154,77,.5);
+}
+
+/* Br row tracks barcode width (QR and CODE128) */
+.barcode-block-128 .barcode-number-item{
+  max-width:100%;
+  width:100%;
+}
+.barcode-block-128 .barcode-128-wrap:not(.is-qr){
+  width:auto;
+  max-width:100%;
+  padding:4px 6px;
+}
+.barcode-block-128 .barcode-128-wrap:not(.is-qr) svg{
+  width:auto;
+  max-width:100%;
+  height:auto;
+}
+
+/* Product name under image only — full wrap; other .product-name stays clamped */
+.product-name-under-img{
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+  display:block !important;
+  -webkit-line-clamp:unset;
+  line-clamp:unset;
+  max-height:none;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+  line-height:1.35;
+}
+@media (max-width:720px){
+  .product-name-under-img{
+    max-height:none;
+    overflow:visible;
+  }
+}
+
+/* Check in Dmart — height net ~-10% from original, lighter weight, fill animation */
+.dmart-check-btn-inline,
+a.dmart-check-btn.dmart-check-btn-inline{
+  position:relative !important;
+  overflow:hidden;
+  isolation:isolate;
+  padding:9px 14px;
+  font-size:11.5px;
+  font-weight:560;
+  letter-spacing:.01em;
+  background:#ffffff;
+  color:#FF6B00;
+  border:1px solid rgba(255,107,0,.55);
+  box-shadow:0 2px 8px rgba(255,107,0,.12);
+  transition:color .28s ease, box-shadow .28s ease, border-color .28s ease;
+  z-index:0 !important;
+}
+.dmart-check-btn-inline::before,
+a.dmart-check-btn.dmart-check-btn-inline::before{
+  content:"" !important;
+  position:absolute !important;
+  inset:0;
+  background:linear-gradient(180deg, #FF8A33 0%, #FF6B00 100%);
+  transform:scaleY(0);
+  transform-origin:bottom center;
+  transition:transform .38s cubic-bezier(.22,.61,.36,1);
+  z-index:-1 !important;
+  pointer-events:none !important;
+}
+.dmart-check-btn-inline[data-fill-from="top"]::before,
+a.dmart-check-btn.dmart-check-btn-inline[data-fill-from="top"]::before{
+  transform-origin:top center;
+}
+.dmart-check-btn-inline[data-fill-from="bottom"]::before,
+a.dmart-check-btn.dmart-check-btn-inline[data-fill-from="bottom"]::before{
+  transform-origin:bottom center;
+}
+.dmart-check-btn-inline .dmart-check-icon,
+a.dmart-check-btn.dmart-check-btn-inline .dmart-check-icon{
+  color:inherit;
+  border-color:transparent;
+  position:relative !important;
+  z-index:1 !important;
+}
+.dmart-check-btn-inline > *,
+a.dmart-check-btn.dmart-check-btn-inline > *{
+  position:relative !important;
+  z-index:1 !important;
+}
+@media (hover:hover) and (pointer:fine){
+  .dmart-check-btn-inline:hover,
+  a.dmart-check-btn.dmart-check-btn-inline:hover{
+    color:#ffffff;
+    border-color:#FF6B00;
+    box-shadow:0 6px 18px rgba(255,107,0,.32);
+    background:#ffffff;
+  }
+  .dmart-check-btn-inline:hover::before,
+  a.dmart-check-btn.dmart-check-btn-inline:hover::before{
+    transform:scaleY(1);
+  }
+}
+.dmart-check-btn-inline:active,
+a.dmart-check-btn.dmart-check-btn-inline:active{
+  transform:scale(.98);
+}
+
+/* DMart Live glow +15% */
+.dmart-live-card{
+  border-color:rgba(255,107,0,.40);
+  box-shadow:
+    0 0 0 1px rgba(255,107,0,.12),
+    0 4px 22px rgba(255,107,0,.155),
+    0 2px 8px rgba(255,107,0,.12);
+}
+[data-theme="dark"] .dmart-live-card{
+  border-color:rgba(255,107,0,.52);
+  box-shadow:
+    0 0 0 1px rgba(255,107,0,.18),
+    0 4px 24px rgba(255,107,0,.22),
+    0 2px 10px rgba(255,107,0,.16);
+}
+
+
+/* ===== Fix: CODE128 must not blow up layout / Recent ===== */
+.product-top-row{
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+}
+.product-image-col,
+.product-barcodes-col,
+.product-live-col,
+.product-recent-col{
+  min-width:0;
+  box-sizing:border-box;
+}
+.product-barcodes-col{
+  overflow:hidden;
+  max-width:100%;
+}
+
+/* CODE128 width capped so Recent stays in place */
+
+.barcode-block.barcode-block-128{
+  max-width:100%;
+  width:max-content;
+}
+.barcode-block-128 .barcode-128-wrap:not(.is-qr){
+  max-width:min(240px, 100%);
+  width:auto;
+}
+.barcode-block-128 .barcode-128-wrap:not(.is-qr) svg{
+  max-width:100%;
+  width:100%;
+  height:auto;
+}
+
+/* Recent / Favorites / any panel: name never escapes the list */
+.panel-item{
+  max-width:100%;
+  overflow:hidden;
+  min-width:0;
+}
+.panel-text{
+  flex:1 1 auto;
+  min-width:0;
+  overflow:hidden;
+}
+.panel-name{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:100%;
+  display:block !important;
+}
+.panel-sub{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:100%;
+}
+.product-recent-col{
+  overflow:hidden;
+  flex-shrink:1;
+}
+.product-recent-list{
+  overflow-x:hidden;
+  overflow-y:auto;
+  max-width:100%;
+}
+.product-recent-list .panel-item{
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+}
+.product-recent-list .panel-name{
+  font-size:12px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* Full product name ONLY under image — constrained to image column */
+.product-image-col .product-name-under-img{
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+  max-height:none;
+  -webkit-line-clamp:unset;
+  line-clamp:unset;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+  max-width:100%;
+  width:100%;
+  box-sizing:border-box;
+}
+/* Any other product-name (title row etc.) stays single-line ellipsis */
+.product-title-row .product-name,
+.product-details-row .product-name,
+.product-name:not(.product-name-under-img){
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:100%;
+  display:block !important;
+  -webkit-line-clamp:unset;
+  line-clamp:unset;
+}
+
+/* Desktop recent-beside: keep barcode col from growing past remaining space */
+@media (min-width:721px){
+  html.recent-beside-barcode .product-barcodes-col{
+    flex:1 1 auto;
+    min-width:0;
+    max-width:calc(100% - 250px);
+  }
+  html.recent-beside-barcode .product-recent-col{
+    flex:0 0 230px;
+    max-width:253px;
+    width:230px;
+  }
+}
+@media (max-width:720px){
+  .barcode-block-128 .barcode-128-wrap:not(.is-qr){
+    max-width:min(160px, 100%);
+  }
+  html.recent-beside-barcode .product-recent-col{
+    max-width:100%;
+  }
+}
+
+
+/* ===== build 64 corrections ===== */
+
+/* 1) Format switch always visible — corner of barcode, not clipped */
+.product-barcodes-col{
+  overflow:visible;
+}
+.barcode-block.barcode-block-128{
+  position:relative;
+}
+
+.barcode-format-switch{
+  display:inline-flex !important;
+  visibility:visible !important;
+  opacity:1;
+  flex:0 0 auto;
+  align-items:center;
+  justify-content:center;
+  align-self:flex-start;
+  margin:0;
+  min-width:40px;
+  height:28px;
+  padding:0 10px;
+  border-radius:999px;
+  border:1.5px solid rgba(255,107,0,.55);
+  background:#fff;
+  color:#E85D00;
+  font-size:11px;
+  font-weight:800;
+  cursor:pointer;
+  box-shadow:0 2px 8px rgba(255,107,0,.16);
+  z-index:5;
+  pointer-events:auto !important;
+  position:relative;
+}
+.barcode-format-switch .bfs-label{display:inline !important;}
+[data-theme="dark"] .barcode-format-switch{
+  background:rgba(28,32,36,.98);
+  color:#FF9A4D;
+  border-color:rgba(255,154,77,.55);
+}
+
+/* 2) Recent size: +15% width, +20% height vs base 200×280 */
+.product-recent-col{
+  flex:0 0 230px;
+  width:230px;
+  min-width:184px;
+  max-width:253px;
+  max-height:336px;
+}
+@media (min-width:721px){
+  html.recent-beside-barcode .product-recent-col{
+    display:flex !important;
+    flex:0 0 230px;
+    width:230px;
+    min-width:184px;
+    max-width:253px;
+    max-height:336px;
+  }
+  html.recent-beside-barcode .product-barcodes-col{
+    flex:1 1 auto;
+    max-width:none;
+  }
+}
+
+/* 2b) CODE128 natural size — remove artificial caps */
+.barcode-block-128 .barcode-128-wrap:not(.is-qr){
+  max-width:100%;
+  width:auto;
+  padding:4px 6px;
+}
+.barcode-block-128 .barcode-128-wrap:not(.is-qr) svg{
+  max-width:none;
+  width:auto;
+  height:auto;
+}
+@media (max-width:720px){
+  .barcode-block-128 .barcode-128-wrap:not(.is-qr){
+    max-width:100%;
+  }
+}
+
+/* 4) Available highlighted frame (like Check in Dmart, smaller) */
+.dmart-live-row:has(.dmart-live-available),
+.dmart-live-row.dmart-live-available-row{
+  display:flex !important;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-top:4px;
+  margin-bottom:4px;
+  padding:6px 10px;
+  border-radius:10px;
+  border:1px solid rgba(255,107,0,.45);
+  background:#fff;
+  box-shadow:0 2px 8px rgba(255,107,0,.10);
+  box-sizing:border-box;
+}
+.dmart-live-row:has(.dmart-live-available) .dmart-live-label,
+.dmart-live-available-row .dmart-live-label{
+  color:#E85D00;
+  font-weight:700;
+  font-size:11px;
+}
+.dmart-live-row:has(.dmart-live-available) .dmart-live-available,
+.dmart-live-available-row .dmart-live-available{
+  color:#1a7a3c;
+  font-weight:700;
+  font-size:13px;
+}
+[data-theme="dark"] .dmart-live-row:has(.dmart-live-available),
+[data-theme="dark"] .dmart-live-available-row{
+  background:rgba(28,32,36,.95);
+  border-color:rgba(255,154,77,.45);
+}
+[data-theme="dark"] .dmart-live-row:has(.dmart-live-available) .dmart-live-available,
+[data-theme="dark"] .dmart-live-available-row .dmart-live-available{
+  color:#5ddea0;
+}
+/* Fallback if :has() unsupported — class on row from JS */
+
+
+/* ===== build 65 ===== */
+
+/* Switch sits on barcode corner (closer, tappable) */
+.barcode-128-wrap{
+  position:relative;
+}
+.barcode-format-switch{
+  position:absolute !important;
+  top:4px;
+  right:4px;
+  left:auto;
+  margin:0;
+  min-width:34px;
+  height:26px;
+  padding:0 8px;
+  z-index:6 !important;
+  box-shadow:0 2px 10px rgba(0,0,0,.12), 0 0 0 1px rgba(255,107,0,.2);
+}
+@media (max-width:720px){
+  .barcode-format-switch{
+    top:2px;
+    right:2px;
+    min-width:36px;
+    height:28px;
+    font-size:11px;
+  }
+}
+
+/* Br row: same width as barcode, edges aligned */
+.barcode-block-128 .barcode-numbers-list{
+  width:100%;
+  max-width:100%;
+  align-self:stretch;
+  box-sizing:border-box;
+}
+.barcode-block-128 .barcode-number-item{
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+  justify-content:space-between;
+}
+
+/* Price + Reserved frames — border matches their text color */
+.dmart-live-reserved-row,
+.dmart-live-price-row{
+  display:flex !important;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-top:4px;
+  margin-bottom:4px;
+  padding:6px 10px;
+  border-radius:10px;
+  border:1px solid rgba(17,17,17,.28);
+  background:#fff;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+  box-sizing:border-box;
+}
+.dmart-live-reserved-row .dmart-live-label,
+.dmart-live-price-row .dmart-live-label{
+  color:#111;
+  font-weight:700;
+  font-size:11px;
+}
+.dmart-live-reserved-row .dmart-live-reserved,
+.dmart-live-price-row .dmart-live-price{
+  color:#111;
+  font-weight:600;
+  font-size:13px;
+}
+[data-theme="dark"] .dmart-live-reserved-row,
+[data-theme="dark"] .dmart-live-price-row{
+  border-color:rgba(242,245,247,.35);
+  background:rgba(28,32,36,.95);
+}
+[data-theme="dark"] .dmart-live-reserved-row .dmart-live-label,
+[data-theme="dark"] .dmart-live-price-row .dmart-live-label,
+[data-theme="dark"] .dmart-live-reserved-row .dmart-live-reserved,
+[data-theme="dark"] .dmart-live-price-row .dmart-live-price{
+  color:#f2f5f7;
+}
+
+
+/* ===== build 66 — radical switch + Br align ===== */
+
+/* Layout: barcode on top; under it Br list + switch to the right of Br */
+.barcode-block.barcode-block-128{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:6px;
+  width:max-content;
+  max-width:100%;
+  position:relative;
+}
+.barcode-128-wrap{
+  position:relative !important;
+  /* switch is NOT inside wrap anymore */
+}
+
+
+/* Switch: right of Br row, always visible, easy tap */
+
+@media (max-width:720px){
+  .barcode-br-row .barcode-format-switch,
+  .barcode-format-switch{
+    min-width:42px;
+    height:32px;
+    font-size:12px;
+  }
+}
+[data-theme="dark"] .barcode-format-switch{
+  background:rgba(28,32,36,.98);
+  color:#FF9A4D;
+  border-color:rgba(255,154,77,.55);
+}
+
+
+/* ===== build 67 — switch top-left + clean Br align ===== */
+
+.barcode-block.barcode-block-128{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:6px;
+  width:max-content;
+  max-width:100%;
+  position:relative !important;
+}
+
+/* Switch: top, left side (mobile + PC) */
+
+
+@media (max-width:720px){
+  .barcode-format-switch{
+    min-width:42px;
+    height:32px;
+  }
+}
+[data-theme="dark"] .barcode-format-switch{
+  background:rgba(28,32,36,.98);
+  color:#FF9A4D;
+  border-color:rgba(255,154,77,.55);
+}
+
+/* Br under barcode — width set by JS to match wrap exactly */
+.barcode-block-128 .barcode-numbers-list{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  align-self:flex-start;
+}
+.barcode-block-128 .barcode-number-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+  padding:6px 8px;
+  margin:0;
+}
+
+
+/* ===== build 68 — floating draggable format switch ===== */
+
+/* Layout back to clean barcode + Br only */
+.barcode-block.barcode-block-128{
+  display:flex !important;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:6px;
+  width:max-content;
+  max-width:100%;
+}
+.barcode-block-128 .barcode-numbers-list{
+  display:flex !important;
+  flex-direction:column;
+  gap:4px;
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  align-self:flex-start;
+}
+.barcode-block-128 .barcode-number-item{
+  display:flex !important;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+  padding:6px 8px;
+  margin:0;
+}
+
+/* Floating switch — fixed, draggable, never in document flow */
+.barcode-format-switch.is-floating,
+#barcodeFormatSwitch.is-floating{
+  position:fixed !important;
+  top:auto;
+  left:auto;
+  right:12px;
+  bottom:96px;
+  z-index:9999 !important;
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+  min-width:48px;
+  height:40px;
+  padding:0 14px;
+  margin:0;
+  border-radius:999px;
+  border:1.5px solid rgba(255,107,0,.6);
+  background:#fff;
+  color:#E85D00;
+  font-size:13px;
+  font-weight:800;
+  cursor:grab;
+  box-shadow:0 4px 18px rgba(255,107,0,.28), 0 2px 8px rgba(0,0,0,.12);
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
+  pointer-events:auto !important;
+  visibility:visible !important;
+  opacity:1;
+}
+.barcode-format-switch.is-floating.is-dragging,
+#barcodeFormatSwitch.is-floating.is-dragging{
+  cursor:grabbing;
+  box-shadow:0 8px 24px rgba(255,107,0,.35), 0 4px 12px rgba(0,0,0,.18);
+  transform:scale(1.06);
+}
+[data-theme="dark"] .barcode-format-switch.is-floating,
+[data-theme="dark"] #barcodeFormatSwitch.is-floating{
+  background:rgba(28,32,36,.98);
+  color:#FF9A4D;
+  border-color:rgba(255,154,77,.6);
+}
+@media (max-width:720px){
+  .barcode-format-switch.is-floating,
+  #barcodeFormatSwitch.is-floating{
+    min-width:52px;
+    height:44px;
+    right:10px;
+    bottom:88px;
+    font-size:13px;
+  }
+}
+
+
+/* ===== build 69 — floating switch FORCE (desktop + mobile) ===== */
+button#barcodeFormatSwitch.barcode-format-switch.is-floating,
+#barcodeFormatSwitch.is-floating,
+body > #barcodeFormatSwitch {
+  position: fixed !important;
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1;
+  pointer-events: auto !important;
+  z-index: 2147483646 !important;
+  min-width: 52px;
+  height: 44px;
+  padding: 0 16px;
+  margin: 0;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 107, 0, 0.7);
+  background: #ffffff;
+  color: #E85D00;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: grab;
+  box-shadow: 0 6px 20px rgba(255, 107, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.15);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  transform: none;
+}
+button#barcodeFormatSwitch.barcode-format-switch.is-floating.is-dragging,
+#barcodeFormatSwitch.is-floating.is-dragging {
+  cursor: grabbing;
+  transform: scale(1.08);
+  box-shadow: 0 10px 28px rgba(255, 107, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+[data-theme="dark"] button#barcodeFormatSwitch.barcode-format-switch.is-floating,
+[data-theme="dark"] #barcodeFormatSwitch.is-floating {
+  background: rgba(28, 32, 36, 0.98);
+  color: #FF9A4D;
+  border-color: rgba(255, 154, 77, 0.7);
+}
+
