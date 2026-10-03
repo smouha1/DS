@@ -543,20 +543,21 @@ export function showDmartConfirm(sku) {
       box.style.bottom = 'auto';
       box.style.transform = 'none';
       if (tRect) {
-        // Default: to the RIGHT of Smouha Team, BELOW header (never under sticky header)
+        // Default: to the RIGHT of Smouha Team rotator, vertically aligned
         const gap = 10;
         let left = tRect.right + gap;
-        let top = Math.max(tRect.bottom + 8, tRect.top);
+        let top = tRect.top;
+        // If overflows right edge, place just left of viewport edge still near team
         if (left + bw > window.innerWidth - 8) {
           left = Math.max(8, window.innerWidth - bw - 8);
         }
-        // Keep fully below typical header (~64px) so title is never clipped
-        top = Math.max(72, Math.min(top, window.innerHeight - 160));
+        // Keep on screen vertically
+        top = Math.max(8, Math.min(top, window.innerHeight - 140));
         box.style.left = left + 'px';
         box.style.top = top + 'px';
       } else {
         box.style.left = Math.max(8, window.innerWidth - bw - 20) + 'px';
-        box.style.top = '88px';
+        box.style.top = '80px';
       }
     });
   }

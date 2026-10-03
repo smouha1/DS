@@ -1,4 +1,4 @@
-/* appStore.js — localStorage: recent / favorites / theme / last Available */
+/* appStore.js — localStorage persistence for recent / favorites / theme / last Available */
 const KEYS = {
   RECENT: 'tm_recent_searches',
   FAVS: 'tm_favorites',
@@ -20,7 +20,7 @@ function safeSet(key, val) {
   try {
     localStorage.setItem(key, JSON.stringify(val));
   } catch (e) {
-    /* ignore */
+    /* storage full/unavailable */
   }
 }
 
@@ -38,58 +38,42 @@ export function addRecent(sku) {
 
 export function clearRecent() {
   safeSet(KEYS.RECENT, []);
+  // keep last-available history so re-adding SKU can still show old qty
 }
 
-/** Map sku -> number | { v, live, t } */
+/** Map sku -> last known Available (number). Survives refresh. */
 export function getLastAvailableMap() {
   const m = safeGet(KEYS.LAST_AVAIL, {});
   return m && typeof m === 'object' ? m : {};
 }
 
-function normalizeMeta(raw) {
-  if (raw == null || raw === '') return null;
-  if (typeof raw === 'number' || (typeof raw === 'string' && raw !== '')) {
-    const n = Number(raw);
-    if (!Number.isFinite(n)) return null;
-    return { available: n, fromLive: false, t: 0 };
-  }
-  if (typeof raw === 'object') {
-    const n = Number(raw.v != null ? raw.v : raw.available);
-    if (!Number.isFinite(n)) return null;
-    return { available: n, fromLive: !!(raw.live || raw.fromLive), t: Number(raw.t) || 0 };
-  }
-  return null;
-}
-
 export function getLastAvailable(sku) {
-  const meta = getLastAvailableMeta(sku);
-  return meta ? meta.available : null;
-}
-
-export function getLastAvailableMeta(sku) {
   const m = getLastAvailableMap();
-  return normalizeMeta(m[String(sku)]);
+  const v = m[String(sku)];
+  if (v == null || v === '') return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
 }
 
-/** @param {object} [opts] fromLive: true when value came from a successful live fetch */
-export function setLastAvailable(sku, onHand, opts) {
+export function setLastAvailable(sku, onHand) {
   if (sku == null || sku === '') return;
   if (onHand == null || !Number.isFinite(Number(onHand))) return;
-  const fromLive = !!(opts && opts.fromLive);
   const m = getLastAvailableMap();
-  m[String(sku)] = { v: Number(onHand), live: fromLive, t: Date.now() };
+  m[String(sku)] = Number(onHand);
+  // cap map size loosely
   const keys = Object.keys(m);
   if (keys.length > 80) {
-    const recent = new Set(getRecent().map(String));
+    const recent = getRecent();
+    const keep = new Set(recent.map(String));
     for (const k of keys) {
-      if (!recent.has(k) && Object.keys(m).length > 60) delete m[k];
+      if (!keep.has(k) && keys.length > 60) delete m[k];
     }
   }
   safeSet(KEYS.LAST_AVAIL, m);
   try {
     window.dispatchEvent(
       new CustomEvent('smouha:last-available', {
-        detail: { sku: String(sku), available: Number(onHand), fromLive },
+        detail: { sku: String(sku), available: Number(onHand) },
       })
     );
   } catch (e) {}
@@ -128,7 +112,6 @@ export const store = {
   addRecent,
   clearRecent,
   getLastAvailable,
-  getLastAvailableMeta,
   getLastAvailableMap,
   setLastAvailable,
   getFavs,

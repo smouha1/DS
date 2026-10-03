@@ -277,13 +277,6 @@ const ui = (() => {
       els.suggestionsBox.addEventListener('pointercancel', () => { tapState = null; });
 
       // Fallback click for accessibility / desktop
-            els.suggestionsBox.addEventListener('touchend', (e) => {
-        const item = itemFromEvent(e);
-        if (!item) return;
-        e.preventDefault();
-        e.stopPropagation();
-        pickFromItem(item);
-      }, { passive: false });
       els.suggestionsBox.addEventListener('click', (e) => {
         const item = itemFromEvent(e);
         if (!item) return;
@@ -451,13 +444,11 @@ const ui = (() => {
     // they can never lag behind or appear to "disappear" while typing.
     updateSuggestions(val);
 
-    // Full product-card render: short debounce; exact SKU-like (6+) almost immediate
-    // so mobile users see data without waiting or fighting the keyboard.
-    const qlen = val.length;
-    const delay = qlen >= 6 ? 40 : (qlen >= 4 ? 80 : 120);
+    // The full product-card render (skeleton + barcode generation) stays
+    // debounced — that's a heavier, separate operation from the dropdown.
     debounceTimer = setTimeout(() => {
       runSearch(val);
-    }, delay);
+    }, 120);
   }
 
   function onKeydown(e) {
@@ -1442,12 +1433,12 @@ function renderSuggestions(matches, query) {
               <span class="sku-qr-label">SKU QR</span>
             </div>
           </div>
-          <div class="product-recent-col recent-rail" id="productRecentCol" hidden>
-            <div class="product-recent-head recent-rail-head">
-              <span class="recent-rail-title">Recent</span>
-              <button type="button" class="panel-clear recent-rail-clear" id="inlineClearRecent">Clear</button>
+          <div class="product-recent-col" id="productRecentCol" hidden>
+            <div class="product-recent-head">
+              <span>Recent</span>
+              <button type="button" class="panel-clear" id="inlineClearRecent">Clear</button>
             </div>
-            <div class="product-recent-list recent-rail-list" id="productRecentList"></div>
+            <div class="product-recent-list" id="productRecentList"></div>
           </div>
         </div>
         <div class="product-details-row">
@@ -1737,7 +1728,7 @@ function renderSuggestions(matches, query) {
     const skus = store.getRecent();
     const products = search.getBySkuList(skus);
     if (!products.length) {
-      list.innerHTML = '<div class="panel-empty recent-rail-empty">No recent scans yet</div>';
+      list.innerHTML = '<div class="panel-empty">No recent searches yet.</div>';
     } else {
       list.innerHTML = products.map(p => panelItemHtml(p, { showAvailable: true })).join('');
       wirePanelItems(list, products);
@@ -1763,41 +1754,27 @@ function renderSuggestions(matches, query) {
 
   /** On startup: always restore last scanned/viewed product when data is ready. */
   function restoreLastRecentProduct() {
-    const tryRestore = () => {
-      try {
-        if (lastRenderedProduct) return true;
-        let sku = null;
-        try { sku = localStorage.getItem('smouha_last_sku'); } catch (e) { sku = null; }
-        if (!sku) {
-          const skus = store.getRecent();
-          if (skus && skus.length) sku = skus[0];
-        }
-        if (!sku) return false;
-        const products = search.getBySkuList([sku]);
-        if (products && products[0]) {
-          renderProduct(products[0]);
-          return true;
-        }
+    try {
+      if (lastRenderedProduct) return;
+      let sku = null;
+      try { sku = localStorage.getItem('smouha_last_sku'); } catch (e) { sku = null; }
+      if (!sku) {
         const skus = store.getRecent();
-        if (skus && skus.length) {
-          const list = search.getBySkuList(skus);
-          if (list && list[0]) {
-            renderProduct(list[0]);
-            return true;
-          }
-        }
-        // Direct index lookup fallback
-        try {
-          const p = search.findBySku && search.findBySku(String(sku));
-          if (p) { renderProduct(p); return true; }
-        } catch (e2) {}
-        return false;
-      } catch (e) { return false; }
-    };
-    if (tryRestore()) return;
-    // Index may still be settling on slow mobile — retry briefly
-    setTimeout(() => { tryRestore(); }, 200);
-    setTimeout(() => { tryRestore(); }, 800);
+        if (skus && skus.length) sku = skus[0];
+      }
+      if (!sku) return;
+      const products = search.getBySkuList([sku]);
+      if (products && products[0]) {
+        renderProduct(products[0]);
+        return;
+      }
+      // Fallback: first resolvable recent
+      const skus = store.getRecent();
+      if (skus && skus.length) {
+        const list = search.getBySkuList(skus);
+        if (list && list[0]) renderProduct(list[0]);
+      }
+    } catch (e) { /* ignore */ }
   }
 
   function renderFavorites() {
@@ -1814,46 +1791,26 @@ function renderSuggestions(matches, query) {
   function panelItemHtml(p, opts) {
     const thumb = resolveProductThumb(p);
     const showAvail = !!(opts && opts.showAvailable);
+    let qtyHtml = '';
     if (showAvail) {
-      let meta = null;
+      let q = null;
       try {
-        meta = (typeof store.getLastAvailableMeta === 'function')
-          ? store.getLastAvailableMeta(p.sku)
-          : null;
-      } catch (e) { meta = null; }
-      if (!meta && typeof store.getLastAvailable === 'function') {
-        try {
-          const q = store.getLastAvailable(p.sku);
-          if (q != null) meta = { available: q, fromLive: false };
-        } catch (e) {}
-      }
-      const has = meta && Number.isFinite(Number(meta.available));
-      const n = has ? Number(meta.available) : null;
+        q = (typeof store.getLastAvailable === 'function') ? store.getLastAvailable(p.sku) : null;
+      } catch (e) { q = null; }
+      const has = q != null && Number.isFinite(Number(q));
+      const n = has ? Number(q) : null;
       const cls = has ? (n > 0 ? 'is-positive' : 'is-zero') : 'is-unknown';
       const label = has ? String(n) : '—';
-      const liveBadge = (meta && meta.fromLive)
-        ? '<span class="recent-rail-live" title="From DMart live">DMart</span>'
-        : '';
-      return `
-      <div class="panel-item recent-rail-item" data-sku="${escapeAttr(p.sku)}">
-        <img class="panel-thumb recent-rail-thumb" src="${escapeAttr(thumb)}" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${placeholderImg()}'">
-        <div class="panel-text recent-rail-body">
-          <div class="panel-name recent-rail-name">${escapeHtml(p.name)}</div>
-          <div class="panel-sub recent-rail-meta">
-            <span class="recent-rail-sku">${escapeHtml(p.sku)}</span>
-            ${liveBadge}
-          </div>
-        </div>
-        <span class="panel-qty recent-rail-qty ${cls}" title="Last Available">${label}</span>
-      </div>`;
+      qtyHtml = '<span class="panel-qty ' + cls + '" title="Last Available">' + label + '</span>';
     }
     return `
-      <div class="panel-item" data-sku="${escapeAttr(p.sku)}">
+      <div class="panel-item${showAvail ? ' panel-item-with-qty' : ''}" data-sku="${escapeAttr(p.sku)}">
         <img class="panel-thumb" src="${escapeAttr(thumb)}" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${placeholderImg()}'">
         <div class="panel-text">
           <div class="panel-name">${escapeHtml(p.name)}</div>
           <div class="panel-sub">SKU ${escapeHtml(p.sku)}</div>
         </div>
+        ${qtyHtml}
       </div>`;
   }
   function wirePanelItems(container, products) {
@@ -2215,12 +2172,6 @@ function renderSuggestions(matches, query) {
     renderFavorites();
     preloadRecentImages();
     restoreLastRecentProduct();
-    try {
-      if (els.resultArea) {
-        els.resultArea.style.display = '';
-        els.resultArea.removeAttribute('hidden');
-      }
-    } catch (e) {}
     if (shouldAutoFocus()) {
       els.searchInput.focus();
       els.searchInput.classList.add('ready-flash');

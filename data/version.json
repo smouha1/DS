@@ -1,59 +1,9 @@
 {
-  "version": "1.9.15",
-  "build": 146,
-  "updated": "2026-10-03",
+  "version": "1.9.11",
+  "build": 142,
+  "updated": "2026-09-21",
   "products": 41125,
   "changelogByVersion": [
-    {
-      "version": "1.9.15",
-      "build": 146,
-      "date": "2026-10-03",
-      "items": [
-        "Mobile: force result area + suggestions visible (z-index/overflow)",
-        "Mobile: touchend selects suggestion; faster search for 6+ digit SKUs",
-        "Stronger last-product restore with retries; Recent panel stays visible on mobile"
-      ]
-    },
-    {
-      "version": "1.9.14",
-      "build": 145,
-      "date": "2026-10-03",
-      "items": [
-        "Full-width layout: remove max-width 1200 trap; use side space on desktop",
-        "Wider Recent rail (~280px) and clearer product row distribution",
-        "Search row expands with viewport; DMart confirm z-index above header"
-      ]
-    },
-    {
-      "version": "1.9.14",
-      "build": 145,
-      "date": "2026-10-03",
-      "items": [
-        "Layout: remove main max-width 1200 — full-width, no large side gutters",
-        "Recent Rail: wider (~300px), larger type/thumb/qty for 20 items",
-        "DMart YES/NO confirm: z-index above header; dock below header so title is visible"
-      ]
-    },
-    {
-      "version": "1.9.13",
-      "build": 144,
-      "date": "2026-10-03",
-      "items": [
-        "Page polish: unified surfaces (header, search, product card, panels, empty state)",
-        "Softer search focus ring; calmer canvas gradient without motion lag",
-        "Main content max-width + spacing rhythm; mobile padding tighten"
-      ]
-    },
-    {
-      "version": "1.9.12",
-      "build": 143,
-      "date": "2026-10-03",
-      "items": [
-        "Recent Rail redesign (desktop): vertical rail, qty badge, DMart live badge, up to 20 items",
-        "DMart Live card v2: Available hero, Reserved/Price secondary row, cleaner adjust",
-        "Premium skeleton loader on stock adjust (replaces Working… text)"
-      ]
-    },
     {
       "version": "1.9.11",
       "build": 142,

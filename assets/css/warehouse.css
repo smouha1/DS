@@ -260,7 +260,7 @@
 .dmart-confirm-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 12000;
+  z-index: 200;
   background: transparent;
   display: flex;
   align-items: flex-start;
@@ -278,7 +278,6 @@
 
 .dmart-confirm-box {
   pointer-events: auto; /* only the card captures clicks */
-  z-index: 12001;
   width: 100%;
   max-width: 260px;
   background: var(--crystal);

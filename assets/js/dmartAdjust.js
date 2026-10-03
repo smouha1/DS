@@ -428,7 +428,11 @@ function buildAdjustPanelHtml(sku) {
   const safe = String(sku || '').replace(/"/g, '');
   return `
     <div class="dmart-adjust-panel" data-adjust-sku="${safe}" hidden>
-      <div class="dmart-adjust-row" role="group" aria-label="Adjust quantity">
+      <div class="dmart-adjust-title">
+        <span class="dmart-adjust-title-text">Adjust stock</span>
+        <span class="dmart-adjust-title-hint">1–5 units</span>
+      </div>
+      <div class="dmart-adjust-row" role="group" aria-label="Quantity">
         <button type="button" class="dmart-adjust-btn dmart-adjust-minus" data-adj="minus" aria-label="Decrease">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 12h12"/></svg>
         </button>
@@ -514,9 +518,8 @@ function bindAdjustPanel(root, sku) {
     panel.querySelectorAll('button').forEach((b) => { b.disabled = true; });
     if (msg) {
       msg.hidden = false;
-      msg.className = 'dmart-adjust-msg is-loading';
-      msg.hidden = false;
-      msg.innerHTML = '<span class="dmart-adj-loader" aria-label="Working" role="status"><span class="dmart-adj-loader-bar"></span><span class="dmart-adj-loader-bar dmart-adj-loader-bar--short"></span></span>';
+      msg.className = 'dmart-adjust-msg';
+      msg.textContent = 'Working…';
     }
 
     const res = await requestStockAdjust({ sku, warehouseId, quantity, direction });
@@ -559,7 +562,7 @@ function bindAdjustPanel(root, sku) {
 
     const applyValues = () => {
       if (d.available != null || d.reserved != null || d.price != null) {
-        try { if (d.available != null && sku) setLastAvailable(sku, d.available, { fromLive: true }); } catch (e) {}
+        try { if (d.available != null && sku) setLastAvailable(sku, d.available); } catch (e) {}
         setLiveValues(root, {
           onHand: d.available != null ? d.available : null,
           reserved: d.reserved != null ? d.reserved : null,
