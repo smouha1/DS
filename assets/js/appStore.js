@@ -41,39 +41,57 @@ export function clearRecent() {
   // keep last-available history so re-adding SKU can still show old qty
 }
 
-/** Map sku -> last known Available (number). Survives refresh. */
+/** Map sku -> number | { v, live, t }. Survives refresh. */
 export function getLastAvailableMap() {
   const m = safeGet(KEYS.LAST_AVAIL, {});
   return m && typeof m === 'object' ? m : {};
 }
 
-export function getLastAvailable(sku) {
-  const m = getLastAvailableMap();
-  const v = m[String(sku)];
-  if (v == null || v === '') return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
+function normalizeAvailMeta(raw) {
+  if (raw == null || raw === '') return null;
+  if (typeof raw === 'number' || (typeof raw === 'string' && raw !== '')) {
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return null;
+    return { available: n, fromLive: false, t: 0 };
+  }
+  if (typeof raw === 'object') {
+    const n = Number(raw.v != null ? raw.v : raw.available);
+    if (!Number.isFinite(n)) return null;
+    return { available: n, fromLive: !!(raw.live || raw.fromLive), t: Number(raw.t) || 0 };
+  }
+  return null;
 }
 
-export function setLastAvailable(sku, onHand) {
+export function getLastAvailable(sku) {
+  const meta = getLastAvailableMeta(sku);
+  return meta ? meta.available : null;
+}
+
+export function getLastAvailableMeta(sku) {
+  const m = getLastAvailableMap();
+  return normalizeAvailMeta(m[String(sku)]);
+}
+
+/** @param {{ fromLive?: boolean }} [opts] */
+export function setLastAvailable(sku, onHand, opts) {
   if (sku == null || sku === '') return;
   if (onHand == null || !Number.isFinite(Number(onHand))) return;
+  const fromLive = !!(opts && opts.fromLive);
   const m = getLastAvailableMap();
-  m[String(sku)] = Number(onHand);
-  // cap map size loosely
+  m[String(sku)] = { v: Number(onHand), live: fromLive, t: Date.now() };
   const keys = Object.keys(m);
   if (keys.length > 80) {
     const recent = getRecent();
     const keep = new Set(recent.map(String));
     for (const k of keys) {
-      if (!keep.has(k) && keys.length > 60) delete m[k];
+      if (!keep.has(k) && Object.keys(m).length > 60) delete m[k];
     }
   }
   safeSet(KEYS.LAST_AVAIL, m);
   try {
     window.dispatchEvent(
       new CustomEvent('smouha:last-available', {
-        detail: { sku: String(sku), available: Number(onHand) },
+        detail: { sku: String(sku), available: Number(onHand), fromLive },
       })
     );
   } catch (e) {}
@@ -112,6 +130,7 @@ export const store = {
   addRecent,
   clearRecent,
   getLastAvailable,
+  getLastAvailableMeta,
   getLastAvailableMap,
   setLastAvailable,
   getFavs,

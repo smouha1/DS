@@ -701,7 +701,7 @@ export function setLiveValues(root, data) {
         (root && root.getAttribute && root.getAttribute('data-sku')) ||
         (data && data.sku) ||
         '';
-      if (sku) setLastAvailable(sku, data.onHand);
+      if (sku) setLastAvailable(sku, data.onHand, { fromLive: true });
     } catch (e) { /* ignore */ }
   } else if (data && data.ok === false && !root.classList.contains('is-loading')) {
     // Terminal failure: clear numbers so a stale Reserved cannot stick
@@ -889,13 +889,25 @@ export function requestLiveForProduct(sku) {
 export function liveCardHtml(sku) {
   const safe = String(sku).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   return `
-    <div class="dmart-live-card" id="dmartLiveCard" data-sku="${safe}" aria-live="polite">
-      <div class="dmart-live-title-row">
-        <div class="dmart-live-title">DMart</div>
-</div>
-      <div class="dmart-live-row dmart-live-available-row"><span class="dmart-live-label">Available</span><span class="dmart-live-value dmart-live-available" data-live="available">…</span></div>
-      <div class="dmart-live-row dmart-live-reserved-row"><span class="dmart-live-label">Reserved</span><span class="dmart-live-value dmart-live-reserved" data-live="reserved">…</span></div>
-      <div class="dmart-live-row dmart-live-price-row"><span class="dmart-live-label">Price</span><span class="dmart-live-value dmart-live-price" data-live="price">…</span></div>
+    <div class="dmart-live-card dmart-live-v2" id="dmartLiveCard" data-sku="${safe}" aria-live="polite">
+      <div class="dmart-live-head">
+        <span class="dmart-live-title">DMart</span>
+        <span class="dmart-live-head-dot" data-live="dot" aria-hidden="true"></span>
+      </div>
+      <div class="dmart-live-hero dmart-live-available-row">
+        <span class="dmart-live-label">Available</span>
+        <span class="dmart-live-value dmart-live-available" data-live="available">…</span>
+      </div>
+      <div class="dmart-live-secondary">
+        <div class="dmart-live-sec dmart-live-reserved-row">
+          <span class="dmart-live-label">Reserved</span>
+          <span class="dmart-live-value dmart-live-reserved" data-live="reserved">…</span>
+        </div>
+        <div class="dmart-live-sec dmart-live-price-row">
+          <span class="dmart-live-label">Price</span>
+          <span class="dmart-live-value dmart-live-price" data-live="price">…</span>
+        </div>
+      </div>
       ${buildAdjustPanelHtml(sku)}
       <a class="dmart-check-btn dmart-check-btn-inline" href="#" data-sku="${safe}" target="_blank" rel="noopener noreferrer">
         <span class="dmart-check-icon" aria-hidden="true">

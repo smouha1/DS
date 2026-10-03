@@ -1,9 +1,20 @@
 {
-  "version": "1.9.11",
-  "build": 142,
-  "updated": "2026-09-21",
+  "version": "1.9.12",
+  "build": 148,
+  "updated": "2026-10-03",
   "products": 41125,
   "changelogByVersion": [
+    {
+      "version": "1.9.12",
+      "build": 148,
+      "date": "2026-10-03",
+      "items": [
+        "UI only (stable base): Recent Rail redesign (desktop) — qty badge + DMart live chip, max 20",
+        "UI only: DMart Live card v2 — Available hero, Reserved/Price row, status dot",
+        "UI only: premium skeleton loader on stock adjust (replaces Working… text)",
+        "Service Worker cache bump v106-148"
+      ]
+    },
     {
       "version": "1.9.11",
       "build": 142,

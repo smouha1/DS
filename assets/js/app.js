@@ -1433,12 +1433,12 @@ function renderSuggestions(matches, query) {
               <span class="sku-qr-label">SKU QR</span>
             </div>
           </div>
-          <div class="product-recent-col" id="productRecentCol" hidden>
-            <div class="product-recent-head">
-              <span>Recent</span>
-              <button type="button" class="panel-clear" id="inlineClearRecent">Clear</button>
+          <div class="product-recent-col recent-rail" id="productRecentCol" hidden>
+            <div class="product-recent-head recent-rail-head">
+              <span class="recent-rail-title">Recent</span>
+              <button type="button" class="panel-clear recent-rail-clear" id="inlineClearRecent">Clear</button>
             </div>
-            <div class="product-recent-list" id="productRecentList"></div>
+            <div class="product-recent-list recent-rail-list" id="productRecentList"></div>
           </div>
         </div>
         <div class="product-details-row">
@@ -1728,7 +1728,7 @@ function renderSuggestions(matches, query) {
     const skus = store.getRecent();
     const products = search.getBySkuList(skus);
     if (!products.length) {
-      list.innerHTML = '<div class="panel-empty">No recent searches yet.</div>';
+      list.innerHTML = '<div class="panel-empty recent-rail-empty">No recent scans yet</div>';
     } else {
       list.innerHTML = products.map(p => panelItemHtml(p, { showAvailable: true })).join('');
       wirePanelItems(list, products);
@@ -1791,26 +1791,46 @@ function renderSuggestions(matches, query) {
   function panelItemHtml(p, opts) {
     const thumb = resolveProductThumb(p);
     const showAvail = !!(opts && opts.showAvailable);
-    let qtyHtml = '';
     if (showAvail) {
-      let q = null;
+      let meta = null;
       try {
-        q = (typeof store.getLastAvailable === 'function') ? store.getLastAvailable(p.sku) : null;
-      } catch (e) { q = null; }
-      const has = q != null && Number.isFinite(Number(q));
-      const n = has ? Number(q) : null;
+        meta = (typeof store.getLastAvailableMeta === 'function')
+          ? store.getLastAvailableMeta(p.sku)
+          : null;
+      } catch (e) { meta = null; }
+      if (!meta && typeof store.getLastAvailable === 'function') {
+        try {
+          const q = store.getLastAvailable(p.sku);
+          if (q != null) meta = { available: q, fromLive: false };
+        } catch (e) {}
+      }
+      const has = meta && Number.isFinite(Number(meta.available));
+      const n = has ? Number(meta.available) : null;
       const cls = has ? (n > 0 ? 'is-positive' : 'is-zero') : 'is-unknown';
       const label = has ? String(n) : '—';
-      qtyHtml = '<span class="panel-qty ' + cls + '" title="Last Available">' + label + '</span>';
+      const liveBadge = (meta && meta.fromLive)
+        ? '<span class="recent-rail-live" title="From DMart live">DMart</span>'
+        : '';
+      return `
+      <div class="panel-item recent-rail-item" data-sku="${escapeAttr(p.sku)}">
+        <img class="panel-thumb recent-rail-thumb" src="${escapeAttr(thumb)}" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${placeholderImg()}'">
+        <div class="panel-text recent-rail-body">
+          <div class="panel-name recent-rail-name">${escapeHtml(p.name)}</div>
+          <div class="panel-sub recent-rail-meta">
+            <span class="recent-rail-sku">${escapeHtml(p.sku)}</span>
+            ${liveBadge}
+          </div>
+        </div>
+        <span class="panel-qty recent-rail-qty ${cls}" title="Last Available">${label}</span>
+      </div>`;
     }
     return `
-      <div class="panel-item${showAvail ? ' panel-item-with-qty' : ''}" data-sku="${escapeAttr(p.sku)}">
+      <div class="panel-item" data-sku="${escapeAttr(p.sku)}">
         <img class="panel-thumb" src="${escapeAttr(thumb)}" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${placeholderImg()}'">
         <div class="panel-text">
           <div class="panel-name">${escapeHtml(p.name)}</div>
           <div class="panel-sub">SKU ${escapeHtml(p.sku)}</div>
         </div>
-        ${qtyHtml}
       </div>`;
   }
   function wirePanelItems(container, products) {
