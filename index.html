@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en" data-app="smouha-pick">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta name="theme-color" content="#FF6B00">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Smouha Pick">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+
+<link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+<link rel="dns-prefetch" href="https://unpkg.com">
+<link rel="modulepreload" href="assets/js/app.js">
+<link rel="preconnect" href="https://talabat.dhmedia.io" crossorigin>
+<link rel="dns-prefetch" href="https://talabat.dhmedia.io">
+<link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+
+<title>Smouha Pick</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2220%22%20fill%3D%22%23FF6B00%22/%3E%3Cg%20transform%3D%22translate%2810%2C10%29%20scale%280.8%29%22%3E%3Cpath%20d%3D%22M%2051.28%2C14.43%20L%2048.01%2C15.07%20L%2044.50%2C16.59%20L%2042.58%2C17.94%20L%2040.11%2C20.81%20L%2038.60%2C25.36%20L%2038.52%2C34.85%20L%2026.63%2C34.85%20L%2026.63%2C41.71%20L%2027.67%2C44.42%20L%2030.06%2C46.41%20L%2032.46%2C47.05%20L%2038.60%2C47.13%20L%2038.68%2C67.78%20L%2040.27%2C73.60%20L%2042.66%2C77.59%20L%2046.09%2C81.02%20L%2050.00%2C83.33%20L%2054.47%2C84.61%20L%2059.25%2C84.77%20L%2064.75%2C83.49%20L%2067.70%2C81.90%20L%2067.70%2C70.18%20L%2064.51%2C70.97%20L%2061.80%2C70.73%20L%2058.93%2C69.22%20L%2057.26%2C67.15%20L%2056.14%2C63.32%20L%2056.14%2C47.13%20L%2069.54%2C47.05%20L%2069.54%2C39.87%20L%2068.26%2C37.00%20L%2065.79%2C35.25%20L%2056.14%2C34.77%20L%2056.14%2C14.35%20Z%22%20fill%3D%22%23ffffff%22/%3E%3C/g%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2220%22%20fill%3D%22%23FF6B00%22/%3E%3Cg%20transform%3D%22translate%2810%2C10%29%20scale%280.8%29%22%3E%3Cpath%20d%3D%22M%2051.28%2C14.43%20L%2048.01%2C15.07%20L%2044.50%2C16.59%20L%2042.58%2C17.94%20L%2040.11%2C20.81%20L%2038.60%2C25.36%20L%2038.52%2C34.85%20L%2026.63%2C34.85%20L%2026.63%2C41.71%20L%2027.67%2C44.42%20L%2030.06%2C46.41%20L%2032.46%2C47.05%20L%2038.60%2C47.13%20L%2038.68%2C67.78%20L%2040.27%2C73.60%20L%2042.66%2C77.59%20L%2046.09%2C81.02%20L%2050.00%2C83.33%20L%2054.47%2C84.61%20L%2059.25%2C84.77%20L%2064.75%2C83.49%20L%2067.70%2C81.90%20L%2067.70%2C70.18%20L%2064.51%2C70.97%20L%2061.80%2C70.73%20L%2058.93%2C69.22%20L%2057.26%2C67.15%20L%2056.14%2C63.32%20L%2056.14%2C47.13%20L%2069.54%2C47.05%20L%2069.54%2C39.87%20L%2068.26%2C37.00%20L%2065.79%2C35.25%20L%2056.14%2C34.77%20L%2056.14%2C14.35%20Z%22%20fill%3D%22%23ffffff%22/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/css/main.css">
+<link rel="stylesheet" href="assets/css/cards/01-quick-access.css">
+<link rel="stylesheet" href="assets/css/cards/02-product-card.css">
+<link rel="stylesheet" href="assets/css/cards/03-team-modal.css">
+<link rel="stylesheet" href="assets/css/cards/04-panels.css">
+<link rel="stylesheet" href="assets/css/cards/05-dmart-live.css">
+<link rel="stylesheet" href="assets/css/cards/06a-visual-polish-base.css">
+<link rel="stylesheet" href="assets/css/cards/06b-barcode-switch-saga.css">
+<link rel="stylesheet" href="assets/css/cards/07-anim-and-stock-modal.css">
+<link rel="stylesheet" href="assets/css/cards/08-dmart-identity.css">
+<link rel="stylesheet" href="assets/css/cards/09-latest-overrides.css">
+<link rel="stylesheet" href="assets/css/buttons.css">
+<link rel="stylesheet" href="assets/css/search.css">
+<link rel="stylesheet" href="assets/css/settings.css">
+<link rel="stylesheet" href="assets/css/warehouse.css">
+<!-- Pelican Mode dependencies: barcode decoder (primary), OCR engine, Code128 generator -->
+<script src="assets/js/vendor/JsBarcode.all.min.js" defer></script>
+<script>window.__smouhaLoadStart = performance.now();</script>
+</head>
+<body>
+<header class="app-header">
+  <div class="header-inner">
+    <a class="header-logo" href="https://portal.talabat.com/pv2/eg/" aria-label="Talabat Mart Portal">
+        <svg role="img" aria-label="Talabat Mart" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 312.75 68.249996" preserveAspectRatio="xMidYMid meet" version="1.0"><defs><filter x="0%" y="0%" width="100%" height="100%" id="2b577f4436"><feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0" color-interpolation-filters="sRGB"/></filter><filter x="0%" y="0%" width="100%" height="100%" id="7e155fc221"><feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0.2126 0.7152 0.0722 0 0" color-interpolation-filters="sRGB"/></filter><clipPath id="b7e5d84649"><path d="M 2 0 L 310.925781 0 L 310.925781 67.507812 L 2 67.507812 Z M 2 0 " clip-rule="nonzero"/></clipPath><mask id="b4dbe84d13"><g filter="url(#2b577f4436)"><g filter="url(#7e155fc221)" transform="matrix(0.154521, 0, 0, 0.154481, 1.576095, -0.00000197826)"><image x="0" y="0" width="2002" xlink:href="assets/img/header-logo-1.png" height="437" preserveAspectRatio="xMidYMid meet"/></g></g></mask></defs><g clip-path="url(#b7e5d84649)"><g mask="url(#b4dbe84d13)"><g transform="matrix(0.154521, 0, 0, 0.154481, 1.576095, -0.00000197826)"><image x="0" y="0" width="2002" xlink:href="assets/img/header-logo-2.png" height="437" preserveAspectRatio="xMidYMid meet"/></g></g></g></svg>
+      </a>
+    <div class="header-actions">
+      <div class="header-wh-slot" id="warehouseSelectorMount"></div>
+<a class="apk-header-btn" id="apkDownloadBtn" href="downloads/Smouha-Pick.apk" download="Smouha-Pick.apk" title="Download Android APK" aria-label="Download Android APK">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m8 11 4 4 4-4"/><path d="M5 19h14"/></svg>
+      </a>
+<button class="icon-btn" id="settingsBtn" aria-label="Settings" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<div class="session-auth-banner" id="sessionAuthBanner" role="status" aria-live="polite"></div>
+<div class="pwa-offline-banner" id="pwaOfflineBanner" role="status" aria-live="polite" hidden></div>
+
+
+
+<main>
+  <section class="search-section">
+    <div class="search-main-row">
+      <div class="search-box-wrap">
+        <div class="search-input-shell">
+          <span class="search-icon" id="searchIcon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </span>
+          <span class="search-spinner" id="searchSpinner" hidden aria-hidden="true"></span>
+          <input type="text" id="searchInput" inputmode="numeric" placeholder="Search SKU or Last 6 digits..." autocomplete="off" spellcheck="false" aria-label="Search products" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="suggestionsBox">
+          <button type="button" class="search-inline-btn search-custom-bc-btn" id="customBarcodeBtn" title="Custom Barcode" aria-label="Custom Barcode">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 5v14M7 5v14M10 5v14M14 5v14M17 5v14M21 5v14"/></svg>
+          </button>
+          <button type="button" class="search-inline-btn search-pelican-btn" id="smartScanBtn" title="Pelican Mode" aria-label="Pelican Mode">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </button>
+          <button type="button" class="search-clear-btn clear-btn" id="clearBtn" aria-label="Clear search" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+          <button type="button" class="search-abc-btn" id="abcToggleBtn" aria-label="Toggle letter keyboard" title="ABC / 123">ABC</button>
+        </div>
+        <div class="suggestions" id="suggestionsBox" role="listbox"></div>
+      </div>
+      <div class="team-rotator" id="teamRotator" aria-live="polite">
+        <span class="team-rotator-kicker">Smouha Team</span>
+        <div class="team-rotator-line">
+          <span class="team-rotator-text" id="teamRotatorText"></span><span class="team-rotator-cursor" aria-hidden="true"></span>
+        </div>
+      </div>
+    </div>
+    <div class="search-stats" id="searchStats" aria-live="polite"></div>
+  </section>
+
+  <section class="quick-access-section" id="quickAccessSection">
+    <h2 class="quick-access-title">Quick Access</h2>
+    <div class="quick-access-grid" id="quickAccessGrid"></div>
+  </section>
+
+  <section class="result-area" id="resultArea" aria-live="polite"></section>
+
+  <section class="panels-row">
+    <div class="panel">
+      <div class="panel-header">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Recent Searches
+        </h3>
+        <button class="panel-clear" id="clearRecent">Clear</button>
+      </div>
+      <div class="panel-list" id="recentList"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          Favorites
+        </h3>
+        <button class="panel-clear" id="clearFavs">Clear</button>
+      </div>
+      <div class="panel-list" id="favList"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="app-footer">
+  <p>Developed by <button class="footer-team-link" id="teamLinkBtn" type="button">Talabat Mart Smouha Team <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></button></p>
+  <p>Under the Supervision of <strong class="footer-supervisor">Ashraf Amin</strong></p>
+  <p class="app-version" id="appVersionLine"></p>
+</footer>
+
+<!-- Sticky Barcode Bar (mobile only): shows only the active barcode + number while
+     scrolling past it, for fast repeat scanning without scrolling back up. -->
+<div class="sticky-barcode-bar" id="stickyBarcodeBar" hidden>
+  <div class="sticky-barcode-img" id="stickyBarcodeImg"></div>
+  <span class="sticky-barcode-number" id="stickyBarcodeNumber"></span>
+  <button class="icon-btn-sm" id="stickyCopyBtn" aria-label="Copy barcode number">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+  </button>
+  <button class="icon-btn-sm" id="stickyDownloadBtn" aria-label="Download barcode PNG">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+  </button>
+</div>
+
+<!-- Settings button moved to header -->
+
+<!-- Settings live at settings.html (dedicated URL) -->
+
+<div class="maintenance-backdrop" id="maintenanceBackdrop" aria-hidden="true">
+  <div class="maintenance-drawer">
+    <div class="maintenance-drawer-header">
+      <h3>Maintenance Panel</h3>
+      <button class="modal-close" id="maintenanceClose" aria-label="Close maintenance panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="maintenance-panel" id="maintenanceBody"></div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Choice modal (multiple matches) -->
+<div class="modal-backdrop" id="choiceModal" role="dialog" aria-modal="true" aria-labelledby="choiceModalTitle">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="choiceModalTitle">Multiple products found</span>
+      <button class="modal-close" id="choiceModalClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body" id="choiceModalBody"></div>
+  </div>
+</div>
+
+<!-- Team Members modal (enterprise credits window) -->
+<div class="modal-backdrop" id="teamModal" role="dialog" aria-modal="true" aria-labelledby="teamModalTitle">
+  <div class="modal-box team-modal-box">
+    <div class="modal-header">
+      <div>
+        <span class="modal-title" id="teamModalTitle">Talabat Mart Smouha Team</span>
+        <span class="team-modal-subtitle">Smouha Pick &middot; Internal Team</span>
+      </div>
+      <button class="modal-close" id="teamModalClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body team-modal-body">
+      <div class="team-section">
+        <h4 class="team-section-title">Leadership</h4>
+        <div class="team-leader">
+          <span class="team-leader-name">Ashraf Amin</span>
+          <span class="team-leader-role">Store Supervisor</span>
+        </div>
+        <div class="team-leader">
+          <span class="team-leader-name">Abdallah</span>
+          <span class="team-leader-role">Assistant</span>
+        </div>
+        <div class="team-leader">
+          <span class="team-leader-name">El Sayed Elaraby</span>
+          <span class="team-leader-role">Assistant</span>
+        </div>
+        <div class="team-leader">
+          <span class="team-leader-name">Mohamed Azzema</span>
+          <span class="team-leader-role">Assistant</span>
+        </div>
+      </div>
+
+      <div class="team-divider"></div>
+
+      <div class="team-outstanding">
+        <p class="team-outstanding-message">Special Thanks to <strong class="team-outstanding-highlight">Tarek Ali Abdallah &#128076;</strong> for his invaluable support, creative ideas, and dedication throughout the development of this project.</p>
+      </div>
+
+      <div class="team-divider"></div>
+
+      <div class="team-section">
+        <h4 class="team-section-title">&#128101; Team Members</h4>
+        <ul class="team-members-list">
+          <li>Abd El Rahman Amer</li>
+          <li>Abdelrahman Hassan Mohamed</li>
+          <li>Ahmed Abdelsabor Mahmoud</li>
+          <li>Ahmed Adel Metwally</li>
+          <li>Ahmed Mostafa Mohamed</li>
+          <li>Ahmed Sabry Ramadan</li>
+          <li>Ali Abd El-Aleem Gaber</li>
+          <li>Ali Adel Ali</li>
+          <li>Ashraf Ramzy Abdelmohsen</li>
+          <li>Ayatallah Abdelhafez Abdelhamed</li>
+          <li>Belal Ahmed Mohamed</li>
+          <li>Belal Mahmoud Abdelrazek</li>
+                    <li>Essamelden Mohamed Ali</li>
+          <li>Hanna Ayoub Farag</li>
+          <li>Hassan Elsayed Hassan</li>
+          <li>Ibrahim Elsayed Gabara</li>
+          <li>Ibrahim Gamal Morsy</li>
+          <li>Islam Elsayed Mohamed</li>
+          <li>Khaled Mohamed Abdellatif</li>
+          <li>Mahasen Salah Ahmed</li>
+          <li>Mahmoud El-Sayed Mohamed</li>
+          <li>Mahmoud Magdy Mahmoud</li>
+          <li>Mariam Ismail Saeed</li>
+          <li>Marwan Ahmed Abdelkader</li>
+          <li>Mazen Amr Elsayed</li>
+          <li>Mennatallah Mohamed Ibrahim</li>
+          <li>Mohamed Abdelmoneim Mohamed</li>
+          <li>Mohamed Ahmed Mohamed</li>
+          <li>Mohamed Eid Kobasy</li>
+          <li>Mohamed Khaled Mohamed</li>
+          <li>Mohamed Ramadan</li>
+          <li>Mohammed Saeed Abdelfatah</li>
+          <li>Mostafa El Sayed Kamal</li>
+          <li>Mostafa Elnobi</li>
+          <li>Mostafa Ramzy Zakaria</li>
+          <li>Mustafa Ibrahim El-Sayed</li>
+          <li>Naden Ahmed Mohamed</li>
+          <li>Omar Ali Lotfy</li>
+          <li>Omar Mohamed Abdelmoneim</li>
+          <li>Omar Mohamed Khalil</li>
+          <li>Omar Mohamed Mohamed</li>
+          <li>Rawda Hamdy Saeed</li>
+          <li>Rewan Amin Abdelfatah</li>
+          <li>Rewan Gamal Amer</li>
+          <li>Rewan Mohamed Ebrahim</li>
+          <li>Salem Abdelhaleem Abdo</li>
+          <li>Seif Elden Ibrahim</li>
+          <li>Shaimaa Mohammed Mostafa</li>
+          <li>Shenoda Saadi Faragallah</li>
+          <li>Soaad Gaber Abdelbary</li>
+          <li>Tarek Ali Abdallah</li>
+          <li>Yaseen Samy Ahmed</li>
+          <li>Yosra Ayman Mohamed</li>
+          <li>Yousef Adam Yousef</li>
+        </ul>
+      </div>
+
+      <div class="team-divider"></div>
+
+      <div class="team-section team-thanks">
+        <h4 class="team-section-title">&#10084;&#65039; Thank You</h4>
+        <p class="team-thanks-text">Thank you to every member of the Talabat Mart Smouha Team for contributing to the success of Smouha Pick.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Image zoom -->
+<div class="zoom-backdrop" id="zoomBackdrop" role="dialog" aria-modal="true" aria-label="Image preview">
+  <button class="zoom-close" id="zoomClose" aria-label="Close preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  <img id="zoomImg" src="" alt="Zoomed product image">
+</div>
+
+<!-- Pelican Mode camera modal -->
+<div class="scan-backdrop" id="scanBackdrop" role="dialog" aria-modal="true" aria-label="Pelican Mode barcode scanner">
+  <div class="scan-box">
+    <div class="scan-header">
+      <span class="scan-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/></svg>
+        Pelican Mode
+      </span>
+      <button class="scan-close" id="scanCloseBtn" aria-label="Close Pelican Mode">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="scan-viewport">
+      <video id="scanVideo" autoplay playsinline muted></video>
+      <canvas id="scanOcrCanvas" class="visually-hidden"></canvas>
+      <div class="scan-frame">
+        <div class="scan-line" id="scanLine"></div>
+      </div>
+    </div>
+    <div class="scan-status" id="scanStatus" aria-live="polite">Requesting camera…</div>
+  </div>
+</div>
+
+
+<script src="assets/js/pwa.js" defer></script>
+<script type="module" src="assets/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,659 @@
+/* Split from the original monolithic cards.css (was 3702 lines) for maintainability.
+   Order matters — loaded in numeric filename order from index.html, exactly
+   preserving the original cascade. Do not reorder without checking for
+   selector overrides across files (see project notes on !important usage). */
+
+/* ============================================================
+   CSS CLEANUP LAYER 195 — single source of truth for surfaces
+   (overrides older stacked !important experiments)
+   ============================================================ */
+.product-card {
+  border-radius: 18px;
+  box-shadow: 0 8px 28px rgba(20, 50, 70, 0.08);
+}
+.product-name {
+  font-weight: 650;
+  line-height: 1.35;
+  word-break: break-word;
+}
+.dmart-live-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(255, 107, 0, 0.38) !important;
+  border-radius: 18px !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 107, 0, 0.06),
+    8px 12px 24px -12px rgba(255, 107, 0, 0.28) !important;
+}
+.dmart-live-row {
+  background: #F3F5F7 !important;
+  border: none !important;
+  border-radius: 12px !important;
+}
+/* early check-btn stub removed — see CHECK IN DMART CANONICAL below */
+.panel-item,
+.suggestion-item {
+  content-visibility: auto;
+  contain-intrinsic-size: 56px;
+}
+@media (max-width: 720px) {
+  .product-card {
+    gap: 12px;
+  }
+}
+
+
+/* ============================================================
+   AVAILABLE ROW NORMALIZE 111 — same box as Reserved/Price;
+   label black; value stays green
+   ============================================================ */
+.dmart-live-row.dmart-live-available-row,
+.dmart-live-row:has(.dmart-live-available) {
+  background: #F3F5F7 !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  padding: 10px 12px !important;
+  margin: 0 !important;
+}
+.dmart-live-row.dmart-live-available-row .dmart-live-label,
+.dmart-live-row:has(.dmart-live-available) .dmart-live-label {
+  color: #1b1d21 !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+}
+.dmart-live-row.dmart-live-available-row .dmart-live-available,
+.dmart-live-row:has(.dmart-live-available) .dmart-live-available,
+.dmart-live-available {
+  color: #16a34a !important;
+  font-weight: 800 !important;
+}
+[data-theme="dark"] .dmart-live-row.dmart-live-available-row,
+[data-theme="dark"] .dmart-live-row:has(.dmart-live-available) {
+  background: #24303a !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+[data-theme="dark"] .dmart-live-row.dmart-live-available-row .dmart-live-label,
+[data-theme="dark"] .dmart-live-row:has(.dmart-live-available) .dmart-live-label {
+  color: #eef0f2 !important;
+}
+
+
+/* ============================================================
+   IMG LOAD PERF 118 — reserve space, smoother decode
+   ============================================================ */
+.product-image-wrap {
+  aspect-ratio: 1 / 1;
+  background: rgba(255,255,255,.35);
+  overflow: hidden;
+}
+.product-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  content-visibility: auto;
+}
+.product-image-wrap.loading img {
+  opacity: 0.35;
+  transition: opacity 0.18s ease;
+}
+.product-image-wrap:not(.loading) img {
+  opacity: 1;
+}
+.panel-thumb,
+.suggestion-thumb {
+  content-visibility: auto;
+  background: rgba(255,255,255,.25);
+}
+
+
+/* ===== STABLE FIXES ( base + prior repairs) ===== */
+
+/* Never show Online/Offline / bridge chips */
+.dmart-conn-status,
+.bridge-status-badge,
+.bridge-status-label,
+.catalog-status-badge {
+  display: none !important;
+}
+
+/* Barcode download always visible */
+.product-details-row .sku-barcode-row #barcodeFieldDownload,
+#barcodeFieldDownload,
+.sku-barcode-row .icon-btn-sm {
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+.product-details-row .sku-barcode-row .info-field-barcode {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+/* Desktop product row */
+@media (min-width: 721px) {
+  .product-top-row {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 14px !important;
+  }
+  .product-live-col {
+    flex: 0 0 200px !important;
+    max-width: 220px !important;
+    order: 0 !important;
+  }
+  .product-image-col {
+    flex: 0 0 30% !important;
+    max-width: 30% !important;
+    order: 0 !important;
+  }
+  .product-barcodes-col {
+    flex: 1 1 auto !important;
+    order: 0 !important;
+    min-width: 0 !important;
+  }
+}
+
+/* Mobile: image left | barcode right | live full width below */
+@media (max-width: 720px) {
+  .product-top-row,
+  .product-card .product-top-row {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    padding: 8px !important;
+  }
+  .product-image-col,
+  .product-card .product-image-col {
+    order: 1 !important;
+    flex: 1 1 47% !important;
+    max-width: 48% !important;
+    width: 48% !important;
+    min-width: 0 !important;
+  }
+  .product-barcodes-col,
+  .product-card .product-barcodes-col,
+  .product-card .barcodes-section {
+    order: 2 !important;
+    flex: 1 1 47% !important;
+    max-width: 48% !important;
+    width: 48% !important;
+    min-width: 0 !important;
+  }
+  .product-live-col,
+  .product-card .product-live-col {
+    order: 3 !important;
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+  .product-recent-col {
+    order: 4 !important;
+    flex: 1 1 100% !important;
+  }
+  .product-name-under-img {
+    display: block !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .product-details-row .product-title-row {
+    display: none !important;
+  }
+  /* mobile: keep Check in Dmart visible — size from canonical rules */
+  .sku-barcode-row {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+  }
+}
+
+/* Settings above sticky search */
+
+
+/* Recent width owned by RECENT BESIDE natural width block below */
+.product-recent-list .panel-item-with-qty {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding-right: 8px !important;
+}
+.product-recent-list .panel-item-with-qty .panel-text {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+.product-recent-list .panel-qty {
+  flex: 0 0 auto;
+  min-width: 2.1em;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  line-height: 1.2;
+}
+.product-recent-list .panel-qty.is-positive {
+  color: #0d7a3f;
+  background: rgba(22, 163, 74, 0.14);
+  border: 1px solid rgba(22, 163, 74, 0.28);
+}
+.product-recent-list .panel-qty.is-zero {
+  color: #9a3412;
+  background: rgba(249, 115, 22, 0.12);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+}
+.product-recent-list .panel-qty.is-unknown {
+  color: #64748b;
+  background: rgba(100, 116, 139, 0.1);
+  border: 1px solid rgba(100, 116, 139, 0.2);
+}
+[data-theme="dark"] .product-recent-list .panel-qty.is-positive {
+  color: #4ade80;
+  background: rgba(22, 163, 74, 0.2);
+}
+[data-theme="dark"] .product-recent-list .panel-qty.is-zero {
+  color: #fdba74;
+  background: rgba(249, 115, 22, 0.18);
+}
+
+
+/* CODE128 RENDER FIX — prevent noise / collapsed SVG */
+.barcode-128-wrap:not(.is-qr) {
+  background: #ffffff !important;
+  overflow: hidden !important;
+  min-height: 56px !important;
+}
+.barcode-128-wrap:not(.is-qr) svg,
+.barcode-128-wrap:not(.is-qr) #c128-0 {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  max-width: 100% !important;
+  min-height: 48px !important;
+  background: #ffffff !important;
+}
+.barcode-128-wrap:not(.is-qr) svg image {
+  width: 100%;
+  height: 100%;
+}
+
+
+/* ===== RECENT BESIDE — natural width (does not steal barcode space) ===== */
+@media (min-width: 721px) {
+  html.recent-beside-barcode .product-recent-col,
+  html.recent-beside-barcode .product-recent-col.recent-rail {
+    flex: 0 0 250px !important;
+    width: 250px !important;
+    min-width: 225px !important;
+    max-width: 263px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-self: stretch !important;
+    max-height: min(52vh, 360px) !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+    padding: 6px 4px 6px 8px !important;
+  }
+  html.recent-beside-barcode .product-barcodes-col {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+  html.recent-beside-barcode .product-recent-list,
+  html.recent-beside-barcode .recent-rail-list {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+}
+
+/* Rail row layout (compact — no width expansion) */
+.recent-rail-head,
+.product-recent-head {
+  flex-shrink: 0 !important;
+  margin-bottom: 4px;
+}
+.recent-rail-title {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted, #64748b);
+}
+.recent-rail-list,
+.product-recent-list.recent-rail-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 7px !important; /* ~15% more space between products */
+}
+.recent-rail-item,
+.product-recent-list .panel-item.recent-rail-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 6px 7px !important;
+  flex-shrink: 0 !important;
+  min-height: 42px !important;
+  border-radius: 10px !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+}
+.recent-rail-thumb,
+.product-recent-list .recent-rail-item .panel-thumb {
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  border-radius: 6px !important;
+  object-fit: cover !important;
+  flex-shrink: 0 !important;
+}
+.recent-rail-body {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+.recent-rail-name {
+  font-size: 11.5px !important;
+  font-weight: 650 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: block !important;
+}
+.recent-rail-meta {
+  font-size: 10px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  color: var(--text-muted, #64748b);
+}
+.recent-rail-live {
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #c2410c;
+  background: rgba(255, 107, 0, 0.12);
+  border-radius: 999px;
+  padding: 0 4px;
+  margin-left: 4px;
+}
+.recent-rail-qty {
+  flex: 0 0 auto !important;
+  min-width: 1.9em !important;
+  padding: 3px 6px !important;
+  border-radius: 999px !important;
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  font-variant-numeric: tabular-nums !important;
+  text-align: center !important;
+}
+.recent-rail-qty.is-positive {
+  color: #0d7a3f;
+  background: rgba(22, 163, 74, 0.12);
+}
+.recent-rail-qty.is-zero {
+  color: #9a3412;
+  background: rgba(249, 115, 22, 0.12);
+}
+.recent-rail-qty.is-unknown {
+  color: #64748b;
+  background: rgba(100, 116, 139, 0.1);
+}
+.recent-rail-empty {
+  font-size: 11px;
+  color: var(--text-muted, #64748b);
+  text-align: center;
+  padding: 12px 4px;
+}
+
+/* DMart Live v2 visuals (layout only — no Recent width) */
+.dmart-live-card.dmart-live-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 16px;
+}
+.dmart-live-v2 .dmart-live-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.dmart-live-v2 .dmart-live-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted, #64748b);
+}
+.dmart-live-v2 .dmart-live-head-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #94a3b8;
+}
+.dmart-live-v2.is-ready .dmart-live-head-dot { background: #16a34a; }
+.dmart-live-v2.is-loading .dmart-live-head-dot { background: #f59e0b; }
+.dmart-live-v2.is-error .dmart-live-head-dot { background: #dc2626; }
+.dmart-live-v2 .dmart-live-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(22, 163, 74, 0.08);
+  border: 1px solid rgba(22, 163, 74, 0.16);
+}
+.dmart-live-v2 .dmart-live-hero .dmart-live-available {
+  font-size: 26px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.dmart-live-v2 .dmart-live-secondary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.dmart-live-v2 .dmart-live-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(15, 40, 60, 0.04);
+}
+.dmart-adjust-msg.is-loading {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  background: transparent !important;
+  border: none !important;
+}
+.dmart-adj-loader {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: 140px;
+}
+.dmart-adj-loader-bar {
+  display: block;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,107,0,.12), rgba(255,107,0,.35), rgba(255,107,0,.12));
+  background-size: 200% 100%;
+  animation: dmart-skel-shine 1.05s ease-in-out infinite;
+}
+.dmart-adj-loader-bar--short { width: 62%; height: 6px; }
+@keyframes dmart-skel-shine {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* ===== CHECK IN DMART CANONICAL (single size, no flex-grow, no dead scales) ===== */
+.dmart-live-card .dmart-check-btn-inline,
+.dmart-live-card a.dmart-check-btn.dmart-check-btn-inline,
+.dmart-live-v2 .dmart-check-btn-inline,
+a.dmart-check-btn.dmart-check-btn-inline,
+.dmart-check-btn-inline {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+  align-self: stretch !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  margin: 8px 0 0 0 !important;
+  padding: 0 14px !important;
+  box-sizing: border-box !important;
+  border: none !important;
+  border-radius: 12px !important;
+  background: #FF6B00 !important;
+  color: #ffffff !important;
+  font-size: 13.5px !important;
+  font-weight: 750 !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0.01em !important;
+  text-decoration: none !important;
+  transform: none !important;
+  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.28) !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+}
+.dmart-live-card .dmart-check-btn-inline .dmart-check-icon,
+.dmart-check-btn-inline .dmart-check-icon {
+  display: none !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  .dmart-check-btn-inline:hover,
+  a.dmart-check-btn.dmart-check-btn-inline:hover {
+    background: #e85f00 !important;
+    box-shadow: 0 6px 16px rgba(255, 107, 0, 0.34) !important;
+    transform: none !important;
+  }
+}
+.dmart-check-btn-inline:active {
+  transform: scale(0.98) !important;
+}
+/* v2 card: never let button absorb free vertical space */
+.dmart-live-card.dmart-live-v2 {
+  display: flex !important;
+  flex-direction: column !important;
+}
+.dmart-live-card.dmart-live-v2 > .dmart-check-btn-inline,
+.dmart-live-card.dmart-live-v2 > a.dmart-check-btn {
+  flex: 0 0 44px !important;
+  order: 20;
+}
+.dmart-live-card.dmart-live-v2 > .dmart-adjust-panel {
+  flex: 0 0 auto !important;
+}
+.dmart-live-card.dmart-live-v2 > .dmart-live-status {
+  flex: 0 0 auto !important;
+}
+
+
+/* Adjust confirm — lighter on mobile (less lag) */
+.dmart-adjust-modal.is-mobile-lite {
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+}
+.dmart-adjust-modal.is-mobile-lite .dmart-adjust-modal-card {
+  animation-duration: 0.18s !important;
+}
+
+.lan-user-chip {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  vertical-align: middle;
+  color: #9a3412;
+  background: rgba(255, 107, 0, 0.15);
+}
+
+.dmart-lan-src {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(22, 163, 74, 0.15);
+  color: #15803d;
+  margin-inline-start: 6px;
+}
+html[data-lan-role="viewer"] .dmart-adjust-panel,
+html[data-lan-role="viewer"] .dmart-adjust-wrap {
+  display: none !important;
+}
+#lanClientPairBtn.is-master-hidden {
+  display: none !important;
+}
+.lan-shift-summary {
+  font-size: 12px;
+  line-height: 1.45;
+  padding: 8px 0;
+}
+.lan-last-err {
+  font-size: 11px;
+  color: #b91c1c;
+  margin-top: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(220, 38, 38, 0.08);
+}
+
+
+/* ===== Recent rail: white panel + lighter paint ===== */
+html.recent-beside-barcode .product-recent-col.recent-rail,
+html.recent-beside-barcode .product-recent-col {
+  background: #ffffff !important;
+  border-radius: 12px !important;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06) !important;
+}
+html.recent-beside-barcode .recent-rail-list,
+html.recent-beside-barcode .product-recent-list {
+  background: #ffffff !important;
+  content-visibility: auto;
+  contain: content;
+}
+html.recent-beside-barcode .recent-rail-item,
+html.recent-beside-barcode .panel-item.recent-rail-item {
+  background: #f8fafc !important;
+  content-visibility: auto;
+  contain: layout paint;
+}
+html[data-theme='dark'] .product-recent-col.recent-rail,
+html[data-theme='dark'] html.recent-beside-barcode .product-recent-col {
+  background: #1e293b !important;
+}
+html[data-theme='dark'] .recent-rail-item,
+html[data-theme='dark'] .panel-item.recent-rail-item {
+  background: #0f172a !important;
+}
