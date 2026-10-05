@@ -32,27 +32,28 @@ async function handleStock(msg) {
     master.replyToDevice(deviceId, { type: 'stock_res', reqId, ok: false, reason: 'not-approved' });
     return;
   }
-  if (typeof deps.isBridgeOnline === 'function' && !deps.isBridgeOnline()) {
+  const warehouseId = typeof deps.getWarehouseId === 'function' ? deps.getWarehouseId() : null;
+  if (!sku || !warehouseId || typeof deps.fetchLive !== 'function') {
     master.replyToDevice(deviceId, {
       type: 'stock_res',
       reqId,
       ok: false,
-      reason: 'bridge-offline',
+      reason: !warehouseId ? 'no-warehouse' : 'missing-ids',
       onHand: null,
       reserved: null,
       price: null,
     });
-    setLastLanError({ code: 'BRIDGE_OFFLINE', message: 'Stock denied — extension offline' });
-    appendLanLog({ type: 'stock', action: 'deny_offline', username, deviceId, sku });
+    setLastLanError({
+      code: 'MISSING',
+      message: !warehouseId ? 'Select a warehouse on the Master PC' : 'Missing stock API',
+    });
+    appendLanLog({ type: 'stock', action: 'fail', username, deviceId, sku, reason: 'missing-ids' });
     return;
   }
-  const warehouseId = typeof deps.getWarehouseId === 'function' ? deps.getWarehouseId() : null;
-  if (!sku || !warehouseId || typeof deps.fetchLive !== 'function') {
-    master.replyToDevice(deviceId, { type: 'stock_res', reqId, ok: false, reason: 'missing-ids' });
-    return;
-  }
+  // Do not hard-block on isBridgeOnline flag — it can lag; attempt extension path.
+  // still surface offline if fetch fails with no-bridge.
   try {
-    const data = await deps.fetchLive(sku, warehouseId, { force: true });
+    const data = await deps.fetchLive(sku, warehouseId, { force: true, skipLan: true, fromLanMaster: true });
     master.replyToDevice(deviceId, {
       type: 'stock_res',
       reqId,
@@ -109,29 +110,11 @@ async function handleAdjust(msg) {
     });
     return;
   }
-  if (typeof deps.isBridgeOnline === 'function' && !deps.isBridgeOnline()) {
-    finish({
-      type: 'adjust_res',
-      reqId,
-      success: false,
-      error: {
-        code: 'BRIDGE_OFFLINE',
-        message: 'Master offline / extension disconnected — reconnect when Master is back',
-      },
-    });
-    setLastLanError({ code: 'BRIDGE_OFFLINE', message: 'Adjust denied — offline' });
-    appendLanLog({
-      type: 'adjust',
-      action: 'deny_offline',
-      username,
-      deviceId,
-      sku,
-      quantity,
-      direction,
-    });
-    return;
-  }
   const warehouseId = typeof deps.getWarehouseId === 'function' ? deps.getWarehouseId() : null;
+  if (typeof deps.isBridgeOnline === 'function' && !deps.isBridgeOnline()) {
+    // Soft warning only — still attempt adjust (flag can be stale)
+    setLastLanError({ code: 'BRIDGE_WARN', message: 'Extension status offline — trying anyway' });
+  }
   if (!sku || !warehouseId || typeof deps.adjustStock !== 'function') {
     finish({
       type: 'adjust_res',

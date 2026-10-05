@@ -1,14 +1,17 @@
 {
   "version": "1.9.15",
-  "build": 159,
-  "updated": "2026-10-04",
+  "build": 160,
+  "updated": "2026-10-05",
   "products": 41125,
   "changelogByVersion": [
     {
       "version": "1.9.15",
-      "build": 159,
+      "build": 160,
       "date": "2026-10-04",
       "items": [
+        "Master mode clears stale mobile pair session on this PC",
+        "LAN stock: do not hard-deny when extension status flag lags; clearer no-warehouse error",
+        "LAN stock: Master fetch skips client LAN path (fixes empty qty/price on paired mobiles)",
         "Settings page styles moved to assets/css/settings-page.css for maintainability",
         "Fix: Maintenance Panel text leaking on main UI (drawer hide CSS restored)",
         "Settings is now a dedicated page (settings.html) with desktop sidebar layout",

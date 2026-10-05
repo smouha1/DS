@@ -599,26 +599,42 @@ export async function fetchLiveProductInfo(sku, warehouseId, opts = {}) {
   }
 
   // 0) Paired mobile on LAN → Master only (no Supabase while paired)
-  try {
-    const lan = await getLanClient();
-    if (lan && lan.isPairedApproved && lan.isPairedApproved()) {
-      const lanRes = await lan.clientRequestStock(sku);
-      if (lanRes && lanRes.ok && hasCompleteLiveData(lanRes)) {
-        const data = { onHand: lanRes.onHand, reserved: lanRes.reserved, price: lanRes.price };
-        cache.set(cacheKey, { at: Date.now(), data });
-        return { ...data, ok: true, via: 'lan' };
+  // skipLan: Master fulfills stock_req via this same function — must NOT re-enter LAN
+  // or we hang / return empty forever on the mobile.
+  const skipLan = !!(opts && (opts.skipLan || opts.fromLanMaster));
+  if (!skipLan) {
+    try {
+      // If this tab is Master, never use client LAN path (stale mobile session)
+      let masterOn = false;
+      try {
+        const st = JSON.parse(localStorage.getItem('smouha_lan_master_v1') || 'null');
+        masterOn = !!(st && st.enabled);
+      } catch (e) {}
+      if (!masterOn) {
+        const lan = await getLanClient();
+        if (lan && lan.isPairedApproved && lan.isPairedApproved()) {
+          const lanRes = await lan.clientRequestStock(sku);
+          if (lanRes && lanRes.ok && hasCompleteLiveData(lanRes)) {
+            const data = { onHand: lanRes.onHand, reserved: lanRes.reserved, price: lanRes.price };
+            cache.set(cacheKey, { at: Date.now(), data });
+            return { ...data, ok: true, via: 'lan' };
+          }
+          // Paired but failed: still try extension/relay as soft fallback if channel dead
+          if (lan.isLanChannelOpen && lan.isLanChannelOpen()) {
+            return {
+              onHand: lanRes && lanRes.onHand != null ? lanRes.onHand : null,
+              reserved: lanRes && lanRes.reserved != null ? lanRes.reserved : null,
+              price: lanRes && lanRes.price != null ? lanRes.price : null,
+              ok: false,
+              reason: (lanRes && lanRes.reason) || 'bridge-offline',
+              via: 'lan',
+            };
+          }
+          // channel closed → fall through to extension/supabase
+        }
       }
-      // Paired but failed/offline: do NOT fall back to Supabase
-      return {
-        onHand: lanRes && lanRes.onHand != null ? lanRes.onHand : null,
-        reserved: lanRes && lanRes.reserved != null ? lanRes.reserved : null,
-        price: lanRes && lanRes.price != null ? lanRes.price : null,
-        ok: false,
-        reason: (lanRes && lanRes.reason) || 'bridge-offline',
-        via: 'lan',
-      };
-    }
-  } catch (e) { /* continue normal path */ }
+    } catch (e) { /* continue normal path */ }
+  }
 
   // 1) Prefer extension bridge (PC — solves CORS, uses portal session)
   const bridge = await requestViaExtension(sku, warehouseId);

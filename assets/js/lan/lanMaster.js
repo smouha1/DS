@@ -13,6 +13,7 @@ import {
   clearLanLog,
   setLastLanError,
   packSignal,
+  saveMobileSession,
 } from './lanStore.js';
 import { masterCreateOffer, masterAcceptAnswer, sendLan } from './lanTransport.js';
 
@@ -35,6 +36,10 @@ export function setMasterEnabled(on) {
   state = getMasterState();
   state.enabled = !!on;
   if (state.enabled && !state.masterId) state.masterId = genId('m');
+  // Master PC must not keep a mobile pair session — that stole stock path into LAN loop
+  if (state.enabled) {
+    try { saveMobileSession(null); } catch (e) {}
+  }
   persist();
   appendLanLog({ type: 'master', action: on ? 'enabled' : 'disabled' });
   return state;
@@ -304,14 +309,25 @@ function handleIncoming(msg) {
   const username = (sess && sess.username) || msg.username || '?';
 
   if (msg.type === 'hello') {
-    if (msg.username && msg.deviceId && !sessions.has(msg.deviceId) && activeOffer) {
-      sessions.set(msg.deviceId, {
-        pc: activeOffer.pc,
-        channel: activeOffer.channel,
-        username: msg.username,
-        deviceLabel: msg.deviceLabel || '',
-        role: msg.role === 'viewer' ? 'viewer' : 'operator',
-      });
+    if (msg.username && msg.deviceId) {
+      if (sessions.has(msg.deviceId)) {
+        const s = sessions.get(msg.deviceId);
+        s.username = msg.username;
+        s.deviceLabel = msg.deviceLabel || s.deviceLabel || '';
+        s.role = msg.role === 'viewer' ? 'viewer' : s.role || 'operator';
+        if (activeOffer && activeOffer.channel) {
+          s.channel = activeOffer.channel;
+          s.pc = activeOffer.pc;
+        }
+      } else if (activeOffer) {
+        sessions.set(msg.deviceId, {
+          pc: activeOffer.pc,
+          channel: activeOffer.channel,
+          username: msg.username,
+          deviceLabel: msg.deviceLabel || '',
+          role: msg.role === 'viewer' ? 'viewer' : 'operator',
+        });
+      }
     }
     return;
   }
@@ -400,8 +416,24 @@ function getDeviceRole(deviceId) {
 }
 
 export function replyToDevice(deviceId, msg) {
-  const sess = sessions.get(deviceId);
-  if (!sess) return false;
+  let sess = sessions.get(deviceId);
+  if (!sess) {
+    // Fallback: channel may still be open under a stale map entry after reconnect
+    for (const [id, s] of sessions.entries()) {
+      if (s && s.channel && s.channel.readyState === 'open') {
+        if (!deviceId || id === deviceId) {
+          sess = s;
+          break;
+        }
+      }
+    }
+  }
+  if (!sess || !sess.channel) {
+    try {
+      setLastLanError({ code: 'NO_SESSION', message: 'No open channel for device ' + (deviceId || '?') });
+    } catch (e) {}
+    return false;
+  }
   // unlock after adjust response
   if (msg && msg.type === 'adjust_res' && msg.sku) {
     unlockSku(msg.sku, deviceId);

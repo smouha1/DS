@@ -41,12 +41,16 @@ export function initMaintenancePanel(elements) {
 export function open() {
   if (!panelBackdropEl) return;
   panelBackdropEl.classList.add('open');
+  panelBackdropEl.setAttribute('aria-hidden', 'false');
   if (unlocked) renderPanel();
   else renderPasswordGate();
 }
 
 export function close() {
-  if (panelBackdropEl) panelBackdropEl.classList.remove('open');
+  if (panelBackdropEl) {
+    panelBackdropEl.classList.remove('open');
+    panelBackdropEl.setAttribute('aria-hidden', 'true');
+  }
 }
 
 function renderPasswordGate() {
