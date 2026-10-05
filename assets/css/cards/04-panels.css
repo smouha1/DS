@@ -1,0 +1,50 @@
+/* Split from the original monolithic cards.css (was 3702 lines) for maintainability.
+   Order matters — loaded in numeric filename order from index.html, exactly
+   preserving the original cascade. Do not reorder without checking for
+   selector overrides across files (see project notes on !important usage). */
+
+/* ============================================================
+   RECENT / FAVORITES PANELS
+   ============================================================ */
+.panels-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px;}
+@media (max-width:720px){.panels-row{grid-template-columns:1fr;}}
+.panel{background:var(--crystal);border:1px solid var(--crystal-border);border-radius:var(--radius);box-shadow:var(--shadow-sm);overflow:hidden;}
+.panel-header{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.panel-header h3{margin:0;font-size:14.5px;font-weight:800;display:flex;align-items:center;gap:8px;}
+.panel-header h3 svg{width:17px;height:17px;color:var(--primary);}
+.panel-clear{font-size:12px;color:var(--text-muted);background:none;border:none;cursor:pointer;font-weight:600;}
+.panel-clear:hover{color:var(--danger);}
+.panel-list{max-height:220px;overflow-y:auto;contain:layout paint style;}
+.panel-item{
+  display:flex;align-items:center;gap:12px;padding:8px 20px;cursor:pointer;
+  transition:background-color var(--transition);border-bottom:1px solid var(--border);
+  content-visibility:auto;contain-intrinsic-size:0 52px;
+}
+.panel-item:last-child{border-bottom:none;}
+.panel-item:hover{background:var(--primary-light);}
+.panel-thumb{width:32px;height:32px;border-radius:8px;object-fit:cover;background:var(--bg);flex-shrink:0;}
+.panel-text{flex:1;min-width:0;}
+.panel-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.panel-sub{font-size:11.5px;color:var(--text-muted);}
+.panel-empty{padding:24px 20px;text-align:center;color:var(--text-muted);font-size:13px;}
+
+
+/* Phase 2.1 desktop product hover */
+@media (hover:hover) and (pointer:fine){
+  .product-card{
+    box-shadow:var(--shadow-sm);
+    transition:box-shadow 160ms ease,border-color 160ms ease;
+  }
+  .product-card:hover{
+    box-shadow:var(--shadow-md);
+    border-color:var(--crystal-border);
+  }
+  .product-card:hover .product-image-wrap img{
+    transform:scale(1.03);
+  }
+  .product-image-wrap img{
+    transition:transform 180ms ease;
+  }
+}
+
+
