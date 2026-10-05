@@ -1,14 +1,17 @@
 {
   "version": "1.9.15",
-  "build": 160,
+  "build": 161,
   "updated": "2026-10-05",
   "products": 41125,
   "changelogByVersion": [
     {
       "version": "1.9.15",
-      "build": 160,
+      "build": 161,
       "date": "2026-10-04",
       "items": [
+        "Live card: show clear message when LAN is still Pending instead of endless relay spinner",
+        "LAN: hello re-syncs approval so mobile recovers lost Yes",
+        "LAN pair: wait for WebRTC channel open before pair_pending / pair_approved (fixes stuck Pending)",
         "Master mode clears stale mobile pair session on this PC",
         "LAN stock: do not hard-deny when extension status flag lags; clearer no-warehouse error",
         "LAN stock: Master fetch skips client LAN path (fixes empty qty/price on paired mobiles)",

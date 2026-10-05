@@ -612,6 +612,20 @@ export async function fetchLiveProductInfo(sku, warehouseId, opts = {}) {
       } catch (e) {}
       if (!masterOn) {
         const lan = await getLanClient();
+        // Stuck Pending = not approved yet — do not spin on Supabase forever
+        if (lan && lan.getClientSession) {
+          const sess = lan.getClientSession();
+          if (sess && sess.status === 'pending') {
+            return {
+              onHand: null,
+              reserved: null,
+              price: null,
+              ok: false,
+              reason: 'lan-pending',
+              via: 'lan',
+            };
+          }
+        }
         if (lan && lan.isPairedApproved && lan.isPairedApproved()) {
           const lanRes = await lan.clientRequestStock(sku);
           if (lanRes && lanRes.ok && hasCompleteLiveData(lanRes)) {

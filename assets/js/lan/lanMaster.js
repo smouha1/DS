@@ -15,7 +15,7 @@ import {
   packSignal,
   saveMobileSession,
 } from './lanStore.js';
-import { masterCreateOffer, masterAcceptAnswer, sendLan } from './lanTransport.js';
+import { masterCreateOffer, masterAcceptAnswer, sendLan, sendLanWhenOpen, waitChannelOpen } from './lanTransport.js';
 
 let state = loadMasterState();
 const sessions = new Map(); // deviceId → { pc, channel, username, deviceLabel, role }
@@ -165,17 +165,30 @@ export async function completePairWithAnswer({
   state.pending.unshift(device);
   persist();
 
+  const ch = activeOffer.channel;
+  const pcRef = activeOffer.pc;
   sessions.set(id, {
-    pc: activeOffer.pc,
-    channel: activeOffer.channel,
+    pc: pcRef,
+    channel: ch,
     username: uname,
     deviceLabel: label,
     role: deviceRole,
   });
-  sendLan(activeOffer.channel, {
+  // CRITICAL: channel often not open yet right after setRemoteDescription.
+  // Queue pair_pending until open so mobile is not stuck forever on Pending.
+  sendLanWhenOpen(ch, {
     type: 'pair_pending',
     deviceId: id,
     masterName: state.masterName,
+  }, 15000).then((ok) => {
+    if (!ok) {
+      try {
+        setLastLanError({
+          code: 'CHANNEL',
+          message: 'Pair channel did not open — check same Wi‑Fi / try pair again',
+        });
+      } catch (e) {}
+    }
   });
 
   activeOffer = null;
@@ -226,13 +239,31 @@ export function approveDevice(deviceId) {
   const sess = sessions.get(deviceId);
   if (sess) {
     sess.role = device.role || 'operator';
-    sendLan(sess.channel, {
+    const payload = {
       type: 'pair_approved',
       deviceId,
       sessionHours: state.sessionHours,
       expiresAt: device.expiresAt,
       role: device.role || 'operator',
+    };
+    // Retry until channel open — this was the root cause of permanent Pending on mobile
+    sendLanWhenOpen(sess.channel, payload, 15000).then((ok) => {
+      if (!ok) {
+        try {
+          setLastLanError({
+            code: 'CHANNEL',
+            message: 'Approved but mobile did not receive — ask them to reopen app / re-pair',
+          });
+        } catch (e) {}
+      }
     });
+  } else {
+    try {
+      setLastLanError({
+        code: 'NO_SESSION',
+        message: 'Approved in list but no live channel — mobile must pair again',
+      });
+    } catch (e) {}
   }
   appendLanLog({
     type: 'pair',
@@ -327,6 +358,31 @@ function handleIncoming(msg) {
           deviceLabel: msg.deviceLabel || '',
           role: msg.role === 'viewer' ? 'viewer' : 'operator',
         });
+      }
+      // Re-sync approval state to mobile (recovers lost pair_approved)
+      const sess = sessions.get(msg.deviceId);
+      if (sess && sess.channel) {
+        state = getMasterState();
+        const now = Date.now();
+        const approved = state.devices.find(
+          (d) => d.id === msg.deviceId && d.status === 'approved' && (!d.expiresAt || d.expiresAt > now)
+        );
+        const pendingDev = state.pending.find((d) => d.id === msg.deviceId);
+        if (approved) {
+          sendLanWhenOpen(sess.channel, {
+            type: 'pair_approved',
+            deviceId: msg.deviceId,
+            sessionHours: state.sessionHours,
+            expiresAt: approved.expiresAt,
+            role: approved.role || sess.role || 'operator',
+          });
+        } else if (pendingDev) {
+          sendLanWhenOpen(sess.channel, {
+            type: 'pair_pending',
+            deviceId: msg.deviceId,
+            masterName: state.masterName,
+          });
+        }
       }
     }
     return;

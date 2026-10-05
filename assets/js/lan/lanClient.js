@@ -173,6 +173,18 @@ function wireClientChannel(ch) {
     connState = 'channel-error';
   };
   ch.onopen = () => {
+    connState = 'channel-open';
+    // Re-announce so Master can re-send pair_approved if it was lost
+    session = loadMobileSession() || session;
+    if (session && session.deviceId) {
+      sendLan(ch, {
+        type: 'hello',
+        deviceId: session.deviceId,
+        username: session.username,
+        deviceLabel: session.deviceLabel || '',
+        role: session.role || 'operator',
+      });
+    }
     startHeartbeat();
   };
 }

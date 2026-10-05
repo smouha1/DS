@@ -112,3 +112,43 @@ export function sendLan(channel, msg) {
     return false;
   }
 }
+
+/** Resolve when data channel is open (or timeout). */
+export function waitChannelOpen(channel, timeoutMs = 12000) {
+  return new Promise((resolve) => {
+    if (!channel) {
+      resolve(false);
+      return;
+    }
+    if (channel.readyState === 'open') {
+      resolve(true);
+      return;
+    }
+    let done = false;
+    const finish = (ok) => {
+      if (done) return;
+      done = true;
+      try {
+        channel.removeEventListener('open', onOpen);
+      } catch (e) {}
+      clearTimeout(timer);
+      resolve(ok);
+    };
+    const onOpen = () => finish(true);
+    const timer = setTimeout(() => finish(channel.readyState === 'open'), timeoutMs);
+    try {
+      channel.addEventListener('open', onOpen);
+    } catch (e) {
+      finish(false);
+    }
+  });
+}
+
+/** Send now, or queue until channel opens (best-effort). */
+export function sendLanWhenOpen(channel, msg, timeoutMs = 12000) {
+  if (sendLan(channel, msg)) return Promise.resolve(true);
+  return waitChannelOpen(channel, timeoutMs).then((ok) => {
+    if (!ok) return false;
+    return sendLan(channel, msg);
+  });
+}
