@@ -295,10 +295,10 @@
 @media (min-width: 721px) {
   html.recent-beside-barcode .product-recent-col,
   html.recent-beside-barcode .product-recent-col.recent-rail {
-    flex: 0 0 188px !important;
-    width: 188px !important;
-    min-width: 168px !important;
-    max-width: 196px !important;
+    flex: 0 0 226px !important;
+    width: 226px !important;
+    min-width: 200px !important;
+    max-width: 240px !important;
     display: flex !important;
     flex-direction: column !important;
     align-self: stretch !important;
@@ -597,4 +597,42 @@ html[data-theme='dark'] html.recent-beside-barcode .product-recent-col {
 }
 html[data-theme='dark'] .recent-rail-item {
   background: #0f172a !important;
+}
+
+
+/* Recent rail — softer type, slightly wider */
+html.recent-beside-barcode .recent-rail-name,
+html.recent-beside-barcode .product-recent-list .panel-name,
+html.recent-beside-barcode .recent-rail-item .panel-name {
+  font-weight: 500 !important;
+  font-size: 12.5px !important;
+  letter-spacing: 0.01em !important;
+  color: #334155 !important;
+}
+html.recent-beside-barcode .recent-rail-sku,
+html.recent-beside-barcode .recent-rail-meta {
+  font-weight: 450 !important;
+  font-size: 11px !important;
+  color: #64748b !important;
+}
+
+@media (max-width: 899px) {
+  .dmart-adjust-panel:not([hidden]) {
+    display: block !important;
+    margin-top: 8px !important;
+    padding: 10px 8px !important;
+    border-radius: 12px !important;
+    background: rgba(255,255,255,.55) !important;
+  }
+  .dmart-adjust-row {
+    gap: 8px !important;
+  }
+  .dmart-adjust-btn {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+  .dmart-adjust-qty {
+    min-height: 44px !important;
+    font-size: 16px !important;
+  }
 }

@@ -31,7 +31,7 @@ async function ensureMasterSession(on) {
       getWarehouseId: () => (wh.getSelectedId && wh.getSelectedId()) || null,
       isBridgeOnline: () => !!(live.isBridgeOnline && live.isBridgeOnline()),
       fetchLive: (sku, wid, opts) => live.fetchLiveProductInfo(sku, wid, opts || { force: true, skipHub: true }),
-      lookupProduct: (sku, wid, ms) => live.lookupProductViaBridge(sku, wid, ms || 14000),
+      lookupProduct: (sku, wid, ms) => live.lookupProductViaBridge(sku, wid, ms || 14000, { skipHub: true }),
       adjustStock: async ({ sku, warehouseId, quantity, direction }) => {
         // Prefer bridge path on Master PC
         if (typeof adj.requestStockAdjust === 'function') {

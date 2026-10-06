@@ -438,28 +438,36 @@ export function updateBridgeStatusUi() {
     node.hidden = true;
     node.style.display = 'none';
   });
-  // Show/hide adjust: desktop+extension OR any device with Hub URL and non-viewer role
+  // Show/hide adjust: desktop+extension OR Hub URL + Operator/Supervisor
   document.querySelectorAll('.dmart-adjust-panel').forEach((panel) => {
     let hubOk = false;
     let viewer = false;
     try {
       const hubUrl = localStorage.getItem('smouha_lan_hub_url_v1');
-      hubOk = !!hubUrl;
+      hubOk = !!hubUrl && String(hubUrl).trim().length > 8;
       const u = JSON.parse(localStorage.getItem('smouha_lan_hub_user_v1') || 'null');
       if (u && u.role === 'viewer') viewer = true;
-      // Settings override: force show/hide mobile adjust
       const force = localStorage.getItem('smouha_hub_mobile_adjust');
       if (force === '0') {
         panel.hidden = !(online && isDesktopViewport());
+        panel.style.display = panel.hidden ? 'none' : '';
         return;
       }
-      if (force === '1') {
+      if (force === '1' && hubOk) {
         panel.hidden = viewer;
+        panel.style.display = panel.hidden ? 'none' : '';
         return;
       }
     } catch (e) {}
     const show = (online && isDesktopViewport()) || (hubOk && !viewer);
     panel.hidden = !show;
+    // Override any CSS that may have forced display:none on phones
+    if (show) {
+      panel.style.display = '';
+      panel.removeAttribute('hidden');
+    } else {
+      panel.style.display = 'none';
+    }
   });
 }
 
@@ -536,10 +544,12 @@ function applyBridgeStatusPayload(data) {
 
 
 /** Lookup product catalog fields from DMart when local search misses. */
-export function lookupProductViaBridge(sku, warehouseId, timeoutMs) {
+export function lookupProductViaBridge(sku, warehouseId, timeoutMs, opts) {
   const ms = Number(timeoutMs) || 15000;
+  const skipHub = !!(opts && opts.skipHub);
   // Hub path (phones without extension)
   const tryHub = async () => {
+    if (skipHub) return null;
     try {
       const hub = await import('./lan/lanHub.js');
       if (!hub.getHubUrl || !hub.getHubUrl()) return null;
@@ -550,10 +560,10 @@ export function lookupProductViaBridge(sku, warehouseId, timeoutMs) {
     return null;
   };
   return new Promise(async (resolve) => {
-    // Prefer hub when no extension / not desktop
+    // Prefer hub when no extension / not desktop (phones)
     let isDesktop = false;
     try { isDesktop = window.matchMedia('(min-width: 900px)').matches; } catch (e) {}
-    if (!isDesktop || !isBridgeOnline()) {
+    if (!skipHub && (!isDesktop || !isBridgeOnline())) {
       const hubRes = await tryHub();
       if (hubRes && hubRes.ok) {
         resolve(hubRes);
@@ -637,7 +647,17 @@ export async function fetchLiveProductInfo(sku, warehouseId, opts = {}) {
                 price: hubRes.price,
               };
               cache.set(cacheKey, { at: Date.now(), data });
-              return { ...data, ok: true, via: 'hub' };
+              const img = hubRes.image || (hubRes.product && hubRes.product.image) || null;
+              if (img) {
+                try {
+                  window.dispatchEvent(
+                    new CustomEvent('smouha:hub-product-image', {
+                      detail: { sku: String(sku), image: String(img), product: hubRes.product || null },
+                    })
+                  );
+                } catch (e) {}
+              }
+              return { ...data, ok: true, via: 'hub', image: img };
             }
             if (hubRes && hubRes.reason === 'MASTER_OFFLINE') {
               // fall through

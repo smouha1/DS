@@ -297,6 +297,7 @@ const server = http.createServer(async (req, res) => {
         price: body.price ?? null,
         reason: body.reason || null,
         product: body.product || null,
+        image: body.image || (body.product && body.product.image) || null,
         via: 'hub',
       });
       sendJson(res, 200, { ok: true });

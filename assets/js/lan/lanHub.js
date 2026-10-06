@@ -133,9 +133,13 @@ export async function hubDeviceHello() {
     try {
       if (j && j.pending) localStorage.setItem('smouha_hub_pending', '1');
       else localStorage.removeItem('smouha_hub_pending');
-      if (j && j.approved && j.role) {
+      // Keep local Operator/Supervisor — never demote to viewer from server echo
+      if (j && j.approved && j.role && j.role !== 'viewer') {
         const cur = getHubIdentity();
-        localStorage.setItem('smouha_lan_hub_user_v1', JSON.stringify({ username: cur.username, role: j.role }));
+        localStorage.setItem(
+          'smouha_lan_hub_user_v1',
+          JSON.stringify({ username: cur.username || j.username || 'phone', role: j.role })
+        );
       }
     } catch (e) {}
     return j;
@@ -180,6 +184,8 @@ export async function hubRequestStock(sku, warehouseId) {
       price: j.price ?? null,
       reason: j.reason || j.error || null,
       message: j.message || null,
+      image: j.image || (j.product && j.product.image) || null,
+      product: j.product || null,
       via: 'hub',
     };
   } catch (e) {
@@ -393,6 +399,15 @@ export function startMasterHub(handlers) {
           price: live && live.price != null ? live.price : null,
           reason: live && live.reason ? live.reason : null,
         };
+        if (masterHandlers.lookupProduct) {
+          try {
+            const look = await masterHandlers.lookupProduct(data.sku, wid, 8000);
+            if (look && look.ok && look.product && look.product.image) {
+              reply.image = String(look.product.image).trim();
+              reply.product = look.product;
+            }
+          } catch (e) {}
+        }
       }
     } catch (e) {
       reply.reason = String(e.message || e);

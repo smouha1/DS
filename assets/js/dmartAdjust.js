@@ -48,12 +48,12 @@ function invalidateCacheKey(key) {
 }
 
 async function requestStockAdjust({ sku, warehouseId, quantity, direction }) {
-  // Mobile / non-extension: LAN Hub
+  // Prefer LAN Hub whenever configured (phone → Master → extension)
   try {
-    const desktop = window.matchMedia('(min-width: 900px)').matches;
-    if (!desktop || !isBridgeOnline()) {
-      const hub = await import('./lan/lanHub.js');
-      if (hub.getHubUrl && hub.getHubUrl()) {
+    const hub = await import('./lan/lanHub.js');
+    if (hub.getHubUrl && hub.getHubUrl()) {
+      const desktop = window.matchMedia('(min-width: 900px)').matches;
+      if (!desktop || !isBridgeOnline()) {
         const res = await hub.hubRequestAdjust({ sku, quantity, direction, warehouseId });
         return res;
       }
@@ -503,8 +503,10 @@ function bindAdjustPanel(root, sku) {
       hubConfigured = !!localStorage.getItem('smouha_lan_hub_url_v1');
     } catch (e) {}
     const desktop = isDesktopViewport();
-    // Desktop needs extension; phone needs Hub URL
-    if (desktop && !isBridgeOnline()) {
+    // Hub path (phone OR desktop-mode without extension): send to PC Master → extension
+    if (hubConfigured && (!desktop || !isBridgeOnline())) {
+      // continue to confirm + hubRequestAdjust below
+    } else if (desktop && !isBridgeOnline()) {
       if (msg) {
         msg.hidden = false;
         msg.textContent = 'Extension offline — open DMart portal on this PC';
@@ -519,8 +521,7 @@ function bindAdjustPanel(root, sku) {
         setTimeout(() => root.classList.remove('dmart-card-shake'), 700);
       } catch (e) {}
       return;
-    }
-    if (!desktop && !hubConfigured) {
+    } else if (!desktop && !hubConfigured) {
       if (msg) {
         msg.hidden = false;
         msg.textContent = 'Set Hub URL (Hub button) to adjust from phone';
