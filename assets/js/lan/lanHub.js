@@ -296,11 +296,25 @@ export async function hubFetchLog(n = 80) {
   }
 }
 
+function masterBaseUrl() {
+  const base = getHubUrl();
+  if (!base) return '';
+  // Same PC: prefer loopback so HTTPS page can still reach local Hub more reliably
+  try {
+    const u = new URL(base);
+    if (u.hostname !== '127.0.0.1' && u.hostname !== 'localhost') {
+      return 'http://127.0.0.1:' + (u.port || '8787');
+    }
+  } catch (e) {}
+  return base;
+}
+
 export function startMasterHub(handlers) {
   masterHandlers = handlers || null;
   stopMasterHub();
-  const base = getHubUrl();
-  if (!base) return false;
+  const publicBase = getHubUrl();
+  if (!publicBase) return false;
+  const base = masterBaseUrl() || publicBase;
 
   fetch(base + '/api/master/hello', {
     method: 'POST',
@@ -314,6 +328,7 @@ export function startMasterHub(handlers) {
   try {
     masterEs = new EventSource(base + '/api/events?role=master');
   } catch (e) {
+    console.warn('[lanHub] EventSource failed', e);
     return false;
   }
 
@@ -417,7 +432,18 @@ export function startMasterHub(handlers) {
     } catch (e) {}
   });
 
-  masterEs.onerror = () => {};
+  masterEs.onerror = () => {
+    try {
+      window.dispatchEvent(new CustomEvent('smouha:hub-master-sse-error', { detail: { at: Date.now() } }));
+    } catch (e) {}
+  };
+  masterEs.addEventListener('hello', () => {
+    try {
+      probeHub().then((h) => {
+        window.dispatchEvent(new CustomEvent('smouha:hub-health', { detail: h }));
+      });
+    } catch (e) {}
+  });
   probeHub(base);
   return true;
 }

@@ -8,6 +8,42 @@ function el(html) {
   d.innerHTML = html.trim();
   return d.firstChild;
 }
+
+async function ensureMasterSession(on) {
+  try {
+    if (!on) {
+      hub.stopMasterHub();
+      return;
+    }
+    if (!hub.getHubUrl()) return;
+    const live = await import('../dmartLive.js');
+    const adj = await import('../dmartAdjust.js');
+    const wh = await import('../warehouse.js');
+    hub.startMasterHub({
+      getMasterName: () => {
+        try {
+          const u = JSON.parse(localStorage.getItem('smouha_lan_hub_user_v1') || '{}');
+          return u.username || 'Master';
+        } catch (e) {
+          return 'Master';
+        }
+      },
+      getWarehouseId: () => (wh.getSelectedId && wh.getSelectedId()) || null,
+      isBridgeOnline: () => !!(live.isBridgeOnline && live.isBridgeOnline()),
+      fetchLive: (sku, wid, opts) => live.fetchLiveProductInfo(sku, wid, opts || { force: true, skipHub: true }),
+      adjustStock: async ({ sku, warehouseId, quantity, direction }) => {
+        // Prefer bridge path on Master PC
+        if (typeof adj.requestStockAdjust === 'function') {
+          return adj.requestStockAdjust({ sku, warehouseId, quantity, direction });
+        }
+        return { success: false, error: { code: 'NO_ADJUST', message: 'Adjust module missing' } };
+      },
+    });
+  } catch (e) {
+    console.warn('[lanHubUi] ensureMasterSession', e);
+  }
+}
+
 function esc(s) {
   return String(s || '')
     .replace(/&/g, '&amp;')
@@ -263,6 +299,7 @@ export function mountHubSettingsSection(container) {
     } catch (e) {}
     window.dispatchEvent(new CustomEvent('smouha:hub-master-flag', { detail: { master: masterCb.checked } }));
     hub.hubDeviceHello().catch(() => {});
+    ensureMasterSession(!!masterCb.checked).then(() => setTimeout(refresh, 400));
     refresh();
   };
   block.querySelector('#lanHubSettingsSave').onclick = save;
@@ -341,9 +378,18 @@ export function initLanHubUi() {
         else alert(text);
       } catch (err) { alert(text); }
     });
+    window.addEventListener('smouha:hub-master-flag', (e) => {
+      ensureMasterSession(!!(e.detail && e.detail.master));
+    });
     if (hub.getHubUrl()) {
       hub.probeHub().then(updateHubBadge);
       hub.hubDeviceHello().catch(() => {});
+    }
+    // Resume Master stream if this PC was marked Master (was never started before)
+    if (isHubMasterFlag() && hub.getHubUrl()) {
+      ensureMasterSession(true).then(() => {
+        setTimeout(() => hub.probeHub().then(updateHubBadge), 500);
+      });
     }
   } catch (e) {
     console.warn('[lanHubUi]', e);
