@@ -31,6 +31,7 @@ async function ensureMasterSession(on) {
       getWarehouseId: () => (wh.getSelectedId && wh.getSelectedId()) || null,
       isBridgeOnline: () => !!(live.isBridgeOnline && live.isBridgeOnline()),
       fetchLive: (sku, wid, opts) => live.fetchLiveProductInfo(sku, wid, opts || { force: true, skipHub: true }),
+      lookupProduct: (sku, wid, ms) => live.lookupProductViaBridge(sku, wid, ms || 14000),
       adjustStock: async ({ sku, warehouseId, quantity, direction }) => {
         // Prefer bridge path on Master PC
         if (typeof adj.requestStockAdjust === 'function') {
@@ -215,6 +216,10 @@ export function mountHubSettingsSection(container) {
         <span>This PC is Master (answers phones)</span>
         <input type="checkbox" id="lanHubMasterToggle" />
       </label>
+      <label class="settings-row" style="margin:6px 0">
+        <span>Show adjust on phones (LAN)</span>
+        <input type="checkbox" id="lanHubMobileAdjust" checked />
+      </label>
       <div id="lanHubQr" style="margin:8px 0"></div>
       <p style="font-size:11px;opacity:.75;margin:4px 0 8px">
         Adjust is refused if the Chrome extension is offline. Same SKU cannot be adjusted by two devices at once.
@@ -237,6 +242,13 @@ export function mountHubSettingsSection(container) {
   const st = block.querySelector('#lanHubSettingsStatus');
   const devs = block.querySelector('#lanHubDevices');
   const masterCb = block.querySelector('#lanHubMasterToggle');
+  const mobileAdj = block.querySelector('#lanHubMobileAdjust');
+  try {
+    if (mobileAdj) {
+      const v = localStorage.getItem('smouha_hub_mobile_adjust');
+      mobileAdj.checked = v !== '0';
+    }
+  } catch (e) {}
   urlIn.value = hub.getHubUrl() || '';
   try {
     masterCb.checked = localStorage.getItem('smouha_hub_is_master') === '1';
@@ -296,6 +308,10 @@ export function mountHubSettingsSection(container) {
     hub.setHubIdentity({ username: userIn.value, role: roleIn.value });
     try {
       localStorage.setItem('smouha_hub_is_master', masterCb.checked ? '1' : '0');
+      if (mobileAdj) localStorage.setItem('smouha_hub_mobile_adjust', mobileAdj.checked ? '1' : '0');
+    } catch (e) {}
+    try {
+      import('../dmartLive.js').then((m) => m.updateBridgeStatusUi && m.updateBridgeStatusUi());
     } catch (e) {}
     window.dispatchEvent(new CustomEvent('smouha:hub-master-flag', { detail: { master: masterCb.checked } }));
     hub.hubDeviceHello().catch(() => {});

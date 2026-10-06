@@ -1692,12 +1692,17 @@ function renderSuggestions(matches, query) {
   function recordSearch(product) {
     store.addRecent(product.sku);
     renderRecent();
+    try { fillInlineRecent(); } catch (e) {}
     try {
       if (lanHub.getHubUrl && lanHub.getHubUrl()) {
         lanHub.hubPushRecent({ sku: product.sku, name: product.name || '' });
       }
     } catch (e) {}
   }
+  document.addEventListener('smouha:recent-changed', () => {
+    try { renderRecent(); } catch (e) {}
+    try { fillInlineRecent(); } catch (e) {}
+  });
 
     function renderRecent() {
     const skus = store.getRecent();
@@ -2482,6 +2487,37 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+
+window.addEventListener('smouha:hub-recent', (ev) => {
+  try {
+    const d = ev.detail || {};
+    const sku = d.sku;
+    if (!sku) return;
+    if (d.name && search.registerDmartProduct) {
+      try {
+        search.registerDmartProduct({
+          sku: String(sku),
+          name: String(d.name),
+          barcodes: [String(sku)],
+          image: d.image || '',
+        });
+      } catch (e) {}
+    }
+    try { store.addRecent(String(sku)); } catch (e) {}
+    try {
+      const map = JSON.parse(localStorage.getItem('smouha_recent_users') || '{}');
+      if (d.username) map[String(sku)] = d.username;
+      localStorage.setItem('smouha_recent_users', JSON.stringify(map));
+    } catch (e) {}
+    try {
+      if (typeof ui !== 'undefined' && ui.renderRecent) ui.renderRecent();
+    } catch (e) {}
+    // Force re-render recent panels if functions exist on window/ui
+    try {
+      document.dispatchEvent(new CustomEvent('smouha:recent-changed'));
+    } catch (e) {}
+  } catch (e) {}
+});
 
 window.addEventListener('smouha:clear-dmart-cache', () => {
   try {

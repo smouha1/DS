@@ -226,6 +226,35 @@ export async function hubRequestAdjust({ sku, quantity, direction, warehouseId }
   }
 }
 
+export async function hubRequestLookup(sku, warehouseId, timeoutMs) {
+  const base = getHubUrl();
+  if (!base) return { ok: false, reason: 'no-hub' };
+  const id = getHubIdentity();
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), Number(timeoutMs) || 18000);
+    const r = await fetch(base + '/api/lookup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sku: String(sku || '').trim(),
+        warehouseId: warehouseId || null,
+        deviceId: id.deviceId,
+        username: id.username,
+        role: id.role,
+      }),
+      signal: ctrl.signal,
+      cache: 'no-store',
+    });
+    clearTimeout(t);
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) return { ok: false, reason: j.error || 'hub-http', message: j.message };
+    return j;
+  } catch (e) {
+    return { ok: false, reason: 'hub-error', message: String(e.message || e) };
+  }
+}
+
 export async function hubPushRecent({ sku, name }) {
   const base = getHubUrl();
   if (!base) return { ok: false };
@@ -364,6 +393,33 @@ export function startMasterHub(handlers) {
           price: live && live.price != null ? live.price : null,
           reason: live && live.reason ? live.reason : null,
         };
+      }
+    } catch (e) {
+      reply.reason = String(e.message || e);
+    }
+    try {
+      await fetch(base + '/api/reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reply),
+      });
+    } catch (e) {}
+  });
+
+
+  masterEs.addEventListener('lookup_req', async (ev) => {
+    let data;
+    try { data = JSON.parse(ev.data); } catch (e) { return; }
+    let reply = { reqId: data.reqId, ok: false, product: null, reason: 'no-handler' };
+    try {
+      if (masterHandlers && masterHandlers.lookupProduct) {
+        const wid = data.warehouseId || (masterHandlers.getWarehouseId && masterHandlers.getWarehouseId());
+        const look = await masterHandlers.lookupProduct(data.sku, wid, 14000);
+        if (look && look.ok && look.product) {
+          reply = { reqId: data.reqId, ok: true, product: look.product };
+        } else {
+          reply.reason = (look && look.reason) || 'not-found';
+        }
       }
     } catch (e) {
       reply.reason = String(e.message || e);

@@ -438,16 +438,25 @@ export function updateBridgeStatusUi() {
     node.hidden = true;
     node.style.display = 'none';
   });
-  // Show/hide adjust panels: desktop+extension OR hub-connected phone (non-viewer)
+  // Show/hide adjust: desktop+extension OR any device with Hub URL and non-viewer role
   document.querySelectorAll('.dmart-adjust-panel').forEach((panel) => {
     let hubOk = false;
     let viewer = false;
     try {
       const hubUrl = localStorage.getItem('smouha_lan_hub_url_v1');
-      hubOk = !!hubUrl && !isDesktopViewport();
+      hubOk = !!hubUrl;
       const u = JSON.parse(localStorage.getItem('smouha_lan_hub_user_v1') || 'null');
       if (u && u.role === 'viewer') viewer = true;
-      if (localStorage.getItem('smouha_hub_pending') === '1') viewer = true;
+      // Settings override: force show/hide mobile adjust
+      const force = localStorage.getItem('smouha_hub_mobile_adjust');
+      if (force === '0') {
+        panel.hidden = !(online && isDesktopViewport());
+        return;
+      }
+      if (force === '1') {
+        panel.hidden = viewer;
+        return;
+      }
     } catch (e) {}
     const show = (online && isDesktopViewport()) || (hubOk && !viewer);
     panel.hidden = !show;
@@ -528,53 +537,66 @@ function applyBridgeStatusPayload(data) {
 
 /** Lookup product catalog fields from DMart when local search misses. */
 export function lookupProductViaBridge(sku, warehouseId, timeoutMs) {
-  const requestId =
-    'lookup_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
-  return new Promise((resolve) => {
-    let settled = false;
-    const timer = setTimeout(() => {
-      finish({ ok: false, reason: 'bridge-timeout' });
-    }, timeoutMs || 15000);
-
-    function finish(result) {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      window.removeEventListener('message', onMsg);
-      resolve(result);
+  const ms = Number(timeoutMs) || 15000;
+  // Hub path (phones without extension)
+  const tryHub = async () => {
+    try {
+      const hub = await import('./lan/lanHub.js');
+      if (!hub.getHubUrl || !hub.getHubUrl()) return null;
+      if (typeof hub.hubRequestLookup === 'function') {
+        return await hub.hubRequestLookup(sku, warehouseId, ms);
+      }
+    } catch (e) {}
+    return null;
+  };
+  return new Promise(async (resolve) => {
+    // Prefer hub when no extension / not desktop
+    let isDesktop = false;
+    try { isDesktop = window.matchMedia('(min-width: 900px)').matches; } catch (e) {}
+    if (!isDesktop || !isBridgeOnline()) {
+      const hubRes = await tryHub();
+      if (hubRes && hubRes.ok) {
+        resolve(hubRes);
+        return;
+      }
     }
-
+    const requestId =
+      'lookup_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+    let done = false;
+    const timer = setTimeout(() => {
+      if (done) return;
+      done = true;
+      window.removeEventListener('message', onMsg);
+      tryHub().then((hubRes) => resolve(hubRes && hubRes.ok ? hubRes : { ok: false, reason: 'timeout' }));
+    }, ms);
     function onMsg(event) {
       if (event.source !== window) return;
       const data = event.data;
       if (!data || data.source !== 'smouha-dmart-bridge') return;
       if (data.type !== 'SMOUHA_PICK_DMART_LOOKUP_RESPONSE') return;
-      if (data.requestId != null && data.requestId !== requestId) return;
-      markBridgeReady();
-      if (data.success && data.data) {
-        finish({ ok: true, product: data.data });
-      } else {
-        const code = (data.error && data.error.code) || 'NOT_FOUND';
-        finish({ ok: false, reason: code });
-      }
+      if (data.requestId !== requestId) return;
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      window.removeEventListener('message', onMsg);
+      resolve(data);
     }
-
     window.addEventListener('message', onMsg);
-    const payload = {
-      type: 'SMOUHA_PICK_DMART_LOOKUP',
-      requestId,
-      warehouseId: String(warehouseId),
-      sku: String(sku),
-    };
     try {
-      window.postMessage(payload, window.location.origin);
+      window.postMessage(
+        {
+          type: 'SMOUHA_PICK_DMART_LOOKUP',
+          requestId,
+          sku: String(sku || ''),
+          warehouseId: warehouseId ? String(warehouseId) : null,
+        },
+        window.location.origin
+      );
     } catch (e) {
-      finish({ ok: false, reason: 'no-bridge' });
-      return;
+      clearTimeout(timer);
+      window.removeEventListener('message', onMsg);
+      tryHub().then((hubRes) => resolve(hubRes && hubRes.ok ? hubRes : { ok: false, reason: String(e.message || e) }));
     }
-    try {
-      document.dispatchEvent(new CustomEvent('smouha-dmart-bridge-req', { detail: payload }));
-    } catch (e) {}
   });
 }
 

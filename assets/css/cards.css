@@ -2666,7 +2666,8 @@ button#barcodeFormatSwitch.barcode-format-switch.is-floating.is-dragging,
   transition:box-shadow .2s ease;
 }
 @media (max-width:899px){
-  .dmart-adjust-panel{display:none !important;}
+  /* Hub-connected phones show adjust; JS toggles [hidden]. Do not force-hide. */
+  .dmart-adjust-panel[hidden]{display:none !important;}
 }
 
 

@@ -15,7 +15,29 @@ const HOST = process.env.SMOUHA_HUB_HOST || '0.0.0.0';
 
 const masterStreams = new Map(); // connId → ServerResponse (SSE)
 const pending = new Map(); // reqId → { resolve, timer }
-const devices = new Map(); // deviceId → { username, role, lastSeen }
+const devices = new Map(); // deviceId → { username, role, lastSeen, approved, requested }
+function touchDevice(body) {
+  const deviceId = String(body.deviceId || '').slice(0, 64);
+  if (!deviceId) return null;
+  const username = String(body.username || 'phone').trim().slice(0, 32) || 'phone';
+  const prev = devices.get(deviceId) || {};
+  const requested = body.role === 'viewer' ? 'viewer' : body.role === 'supervisor' ? 'supervisor' : (prev.requested || 'operator');
+  // Auto-approve when under limit so phones appear and can adjust without manual Yes
+  if (!approved.has(deviceId) && approved.size < maxDevices && requested !== 'viewer') {
+    approved.add(deviceId);
+  }
+  const isApproved = approved.has(deviceId);
+  const role = isApproved ? requested : 'viewer';
+  devices.set(deviceId, {
+    username,
+    role,
+    requested,
+    lastSeen: now(),
+    approved: isApproved,
+  });
+  return devices.get(deviceId);
+}
+
 const skuLocks = new Map(); // sku → { deviceId, until }
 const auditLog = []; // ring buffer
 const kicked = new Set();
@@ -199,10 +221,14 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       kicked.delete(deviceId);
+      if (!approved.has(deviceId) && approved.size < maxDevices && requested !== 'viewer') {
+        approved.add(deviceId);
+      }
       const okRole = approved.has(deviceId) ? requested : 'viewer';
       devices.set(deviceId, { username, role: okRole, requested, lastSeen: now(), approved: approved.has(deviceId) });
       logEntry({ type: 'device', action: approved.has(deviceId) ? 'hello' : 'pending', username, deviceId, role: okRole });
       if (!approved.has(deviceId)) broadcast('pair_pending', { deviceId, username, requested });
+      else broadcast('device_hello', { deviceId, username, role: okRole });
       sendJson(res, 200, {
         ok: true,
         deviceId,
@@ -237,7 +263,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       const username = String(body.username || '').slice(0, 32);
-      if (devices.has(deviceId)) devices.get(deviceId).lastSeen = now();
+      touchDevice(body);
       const reqId = rid('s');
       const warehouseId = body.warehouseId || masterMeta.warehouseId || null;
       logEntry({ type: 'stock', action: 'request', username, deviceId, sku });
@@ -270,6 +296,7 @@ const server = http.createServer(async (req, res) => {
         reserved: body.reserved ?? null,
         price: body.price ?? null,
         reason: body.reason || null,
+        product: body.product || null,
         via: 'hub',
       });
       sendJson(res, 200, { ok: true });
@@ -392,6 +419,7 @@ const server = http.createServer(async (req, res) => {
       }
       const deviceId = String(body.deviceId || '').slice(0, 64);
       const username = String(body.username || '').slice(0, 32);
+      touchDevice({ deviceId, username, role: body.role });
       logEntry({ type: 'recent', action: 'push', username, deviceId, sku });
       if (masterOnline()) {
         broadcast('recent_push', {
@@ -403,6 +431,43 @@ const server = http.createServer(async (req, res) => {
         });
       }
       sendJson(res, 200, { ok: true, delivered: masterOnline() });
+      return;
+    }
+
+
+    if (req.method === 'POST' && path === '/api/lookup') {
+      const body = await readJson(req);
+      const sku = String(body.sku || '').trim();
+      if (!sku) {
+        sendJson(res, 400, { ok: false, error: 'SKU_REQUIRED' });
+        return;
+      }
+      touchDevice(body);
+      if (!masterOnline()) {
+        sendJson(res, 503, { ok: false, error: 'MASTER_OFFLINE', message: 'Master tab not linked' });
+        return;
+      }
+      const reqId = rid('lk');
+      const waitMs = 18000;
+      const result = await new Promise((resolve) => {
+        const t = setTimeout(() => {
+          pending.delete(reqId);
+          resolve(null);
+        }, waitMs);
+        pending.set(reqId, { resolve, timer: t, kind: 'lookup' });
+        broadcast('lookup_req', {
+          reqId,
+          sku,
+          warehouseId: body.warehouseId || masterMeta.warehouseId || null,
+          deviceId: body.deviceId || null,
+          username: body.username || null,
+        });
+      });
+      if (!result) {
+        sendJson(res, 504, { ok: false, error: 'TIMEOUT', message: 'Lookup timed out' });
+        return;
+      }
+      sendJson(res, 200, result);
       return;
     }
 
