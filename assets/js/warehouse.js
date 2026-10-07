@@ -107,6 +107,9 @@ export function setSelectedByName(name) {
   changeListeners.forEach(cb => {
     try { cb(selected); } catch (e) { /* listener error must not break app */ }
   });
+  try {
+    window.dispatchEvent(new CustomEvent('smouha:warehouse-changed', { detail: { ...selected } }));
+  } catch (e) {}
   return true;
 }
 

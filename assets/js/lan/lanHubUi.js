@@ -33,9 +33,12 @@ async function ensureMasterSession(on) {
       fetchLive: (sku, wid, opts) => live.fetchLiveProductInfo(sku, wid, opts || { force: true, skipHub: true }),
       lookupProduct: (sku, wid, ms) => live.lookupProductViaBridge(sku, wid, ms || 14000, { skipHub: true }),
       adjustStock: async ({ sku, warehouseId, quantity, direction }) => {
-        // Prefer bridge path on Master PC
+        // Master must call extension only — never re-enter Hub (would loop / fail silently)
+        if (typeof adj.requestStockAdjustBridgeOnly === 'function') {
+          return adj.requestStockAdjustBridgeOnly({ sku, warehouseId, quantity, direction });
+        }
         if (typeof adj.requestStockAdjust === 'function') {
-          return adj.requestStockAdjust({ sku, warehouseId, quantity, direction });
+          return adj.requestStockAdjust({ sku, warehouseId, quantity, direction, forceBridge: true });
         }
         return { success: false, error: { code: 'NO_ADJUST', message: 'Adjust module missing' } };
       },
@@ -178,12 +181,25 @@ export function openHubModal() {
       updateHubBadge(h);
       return;
     }
-    await hub.hubDeviceHello();
+    const hello = await hub.hubDeviceHello();
+    if (hello && hello.ok === false) {
+      msg.style.color = '#dc2626';
+      msg.textContent = hello.message || hello.reason || 'Blocked by Hub';
+      updateHubBadge(h);
+      return;
+    }
+    // If this PC is Master, restart SSE after URL change
+    try {
+      if (isHubMasterFlag()) {
+        await ensureMasterSession(true);
+      }
+    } catch (e) {}
+    const h2 = await hub.probeHub();
     msg.style.color = '#16a34a';
-    msg.textContent = h.masterOnline
+    msg.textContent = (h2.masterOnline || h.masterOnline)
       ? 'Connected — Master is online. Stock will use Hub.'
       : 'Hub reachable — waiting for Master tab on the PC (open site + Master).';
-    updateHubBadge(h);
+    updateHubBadge(h2.ok ? h2 : h);
   };
 }
 
@@ -265,16 +281,17 @@ export function mountHubSettingsSection(container) {
       st.style.color = h.masterOnline ? '#16a34a' : '#b45309';
       st.textContent =
         (h.masterOnline ? 'Online · Master linked' : 'Hub up · waiting for Master tab on the PC') +
-        (h.ips && h.ips.length ? ' · ' + h.ips.join(', ') : '');
+        (h.ips && h.ips.length ? ' · ' + h.ips.join(', ') : '') +
+        (h.lastError ? ' · last error: ' + String(h.lastError).slice(0, 80) : '');
       const list = h.devices || [];
       devs.innerHTML = list.length
         ? '<div style="font-weight:700;margin-bottom:4px">Connected devices</div>' +
           list.map((d) =>
             '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin:4px 0">' +
-            '<span>' + esc(d.username || d.id) + ' · ' + esc(d.role || 'viewer') + (d.approved ? '' : ' · pending') + '</span>' +
+            '<span>' + esc(d.username || d.deviceId) + ' · ' + esc(d.role || 'viewer') + (d.approved ? '' : ' · pending') + (d.agoSec != null ? ' · ' + d.agoSec + 's' : '') + '</span>' +
             '<span>' +
-            (d.approved ? '' : '<button type="button" data-yes="' + esc(d.id) + '" style="border:1px solid #bbf7d0;background:#fff;color:#166534;border-radius:8px;padding:4px 8px;font-size:11px;margin-right:4px">Yes</button>') +
-            '<button type="button" data-kick="' + esc(d.id) + '" style="border:1px solid #fecaca;background:#fff;color:#b91c1c;border-radius:8px;padding:4px 8px;font-size:11px">Kick</button></span>' +
+            (d.approved ? '' : '<button type="button" data-yes="' + esc(d.deviceId) + '" style="border:1px solid #bbf7d0;background:#fff;color:#166534;border-radius:8px;padding:4px 8px;font-size:11px;margin-right:4px">Yes</button>') +
+            '<button type="button" data-kick="' + esc(d.deviceId) + '" style="border:1px solid #fecaca;background:#fff;color:#b91c1c;border-radius:8px;padding:4px 8px;font-size:11px">Kick</button></span>' +
             '</div>'
           ).join('')
         : 'No phones registered yet — open settings on the phone and Save.';
@@ -314,7 +331,12 @@ export function mountHubSettingsSection(container) {
       import('../dmartLive.js').then((m) => m.updateBridgeStatusUi && m.updateBridgeStatusUi());
     } catch (e) {}
     window.dispatchEvent(new CustomEvent('smouha:hub-master-flag', { detail: { master: masterCb.checked } }));
-    hub.hubDeviceHello().catch(() => {});
+    hub.hubDeviceHello().then((hello) => {
+      if (hello && hello.ok === false && st) {
+        st.style.color = '#dc2626';
+        st.textContent = hello.message || hello.reason || 'Hello failed';
+      }
+    }).catch(() => {});
     ensureMasterSession(!!masterCb.checked).then(() => setTimeout(refresh, 400));
     refresh();
   };
@@ -419,3 +441,51 @@ export function isHubMasterFlag() {
     return false;
   }
 }
+
+
+/* Single-master: this tab was replaced */
+window.addEventListener('smouha:hub-master-superseded', (ev) => {
+  try {
+    const msg = (ev.detail && ev.detail.message) || 'Master moved to another tab';
+    const el = document.getElementById('hubMasterStatus') || document.querySelector('[data-hub-master-status]');
+    if (el) {
+      el.textContent = msg;
+      el.style.color = '#b91c1c';
+    }
+    console.warn('[hub]', msg);
+  } catch (e) {}
+});
+
+
+window.addEventListener('smouha:hub-restarted', () => {
+  try {
+    const st = document.querySelector('[data-hub-status], #hubStatusLine, #lanHubStatus');
+    if (st) {
+      st.textContent = 'Hub restarted — reconnected';
+      st.style.color = '#16a34a';
+    }
+  } catch (e) {}
+});
+
+
+window.addEventListener('smouha:warehouse-changed', async () => {
+  try {
+    if (!isHubMasterFlag()) return;
+    const hub = await import('./lanHub.js');
+    const base = hub.masterBaseUrl ? hub.masterBaseUrl() : hub.getHubUrl();
+    if (!base) return;
+    let wid = null;
+    try {
+      const wh = await import('../warehouse.js');
+      wid = wh.getSelectedId && wh.getSelectedId();
+    } catch (e) {}
+    await fetch(base + '/api/master/hello', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: (hub.getHubIdentity && hub.getHubIdentity().username) || 'Master',
+        warehouseId: wid,
+      }),
+    });
+  } catch (e) {}
+});

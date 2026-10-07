@@ -1,3 +1,4 @@
+import { friendlyHubMessage } from './lan/hubErrors.js';
 /* ============================================================================
    dmartAdjust.js — stock adjust UI (modal, panel, boost, bridge postMessage)
    ------------------------------------------------------------------------
@@ -47,19 +48,8 @@ function invalidateCacheKey(key) {
   if (typeof api.invalidateCacheKey === 'function') api.invalidateCacheKey(key);
 }
 
-async function requestStockAdjust({ sku, warehouseId, quantity, direction }) {
-  // Prefer LAN Hub whenever configured (phone → Master → extension)
-  try {
-    const hub = await import('./lan/lanHub.js');
-    if (hub.getHubUrl && hub.getHubUrl()) {
-      const desktop = window.matchMedia('(min-width: 900px)').matches;
-      if (!desktop || !isBridgeOnline()) {
-        const res = await hub.hubRequestAdjust({ sku, quantity, direction, warehouseId });
-        return res;
-      }
-    }
-  } catch (e) { /* fall through to bridge */ }
-
+/** Extension postMessage only — used by Master Hub so we never loop phone→hub→hub */
+function requestStockAdjustBridgeOnly({ sku, warehouseId, quantity, direction }) {
   return new Promise((resolve) => {
     const requestId = 'adj_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
     let done = false;
@@ -101,6 +91,23 @@ async function requestStockAdjust({ sku, warehouseId, quantity, direction }) {
       resolve({ success: false, error: { code: 'POST_FAILED', message: String(e && e.message || e) } });
     }
   });
+}
+
+/** Phone → Hub → Master; Master uses requestStockAdjustBridgeOnly (no hub loop). */
+async function requestStockAdjust({ sku, warehouseId, quantity, direction, forceBridge }) {
+  if (forceBridge) {
+    return requestStockAdjustBridgeOnly({ sku, warehouseId, quantity, direction });
+  }
+  try {
+    const hub = await import('./lan/lanHub.js');
+    if (hub.getHubUrl && hub.getHubUrl()) {
+      const desktop = window.matchMedia('(min-width: 900px)').matches;
+      if (!desktop || !isBridgeOnline()) {
+        return await hub.hubRequestAdjust({ sku, quantity, direction, warehouseId });
+      }
+    }
+  } catch (e) { /* fall through */ }
+  return requestStockAdjustBridgeOnly({ sku, warehouseId, quantity, direction });
 }
 
 function getAdjustMax() {
@@ -500,7 +507,8 @@ function bindAdjustPanel(root, sku) {
     const done = () => { panel.dataset.busy = '0'; };
     let hubConfigured = false;
     try {
-      hubConfigured = !!localStorage.getItem('smouha_lan_hub_url_v1');
+      // Prefer live getHubUrl when available
+      hubConfigured = !!(localStorage.getItem('smouha_lan_hub_url_v1') || '').trim();
     } catch (e) {}
     const desktop = isDesktopViewport();
     // Hub path (phone OR desktop-mode without extension): send to PC Master → extension
@@ -530,6 +538,19 @@ function bindAdjustPanel(root, sku) {
       done();
       return;
     }
+    try {
+      const blocked = JSON.parse(localStorage.getItem('smouha_hub_blocked') || 'null');
+      if (blocked && blocked.code) {
+        if (msg) {
+          msg.hidden = false;
+          msg.className = 'dmart-adjust-msg is-err';
+          msg.textContent = blocked.message || friendlyHubMessage(blocked.code, blocked.code);
+        }
+        done();
+        playFailOverlay();
+        return;
+      }
+    } catch (e) {}
     const quantity = clampQty();
     const warehouseId = getSelectedId();
     if (!warehouseId) {
@@ -562,13 +583,13 @@ function bindAdjustPanel(root, sku) {
 
     if (!res || !res.success) {
       const err = (res && res.error) || {};
+      const code = err.code || 'ERROR';
       if (msg) {
         msg.hidden = false;
         msg.className = 'dmart-adjust-msg is-err';
-        msg.textContent = (err.code || 'ERROR') + (err.message ? ': ' + err.message : '');
-        if (/reload this page|not reachable|invalidated/i.test(String(err.message || ''))) {
-          msg.textContent = 'Refresh this page (F5) after updating the extension, then try again';
-        }
+        msg.textContent = (typeof friendlyHubMessage === 'function'
+          ? friendlyHubMessage(code, err.message)
+          : null) || err.message || code;
       }
       playFailOverlay();
       try {
@@ -606,7 +627,7 @@ function bindAdjustPanel(root, sku) {
       }
       try {
         const key = String(warehouseId) + '::' + String(sku);
-        cache.delete(key);
+        invalidateCacheKey(key);
       } catch (e) {}
     };
 
@@ -635,7 +656,7 @@ function bindAdjustPanel(root, sku) {
   });
 }
 
-export { buildAdjustPanelHtml, bindAdjustPanel, enableBoostMaxOnce, clearBoostMaxOnce, getAdjustMax, requestStockAdjust };
+export { buildAdjustPanelHtml, bindAdjustPanel, enableBoostMaxOnce, clearBoostMaxOnce, getAdjustMax, requestStockAdjust, requestStockAdjustBridgeOnly };
 
 function wireAdjustHotkeys() {
   if (wireAdjustHotkeys._done) return;

@@ -1358,7 +1358,18 @@ function renderSuggestions(matches, query) {
           }
           return;
         }
-        const look = await dmartLive.lookupProductViaBridge(sku, wid, 15000);
+        let look = await dmartLive.lookupProductViaBridge(sku, wid, 15000);
+        if (!stillSame()) return;
+        // Extra Hub lookup if bridge path returned nothing (phones)
+        if (!(look && look.ok && look.product && look.product.image)) {
+          try {
+            if (lanHub.getHubUrl && lanHub.getHubUrl() && lanHub.hubRequestLookup) {
+              const h = await lanHub.hubRequestLookup(sku, wid, 15000);
+              if (h && h.ok && h.product && h.product.image) look = h;
+              else if (h && h.image) look = { ok: true, product: { image: h.image, sku } };
+            }
+          } catch (e) {}
+        }
         if (!stillSame()) return;
         if (look && look.ok && look.product && look.product.image) {
           const url = String(look.product.image).trim();
@@ -2497,29 +2508,27 @@ window.addEventListener('smouha:hub-product-image', (ev) => {
     if (search.setDmartImage) search.setDmartImage(sku, String(url));
     const img = document.getElementById('prodImg');
     const wrap = document.getElementById('prodImgWrap');
-    const currentSku = (document.getElementById('dmartLiveCard') || {}).dataset
-      ? document.getElementById('dmartLiveCard').getAttribute('data-sku')
-      : null;
-    // Also match search input sku
+    const liveCard = document.getElementById('dmartLiveCard');
+    const currentSku = liveCard ? liveCard.getAttribute('data-sku') : null;
     const inputSku = (document.getElementById('searchInput') || {}).value || '';
-    if (img && (String(inputSku).trim() === String(sku) || String(currentSku) === String(sku))) {
+    const match =
+      String(inputSku).trim() === String(sku) ||
+      String(currentSku || '') === String(sku);
+    if (img && match) {
       img.onload = () => {
         if (wrap) {
-          wrap.classList.remove('loading');
-          wrap.classList.remove('img-fetching-dmart');
+          wrap.classList.remove('loading', 'img-fetching-dmart', 'no-image');
         }
       };
-      img.onerror = () => {
-        if (wrap) {
-          wrap.classList.remove('loading');
-          wrap.classList.remove('img-fetching-dmart');
-        }
-      };
-      img.src = String(url);
+      img.onerror = () => {};
+      img.removeAttribute('hidden');
+      img.style.display = '';
       img.alt = '';
+      img.src = String(url);
       if (wrap) {
-        wrap.classList.remove('loading');
-        wrap.classList.remove('img-fetching-dmart');
+        wrap.classList.remove('loading', 'img-fetching-dmart', 'no-image');
+        const placeholder = wrap.querySelector('.img-placeholder, .no-image-label');
+        if (placeholder) placeholder.style.display = 'none';
       }
     }
     document.querySelectorAll('.panel-item[data-sku="' + String(sku).replace(/"/g, '') + '"] .panel-thumb').forEach((t) => {

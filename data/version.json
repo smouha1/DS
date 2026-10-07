@@ -1,14 +1,18 @@
 {
   "version": "1.9.12",
-  "build": 151,
+  "build": 152,
   "updated": "2026-10-03",
   "products": 41125,
   "changelogByVersion": [
     {
       "version": "1.9.12",
-      "build": 151,
+      "build": 152,
       "date": "2026-10-03",
       "items": [
+        "build 152 — Hub: single approval path (hello/approve only; no stock auto-approve)",
+        "build 152 — Hub: Master token required for reply/adjust-reply/image",
+        "build 152 — Image poll window ~19s + 400ms race; adjust re-hello when stale",
+        "build 152 — Clearer adjust errors (HUB_MALFORMED / NOT_APPROVED / MASTER_OFFLINE)",
         "Service Worker cache v109-151-hub1",
         "Hub: SKU lock during adjust; clear errors; recent push phone→PC",
         "Recent rail: width +25%, spacing +15%, white background",
@@ -465,6 +469,7 @@
     }
   ],
   "changelog": [
+    "v1.9.12 — build 152 — Hub approval source of truth + image poll + adjust re-hello",
     "v1.8.0 — Version 1.8.0 — stock adjust UX + landscape background",
     "v1.8.0 — Landscape photo site background (cover, all screens) + glass-style cards",
     "v1.8.0 — Custom stock-adjust confirm modal: product image, name (SKU), Available, warehouse",

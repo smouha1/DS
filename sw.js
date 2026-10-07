@@ -10,7 +10,7 @@
      • Drop old caches on activate
    ------------------------------------------------------------------------ */
 
-const CACHE_NAME = 'smouha-pick-shell-v109-151-hub7';
+const CACHE_NAME = 'smouha-pick-shell-v109-152-hub11';
 
 /** Core shell — same-origin only. Lazy modules included so first offline
  *  open of Settings/Maintenance/DMart live still works after one online visit. */
@@ -34,6 +34,9 @@ const SHELL_FILES = [
   './assets/css/settings.css',
   './assets/css/warehouse.css',
   './assets/js/app.js',
+  './assets/js/lan/hubErrors.js',
+  './assets/js/lan/lanHubUi.js',
+  './assets/js/lan/lanHub.js',
   './assets/js/appStore.js',
   './assets/js/appSettingsQuick.js',
   './assets/js/appCatalogUi.js',
@@ -196,7 +199,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Same-origin static assets → stale-while-revalidate
+  // JS bundles → network-first so Hub/adjust fixes deploy immediately
+  if (url.pathname.endsWith('.js') || url.pathname.includes('/assets/js/')) {
+    event.respondWith(networkFirstNavigation(request));
+    return;
+  }
+
+  // Same-origin static assets (css/img/fonts) → stale-while-revalidate
   if (isStaticAsset(url.pathname) || url.pathname.includes('/assets/')) {
     event.respondWith(staleWhileRevalidate(request));
     return;
