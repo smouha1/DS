@@ -1,14 +1,16 @@
 {
   "version": "1.9.12",
-  "build": 154,
+  "build": 155,
   "updated": "2026-10-03",
   "products": 41125,
   "changelogByVersion": [
     {
       "version": "1.9.12",
-      "build": 154,
+      "build": 155,
       "date": "2026-10-03",
       "items": [
+        "build 155 — Show Looking up on DMart…; desktop always tries extension LOOKUP first",
+        "build 155 — DMart lookup on catalog miss even when last-6 suffix matched another product",
         "build 154 — Ignore stale KICKED flag on laptop when extension is online",
         "build 154 — Master/desktop adjust always uses extension (never Hub phone path)",
         "build 153 — Fix PC product images: normalize extension LOOKUP (success/data → ok/product.image)",
@@ -473,6 +475,7 @@
     }
   ],
   "changelog": [
+    "v1.9.12 — build 155 — Fix live DMart product lookup when SKU not in products file",
     "v1.9.12 — build 154 — Laptop adjust via extension only (fix KICKED on Master)",
     "v1.9.12 — build 153 — PC images via extension LOOKUP shape fix",
     "v1.9.12 — build 152 — Hub approval source of truth + image poll + adjust re-hello",

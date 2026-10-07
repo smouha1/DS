@@ -596,40 +596,55 @@ function renderSuggestions(matches, query) {
     setTimeout(async () => {
       if (myGen !== searchGen) return;
       let result = fn(query);
-      // Local miss → DMart lookup only when query has at least 6 chars (SKU-like)
-      if (result.type === 'none') {
-        const q = String(query || '').trim();
-        if (/^[0-9A-Za-z]+$/.test(q) && q.length >= 6) {
-          try {
-            const wid = warehouse.getSelectedId && warehouse.getSelectedId();
-            if (wid && dmartLive.lookupProductViaBridge) {
-              const look = await dmartLive.lookupProductViaBridge(q, wid, 15000);
-              if (myGen !== searchGen) return;
-              if (look && look.ok && look.product) {
-                const bcs = Array.isArray(look.product.barcodes) ? look.product.barcodes.filter(Boolean) : [];
-                const rec = {
-                  sku: String(look.product.sku || q),
-                  name: look.product.name || q,
-                  barcodes: bcs.length ? bcs : [String(look.product.sku || q)],
-                  image: look.product.image || '',
-                  productId: look.product.productId || null,
-                };
-                const product = search.registerDmartProduct
-                  ? search.registerDmartProduct(rec)
-                  : {
-                      id: 'dmart:' + rec.sku,
-                      sku: rec.sku,
-                      name: rec.name,
-                      barcodes: rec.barcodes,
-                      image: rec.image,
-                      fromDmart: true,
-                    };
-                result = { type: 'dmart', results: [product] };
-              }
+      // DMart live lookup when there is no *exact* local SKU/barcode hit.
+      // Do not skip lookup just because last-6 suffix matched another product.
+      const q = String(query || '').trim();
+      const isSkuLike = /^[0-9A-Za-z]+$/.test(q) && q.length >= 6;
+      const exactLocal =
+        result.type === 'sku' ||
+        result.type === 'barcode' ||
+        (result.type === 'dmart' && result.results && result.results.length);
+      if (isSkuLike && !exactLocal) {
+        try {
+          const wid = warehouse.getSelectedId && warehouse.getSelectedId();
+          if (!wid) {
+            // Keep local suffix/none result; warehouse required for DMart
+            if (result.type === 'none' && els.searchStats) {
+              try { els.searchStats.textContent = 'Select a warehouse to look up on DMart'; } catch (e) {}
             }
-          } catch (e) {
-            /* keep none */
+          } else if (dmartLive.lookupProductViaBridge) {
+            try {
+              if (els.searchStats) els.searchStats.textContent = 'Looking up on DMart…';
+            } catch (e) {}
+            const look = await dmartLive.lookupProductViaBridge(q, wid, 16000);
+            if (myGen !== searchGen) return;
+            if (look && look.ok && look.product) {
+              const bcs = Array.isArray(look.product.barcodes)
+                ? look.product.barcodes.filter(Boolean).map(String)
+                : [];
+              const rec = {
+                sku: String(look.product.sku || q),
+                name: look.product.name || q,
+                barcodes: bcs.length ? bcs : [String(look.product.sku || q)],
+                image: look.product.image || '',
+                productId: look.product.productId || null,
+              };
+              const product = search.registerDmartProduct
+                ? search.registerDmartProduct(rec)
+                : {
+                    id: 'dmart:' + rec.sku,
+                    sku: rec.sku,
+                    name: rec.name,
+                    barcodes: rec.barcodes,
+                    image: rec.image,
+                    fromDmart: true,
+                  };
+              result = { type: 'dmart', results: [product] };
+            }
+            // else: keep previous suffix matches or none
           }
+        } catch (e) {
+          /* keep previous result */
         }
       }
 

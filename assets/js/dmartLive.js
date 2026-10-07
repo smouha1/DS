@@ -626,13 +626,14 @@ export function lookupProductViaBridge(sku, warehouseId, timeoutMs, opts) {
     return null;
   };
   return new Promise(async (resolve) => {
-    // Desktop + extension online → bridge first (never Hub for local PC images)
+    // Desktop: always try extension LOOKUP first (flag may lag after reload).
+    // Phones without bridge: try Hub first.
     let isDesktop = false;
     try {
       isDesktop = window.matchMedia('(min-width: 900px)').matches;
     } catch (e) {}
     const bridgeOn = typeof isBridgeOnline === 'function' && isBridgeOnline();
-    if (!skipHub && !bridgeOn) {
+    if (!skipHub && !bridgeOn && !isDesktop) {
       const hubRes = await tryHub();
       if (hubRes && hubRes.ok) {
         resolve(hubRes);
