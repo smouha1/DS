@@ -543,27 +543,96 @@ function applyBridgeStatusPayload(data) {
 
 
 
+/** Normalize any LOOKUP response (extension or Hub) to { ok, product, image }. */
+function coerceImageUrl(v) {
+  if (!v) return '';
+  if (typeof v === 'string') {
+    const s = v.trim();
+    if (/^https?:\/\//i.test(s)) return s;
+    if (s.startsWith('//')) return 'https:' + s;
+    return '';
+  }
+  if (typeof v === 'object') {
+    const u = v.url || v.imageUrl || v.image_url || v.href || '';
+    return coerceImageUrl(u);
+  }
+  return '';
+}
+
+export function normalizeLookupResult(raw, skuHint) {
+  if (!raw || typeof raw !== 'object') {
+    return { ok: false, reason: 'empty', product: null, image: null };
+  }
+  // Already normalized (Hub / previous pass)
+  if (raw.ok && raw.product && (raw.product.image || raw.image)) {
+    const img = coerceImageUrl(raw.product.image || raw.image);
+    if (img) {
+      return {
+        ok: true,
+        product: { ...raw.product, image: img, sku: raw.product.sku || skuHint || '' },
+        image: img,
+      };
+    }
+  }
+  // Extension shape: { success, data: { sku, name, image, barcodes, ... } }
+  const payload = raw.data && typeof raw.data === 'object' ? raw.data : raw.product || raw;
+  const success = raw.success === true || raw.ok === true;
+  const img = coerceImageUrl(
+    (payload && (payload.image || payload.imageUrl || payload.image_url)) ||
+      raw.image ||
+      ''
+  );
+  if (success && (img || (payload && (payload.name || payload.sku || payload.productId)))) {
+    const product = {
+      sku: String((payload && payload.sku) || skuHint || ''),
+      name: (payload && payload.name) || String(skuHint || ''),
+      image: img,
+      barcodes: (payload && payload.barcodes) || [],
+      productId: (payload && payload.productId) || null,
+      available: payload && payload.available,
+      reserved: payload && payload.reserved,
+      price: payload && payload.price,
+    };
+    return { ok: true, product, image: img || null, success: true };
+  }
+  const reason =
+    (raw.error && (raw.error.code || raw.error.message)) ||
+    raw.reason ||
+    raw.code ||
+    'lookup-failed';
+  return {
+    ok: false,
+    reason: String(reason),
+    message: (raw.error && raw.error.message) || raw.message || String(reason),
+    product: null,
+    image: null,
+  };
+}
+
 /** Lookup product catalog fields from DMart when local search misses. */
 export function lookupProductViaBridge(sku, warehouseId, timeoutMs, opts) {
   const ms = Number(timeoutMs) || 15000;
   const skipHub = !!(opts && opts.skipHub);
-  // Hub path (phones without extension)
   const tryHub = async () => {
     if (skipHub) return null;
     try {
       const hub = await import('./lan/lanHub.js');
       if (!hub.getHubUrl || !hub.getHubUrl()) return null;
       if (typeof hub.hubRequestLookup === 'function') {
-        return await hub.hubRequestLookup(sku, warehouseId, ms);
+        const h = await hub.hubRequestLookup(sku, warehouseId, ms);
+        return h ? normalizeLookupResult(h, sku) : null;
       }
     } catch (e) {}
     return null;
   };
   return new Promise(async (resolve) => {
-    // Prefer hub when no extension / not desktop (phones)
+    // Desktop + extension online → bridge first (never Hub for local PC images)
     let isDesktop = false;
-    try { isDesktop = window.matchMedia('(min-width: 900px)').matches; } catch (e) {}
-    if (!skipHub && (!isDesktop || !isBridgeOnline())) {
+    try {
+      isDesktop = window.matchMedia('(min-width: 900px)').matches;
+    } catch (e) {}
+    const bridgeOn = typeof isBridgeOnline === 'function' && isBridgeOnline();
+    if (!skipHub && !bridgeOn) {
       const hubRes = await tryHub();
       if (hubRes && hubRes.ok) {
         resolve(hubRes);
@@ -573,11 +642,20 @@ export function lookupProductViaBridge(sku, warehouseId, timeoutMs, opts) {
     const requestId =
       'lookup_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
     let done = false;
+    const finish = (raw) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      window.removeEventListener('message', onMsg);
+      resolve(normalizeLookupResult(raw, sku));
+    };
     const timer = setTimeout(() => {
       if (done) return;
       done = true;
       window.removeEventListener('message', onMsg);
-      tryHub().then((hubRes) => resolve(hubRes && hubRes.ok ? hubRes : { ok: false, reason: 'timeout' }));
+      tryHub().then((hubRes) =>
+        resolve(hubRes && hubRes.ok ? hubRes : { ok: false, reason: 'timeout', product: null, image: null })
+      );
     }, ms);
     function onMsg(event) {
       if (event.source !== window) return;
@@ -585,11 +663,7 @@ export function lookupProductViaBridge(sku, warehouseId, timeoutMs, opts) {
       if (!data || data.source !== 'smouha-dmart-bridge') return;
       if (data.type !== 'SMOUHA_PICK_DMART_LOOKUP_RESPONSE') return;
       if (data.requestId !== requestId) return;
-      if (done) return;
-      done = true;
-      clearTimeout(timer);
-      window.removeEventListener('message', onMsg);
-      resolve(data);
+      finish(data);
     }
     window.addEventListener('message', onMsg);
     try {
@@ -603,9 +677,17 @@ export function lookupProductViaBridge(sku, warehouseId, timeoutMs, opts) {
         window.location.origin
       );
     } catch (e) {
+      if (done) return;
+      done = true;
       clearTimeout(timer);
       window.removeEventListener('message', onMsg);
-      tryHub().then((hubRes) => resolve(hubRes && hubRes.ok ? hubRes : { ok: false, reason: String(e.message || e) }));
+      tryHub().then((hubRes) =>
+        resolve(
+          hubRes && hubRes.ok
+            ? hubRes
+            : { ok: false, reason: String(e.message || e), product: null, image: null }
+        )
+      );
     }
   });
 }

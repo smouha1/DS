@@ -1,14 +1,16 @@
 {
   "version": "1.9.12",
-  "build": 152,
+  "build": 153,
   "updated": "2026-10-03",
   "products": 41125,
   "changelogByVersion": [
     {
       "version": "1.9.12",
-      "build": 152,
+      "build": 153,
       "date": "2026-10-03",
       "items": [
+        "build 153 — Fix PC product images: normalize extension LOOKUP (success/data → ok/product.image)",
+        "build 153 — Desktop prefers bridge LOOKUP over Hub; coerce image.url objects",
         "build 152 — Hub: single approval path (hello/approve only; no stock auto-approve)",
         "build 152 — Hub: Master token required for reply/adjust-reply/image",
         "build 152 — Image poll window ~19s + 400ms race; adjust re-hello when stale",
@@ -469,6 +471,7 @@
     }
   ],
   "changelog": [
+    "v1.9.12 — build 153 — PC images via extension LOOKUP shape fix",
     "v1.9.12 — build 152 — Hub approval source of truth + image poll + adjust re-hello",
     "v1.8.0 — Version 1.8.0 — stock adjust UX + landscape background",
     "v1.8.0 — Landscape photo site background (cover, all screens) + glass-style cards",

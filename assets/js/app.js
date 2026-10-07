@@ -1358,21 +1358,30 @@ function renderSuggestions(matches, query) {
           }
           return;
         }
-        let look = await dmartLive.lookupProductViaBridge(sku, wid, 15000);
+        let look = await dmartLive.lookupProductViaBridge(sku, wid, 15000, { skipHub: false });
         if (!stillSame()) return;
-        // Extra Hub lookup if bridge path returned nothing (phones)
-        if (!(look && look.ok && look.product && look.product.image)) {
+        // Accept normalized or legacy shapes
+        const pickImg = (L) => {
+          if (!L) return '';
+          const p = L.product || L.data || {};
+          let u = L.image || p.image || p.imageUrl || '';
+          if (u && typeof u === 'object') u = u.url || u.imageUrl || '';
+          u = String(u || '').trim();
+          return /^https?:\/\//i.test(u) ? u : '';
+        };
+        let url = pickImg(look);
+        // Extra Hub only if still no image (phones / bridge miss)
+        if (!url) {
           try {
             if (lanHub.getHubUrl && lanHub.getHubUrl() && lanHub.hubRequestLookup) {
               const h = await lanHub.hubRequestLookup(sku, wid, 15000);
-              if (h && h.ok && h.product && h.product.image) look = h;
-              else if (h && h.image) look = { ok: true, product: { image: h.image, sku } };
+              url = pickImg(h);
+              if (!url && h && h.ok && h.product) look = h;
             }
           } catch (e) {}
         }
         if (!stillSame()) return;
-        if (look && look.ok && look.product && look.product.image) {
-          const url = String(look.product.image).trim();
+        if (url) {
           onGotDmartUrl(url);
         } else {
           const img = document.getElementById('prodImg');
