@@ -93,15 +93,29 @@ function requestStockAdjustBridgeOnly({ sku, warehouseId, quantity, direction })
   });
 }
 
-/** Phone → Hub → Master; Master uses requestStockAdjustBridgeOnly (no hub loop). */
+function isHubMasterPc() {
+  try {
+    return localStorage.getItem('smouha_hub_is_master') === '1';
+  } catch (e) {
+    return false;
+  }
+}
+
+/** Phone → Hub → Master. Master/desktop+extension never use Hub for local adjust. */
 async function requestStockAdjust({ sku, warehouseId, quantity, direction, forceBridge }) {
-  if (forceBridge) {
+  // Master PC or explicit force → extension only (no phone identity / KICKED)
+  if (forceBridge || isHubMasterPc()) {
     return requestStockAdjustBridgeOnly({ sku, warehouseId, quantity, direction });
   }
   try {
     const hub = await import('./lan/lanHub.js');
     if (hub.getHubUrl && hub.getHubUrl()) {
-      const desktop = window.matchMedia('(min-width: 900px)').matches;
+      const desktop = isDesktopViewport();
+      // Desktop with live extension: always bridge — never Hub (avoids KICKED on laptop)
+      if (desktop && isBridgeOnline()) {
+        return requestStockAdjustBridgeOnly({ sku, warehouseId, quantity, direction });
+      }
+      // Phones (or desktop without extension): Hub path
       if (!desktop || !isBridgeOnline()) {
         return await hub.hubRequestAdjust({ sku, quantity, direction, warehouseId });
       }
@@ -507,14 +521,18 @@ function bindAdjustPanel(root, sku) {
     const done = () => { panel.dataset.busy = '0'; };
     let hubConfigured = false;
     try {
-      // Prefer live getHubUrl when available
       hubConfigured = !!(localStorage.getItem('smouha_lan_hub_url_v1') || '').trim();
     } catch (e) {}
     const desktop = isDesktopViewport();
-    // Hub path (phone OR desktop-mode without extension): send to PC Master → extension
-    if (hubConfigured && (!desktop || !isBridgeOnline())) {
-      // continue to confirm + hubRequestAdjust below
-    } else if (desktop && !isBridgeOnline()) {
+    const masterPc = isHubMasterPc();
+    const bridgeOn = isBridgeOnline();
+    // Local PC (Master or desktop+extension): always extension — never Hub phone path
+    const useBridgeDirect = masterPc || (desktop && bridgeOn);
+
+    if (useBridgeDirect) {
+      // continue — extension path
+    } else if (desktop && !bridgeOn) {
+      // Desktop without extension: do NOT use Hub as a "phone" (causes KICKED on Master)
       if (msg) {
         msg.hidden = false;
         msg.textContent = 'Extension offline — open DMart portal on this PC';
@@ -538,19 +556,27 @@ function bindAdjustPanel(root, sku) {
       done();
       return;
     }
-    try {
-      const blocked = JSON.parse(localStorage.getItem('smouha_hub_blocked') || 'null');
-      if (blocked && blocked.code) {
-        if (msg) {
-          msg.hidden = false;
-          msg.className = 'dmart-adjust-msg is-err';
-          msg.textContent = blocked.message || friendlyHubMessage(blocked.code, blocked.code);
+    // Phone Hub path only: respect kick / pending block
+    if (!useBridgeDirect) {
+      try {
+        const blocked = JSON.parse(localStorage.getItem('smouha_hub_blocked') || 'null');
+        if (blocked && blocked.code) {
+          if (msg) {
+            msg.hidden = false;
+            msg.className = 'dmart-adjust-msg is-err';
+            msg.textContent = blocked.message || friendlyHubMessage(blocked.code, blocked.code);
+          }
+          done();
+          playFailOverlay();
+          return;
         }
-        done();
-        playFailOverlay();
-        return;
-      }
-    } catch (e) {}
+      } catch (e) {}
+    } else {
+      // Master/desktop bridge path: ignore stale phone kick flag
+      try {
+        localStorage.removeItem('smouha_hub_blocked');
+      } catch (e) {}
+    }
     const quantity = clampQty();
     const warehouseId = getSelectedId();
     if (!warehouseId) {
@@ -576,7 +602,13 @@ function bindAdjustPanel(root, sku) {
       msg.innerHTML = '<span class="dmart-adj-loader" aria-label="Working" role="status"><span class="dmart-adj-loader-bar"></span><span class="dmart-adj-loader-bar dmart-adj-loader-bar--short"></span></span>';
     }
 
-    const res = await requestStockAdjust({ sku, warehouseId, quantity, direction });
+    const res = await requestStockAdjust({
+      sku,
+      warehouseId,
+      quantity,
+      direction,
+      forceBridge: useBridgeDirect,
+    });
     panel.classList.remove('is-busy');
     panel.querySelectorAll('button').forEach((b) => { b.disabled = false; });
     done();
