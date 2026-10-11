@@ -1,18 +1,14 @@
 {
   "version": "1.9.12",
-  "build": 158,
+  "build": 155,
   "updated": "2026-10-03",
-  "products": 41924,
+  "products": 41125,
   "changelogByVersion": [
     {
       "version": "1.9.12",
-      "build": 158,
+      "build": 155,
       "date": "2026-10-03",
       "items": [
-        "build 158 — stock adjust: pass productId + use DMart canonical SKU (fixes DMart-only products)",
-        "build 157 — shorter DMart card animation to cut lag",
-        "build 157 — products.json updated (41924 rows); removed unused products-search.json",
-        "build 156 — Pair with extension 1.11.5: DMart LOOKUP matches last-6 barcode/SKU suffix",
         "build 155 — Show Looking up on DMart…; desktop always tries extension LOOKUP first",
         "build 155 — DMart lookup on catalog miss even when last-6 suffix matched another product",
         "build 154 — Ignore stale KICKED flag on laptop when extension is online",
@@ -479,9 +475,6 @@
     }
   ],
   "changelog": [
-    "v1.9.12 — build 158 — adjust productId for DMart-only products",
-    "v1.9.12 — build 157 — catalog refresh + lighter DMart card",
-    "v1.9.12 — build 156 — Extension 1.11.5 last-6 DMart lookup (service worker + bridge)",
     "v1.9.12 — build 155 — Fix live DMart product lookup when SKU not in products file",
     "v1.9.12 — build 154 — Laptop adjust via extension only (fix KICKED on Master)",
     "v1.9.12 — build 153 — PC images via extension LOOKUP shape fix",
@@ -516,5 +509,5 @@
     "v1.6.3 — Developer panel + search icons",
     "v1.6.0 — Core multi-warehouse scanner"
   ],
-  "productsHash": "e05403933fa19a6c0b613b2336122a51"
+  "productsHash": "a09a268d6a452614b2ce5ce3d0724dce"
 }

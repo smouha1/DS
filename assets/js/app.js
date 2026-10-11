@@ -22,7 +22,6 @@ import * as db from './indexeddb.js';
 import * as updater from './updater.js';
 import * as dmartLib from './dmart.js';
 import * as dmartLive from './dmartLive.js';
-import * as dmartAdjust from './dmartAdjust.js';
 import { initLanHubUi, mountHubSettingsSection, isHubMasterFlag } from './lan/lanHubUi.js';
 import * as lanHub from './lan/lanHub.js';
 import * as warehouse from './warehouse.js';
@@ -572,11 +571,6 @@ function renderSuggestions(matches, query) {
   }
 
   function selectProduct(product) {
-    try { window.__smouhaLastProduct = product || null; } catch (e) {}
-    try {
-      if (product && product.sku && product.productId) dmartAdjust.rememberProductId(product.sku, product.productId);
-    } catch (e) {}
-
     els.searchInput.value = product.sku;
     els.clearBtn.classList.add('visible'); els.clearBtn.removeAttribute('hidden');
     renderProduct(product);

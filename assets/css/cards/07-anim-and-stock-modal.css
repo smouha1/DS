@@ -24,7 +24,7 @@
 }
 
 #resultArea > .product-card {
-  animation: productCardIn 0.22s ease-out both;
+  animation: productCardIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
   transform-origin: center top;
 }
 
@@ -218,7 +218,7 @@
   animation:dmartFadeOut .28s ease forwards;
 }
 .dmart-live-card.dmart-card-redraw{
-  animation:dmartRedraw .32s ease;
+  animation:dmartRedraw .85s ease;
 }
 @keyframes dmartFadeOut{
   from{opacity:1;transform:scale(1);}
