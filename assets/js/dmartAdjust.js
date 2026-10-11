@@ -49,6 +49,22 @@ function invalidateCacheKey(key) {
 }
 
 /** Extension postMessage only — used by Master Hub so we never loop phone→hub→hub */
+const productIdBySku = new Map();
+export function rememberProductId(sku, productId) {
+  if (!sku || !productId) return;
+  productIdBySku.set(String(sku), String(productId));
+}
+function resolveProductId(sku) {
+  const s = String(sku || '');
+  if (productIdBySku.has(s)) return productIdBySku.get(s);
+  try {
+    // Prefer product object on window last-selected if present
+    const p = window.__smouhaLastProduct;
+    if (p && String(p.sku) === s && p.productId) return String(p.productId);
+  } catch (e) {}
+  return null;
+}
+
 function requestStockAdjustBridgeOnly({ sku, warehouseId, quantity, direction }) {
   return new Promise((resolve) => {
     const requestId = 'adj_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
@@ -79,6 +95,7 @@ function requestStockAdjustBridgeOnly({ sku, warehouseId, quantity, direction })
           type: 'SMOUHA_PICK_DMART_STOCK_ADJUST',
           requestId,
           sku: String(sku),
+          productId: resolveProductId(sku),
           warehouseId: String(warehouseId),
           quantity: Number(quantity) || 1,
           direction: direction === 'decrease' ? 'decrease' : 'increase',
