@@ -1,14 +1,17 @@
 {
   "version": "1.9.12",
-  "build": 159,
+  "build": 160,
   "updated": "2026-10-12",
   "products": 41931,
   "changelogByVersion": [
     {
       "version": "1.9.12",
-      "build": 159,
+      "build": 160,
       "date": "2026-10-12",
       "items": [
+        "build 160 — search: never block local catalog hits on DMart product LOOKUP (SKU/barcode/last-6 show barcode immediately)",
+        "build 160 — DMart product LOOKUP only on catalog miss (type none); red DMart badge unchanged",
+        "build 160 — live stock/price/image repair still one request after local render (unchanged)",
         "build 159 — catalog refresh: products.json → 41931 rows",
         "build 159 — Service Worker cache v109-159-hub11",
         "build 159 — live stock: force refresh skips extension TTL cache (fresh DMart on every search)",
@@ -483,6 +486,9 @@
     }
   ],
   "changelog": [
+    "build 160 — search: never block local catalog hits on DMart product LOOKUP (SKU/barcode/last-6 show barcode immediately)",
+    "build 160 — DMart product LOOKUP only on catalog miss (type none); red DMart badge unchanged",
+    "build 160 — live stock/price/image repair still one request after local render (unchanged)",
     "build 159 — catalog refresh: products.json → 41931 rows",
     "build 159 — Service Worker cache v109-159-hub11",
     "build 159 — live stock: force refresh skips extension TTL cache (fresh DMart on every search)",
