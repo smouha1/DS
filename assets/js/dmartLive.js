@@ -133,7 +133,7 @@ function newRequestId() {
 /** Talk to the DMart Bridge extension via window.postMessage (+ CustomEvent backup). */
 let bridgeAbortSeq = 0;
 
-function requestViaExtensionOnce(sku, warehouseId, timeoutMs) {
+function requestViaExtensionOnce(sku, warehouseId, timeoutMs, force) {
   return new Promise((resolve) => {
     const requestId = newRequestId();
     const seqAtStart = bridgeAbortSeq;
@@ -201,6 +201,7 @@ function requestViaExtensionOnce(sku, warehouseId, timeoutMs) {
       requestId,
       warehouseId: String(warehouseId),
       sku: String(sku),
+      force: !!force,
     };
     try {
       window.postMessage(payload, window.location.origin);
@@ -215,7 +216,7 @@ function requestViaExtensionOnce(sku, warehouseId, timeoutMs) {
   });
 }
 
-async function requestViaExtension(sku, warehouseId) {
+async function requestViaExtension(sku, warehouseId, force) {
   // Detect attribute set by content script
   try {
     if (document.documentElement.getAttribute('data-dmart-bridge') === '1') {
@@ -223,12 +224,12 @@ async function requestViaExtension(sku, warehouseId) {
     }
   } catch (e) {}
 
-  let result = await requestViaExtensionOnce(sku, warehouseId, BRIDGE_TIMEOUT_MS);
+  let result = await requestViaExtensionOnce(sku, warehouseId, BRIDGE_TIMEOUT_MS, force);
   if (result.ok) return result;
   // One automatic retry on timeout if we believe the bridge is present
   if (result.reason === 'bridge-timeout' && (bridgeReady || document.documentElement.getAttribute('data-dmart-bridge') === '1')) {
     await new Promise((r) => setTimeout(r, 350));
-    result = await requestViaExtensionOnce(sku, warehouseId, Math.min(BRIDGE_TIMEOUT_MS + 4000, 18000));
+    result = await requestViaExtensionOnce(sku, warehouseId, Math.min(BRIDGE_TIMEOUT_MS + 4000, 18000), force);
   }
   return result;
 }
@@ -762,7 +763,8 @@ export async function fetchLiveProductInfo(sku, warehouseId, opts = {}) {
   }
 
   // 1) Prefer extension bridge (PC — solves CORS, uses portal session)
-  const bridge = await requestViaExtension(sku, warehouseId);
+  // Pass force so the extension skips its own TTL cache and hits DMart fresh
+  const bridge = await requestViaExtension(sku, warehouseId, force);
   if (bridge.ok) {
     const data = {
       onHand: bridge.onHand,

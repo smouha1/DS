@@ -1,14 +1,18 @@
 {
   "version": "1.9.12",
-  "build": 158,
-  "updated": "2026-10-03",
-  "products": 41924,
+  "build": 159,
+  "updated": "2026-10-12",
+  "products": 41931,
   "changelogByVersion": [
     {
       "version": "1.9.12",
-      "build": 158,
-      "date": "2026-10-03",
+      "build": 159,
+      "date": "2026-10-12",
       "items": [
+        "build 159 — catalog refresh: products.json → 41931 rows",
+        "build 159 — Service Worker cache v109-159-hub11",
+        "build 159 — live stock: force refresh skips extension TTL cache (fresh DMart on every search)",
+        "build 159 — fix: remove duplicate export of rememberProductId (app failed to boot)",
         "build 158 — stock adjust: pass productId + use DMart canonical SKU (fixes DMart-only products)",
         "build 157 — shorter DMart card animation to cut lag",
         "build 157 — products.json updated (41924 rows); removed unused products-search.json",
@@ -479,6 +483,10 @@
     }
   ],
   "changelog": [
+    "build 159 — catalog refresh: products.json → 41931 rows",
+    "build 159 — Service Worker cache v109-159-hub11",
+    "build 159 — live stock: force refresh skips extension TTL cache (fresh DMart on every search)",
+    "build 159 — fix: remove duplicate export of rememberProductId (app failed to boot)",
     "v1.9.12 — build 158 — adjust productId for DMart-only products",
     "v1.9.12 — build 157 — catalog refresh + lighter DMart card",
     "v1.9.12 — build 156 — Extension 1.11.5 last-6 DMart lookup (service worker + bridge)",
@@ -516,5 +524,5 @@
     "v1.6.3 — Developer panel + search icons",
     "v1.6.0 — Core multi-warehouse scanner"
   ],
-  "productsHash": "e05403933fa19a6c0b613b2336122a51"
+  "productsHash": "02ca46ae6dd51d3de818691697a0beb7"
 }
