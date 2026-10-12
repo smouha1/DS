@@ -602,20 +602,23 @@ function renderSuggestions(matches, query) {
     setTimeout(async () => {
       if (myGen !== searchGen) return;
       let result = fn(query);
-      // DMart live lookup when there is no *exact* local SKU/barcode hit.
-      // Do not skip lookup just because last-6 suffix matched another product.
+      // Product identity LOOKUP via extension ONLY when catalog has zero local hits
+      // (type === 'none'). Local SKU / full barcode / last-6 suffix matches render
+      // immediately so the barcode appears fast. Live stock + price + broken-image
+      // repair still run in one request from renderProduct → requestLiveForProduct
+      // / image path — that is independent of this product LOOKUP.
       const q = String(query || '').trim();
       const isSkuLike = /^[0-9A-Za-z]+$/.test(q) && q.length >= 6;
-      const exactLocal =
+      const hasLocalHit =
         result.type === 'sku' ||
         result.type === 'barcode' ||
+        result.type === 'suffix' ||
         (result.type === 'dmart' && result.results && result.results.length);
-      if (isSkuLike && !exactLocal) {
+      if (isSkuLike && !hasLocalHit && result.type === 'none') {
         try {
           const wid = warehouse.getSelectedId && warehouse.getSelectedId();
           if (!wid) {
-            // Keep local suffix/none result; warehouse required for DMart
-            if (result.type === 'none' && els.searchStats) {
+            if (els.searchStats) {
               try { els.searchStats.textContent = 'Select a warehouse to look up on DMart'; } catch (e) {}
             }
           } else if (dmartLive.lookupProductViaBridge) {
@@ -645,12 +648,13 @@ function renderSuggestions(matches, query) {
                     image: rec.image,
                     fromDmart: true,
                   };
+              // Ensure red DMart source badge is always set for catalog-miss path
+              if (product && !product.fromDmart) product.fromDmart = true;
               result = { type: 'dmart', results: [product] };
             }
-            // else: keep previous suffix matches or none
           }
         } catch (e) {
-          /* keep previous result */
+          /* keep none */
         }
       }
 
