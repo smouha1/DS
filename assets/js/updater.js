@@ -87,8 +87,9 @@ function fillImagesFromBarcodes() {
 
 async function fetchAndImportProducts() {
   // Single catalog: products.json only. Image URLs derived client-side from barcodes.
-  const { text } = await fetchJson(PRODUCTS_URL);
-  const raw = JSON.parse(text);
+  // Use json from fetchJson — avoid second JSON.parse on the main thread.
+  const { json } = await fetchJson(PRODUCTS_URL);
+  const raw = Array.isArray(json) ? json : [];
   const records = raw.map(normalizeRawRow);
   await search.buildAsync(records);
   try { fillImagesFromBarcodes(); } catch (e) {}
@@ -136,17 +137,15 @@ async function backgroundRefresh(remoteVersion) {
 }
 
 export async function loadInitial() {
-  // 1) version.json (tiny) — optional on first paint
-  let remoteVersion = null;
-  try {
-    const { json } = await fetchJson(VERSION_URL);
-    remoteVersion = json;
-    lastVersionInfo = json;
-  } catch (e) {
-    /* offline or missing */
-  }
+  // Start version.json in parallel with IndexedDB — do not block warm cache on version RTT.
+  const versionPromise = fetchJson(VERSION_URL)
+    .then(({ json }) => {
+      lastVersionInfo = json;
+      return json;
+    })
+    .catch(() => null);
 
-  // 2) IndexedDB-first: serve cache immediately, refresh in background if stale
+  // IndexedDB-first: serve cache immediately, refresh in background if stale
   try {
     const cachedCount = await db.countProducts();
     if (cachedCount > 0) {
@@ -157,7 +156,9 @@ export async function loadInitial() {
       const indexMs = Math.round(((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - t0);
       try { window.__smouhaIndexMs = indexMs; } catch (e) {}
       lastLoadSource = 'indexeddb';
-      if (!lastVersionInfo) lastVersionInfo = storedVersion;
+
+      const remoteVersion = await versionPromise;
+      if (!lastVersionInfo) lastVersionInfo = remoteVersion || storedVersion;
 
       const buildMatches = !remoteVersion || (storedVersion && storedVersion.build === remoteVersion.build);
       const countMatches = !remoteVersion || !remoteVersion.products || cachedCount === Number(remoteVersion.products);
@@ -176,8 +177,9 @@ export async function loadInitial() {
     console.warn('[updater] IndexedDB unavailable, falling back to products.json:', e);
   }
 
-  // 3) First launch / empty cache: full network import
+  // First launch / empty cache: full network import
   try {
+    const remoteVersion = await versionPromise;
     const t0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
     const records = await fetchAndImportProducts();
     const indexMs = Math.round(((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - t0);

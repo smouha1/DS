@@ -595,7 +595,9 @@ async function renderPanel() {
         try {
           const raw = localStorage.getItem('tm_recent_searches');
           const arr = raw ? JSON.parse(raw) : [];
-          if (Array.isArray(arr) && arr[0] && arr[0].sku) sampleSku = String(arr[0].sku);
+          if (Array.isArray(arr) && arr[0]) {
+            sampleSku = typeof arr[0] === 'string' ? String(arr[0]) : String(arr[0].sku || '');
+          }
         } catch (e) {}
         if (sampleSku && search.findBySku) {
           const p = search.findBySku(sampleSku);
@@ -638,8 +640,8 @@ async function renderPanel() {
         }
         // Search catalog file reachability
         try {
-          const res = await fetch('data/products-search.json', { method: 'HEAD', cache: 'no-store' });
-          results.push(['products-search.json', res.ok, 'HTTP ' + res.status]);
+          const res = await fetch('data/products.json', { method: 'HEAD', cache: 'no-store' });
+          results.push(['products.json', res.ok, 'HTTP ' + res.status]);
         } catch (e) {
           results.push(['products-search.json', false, e.message || 'err']);
         }

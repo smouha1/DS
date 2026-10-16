@@ -403,6 +403,8 @@ export function mountHubSettingsSection(container) {
 }
 
 export function initLanHubUi() {
+  if (initLanHubUi._done) return;
+  initLanHubUi._done = true;
   try {
     ensureFab();
     ensureBadge();
@@ -421,7 +423,9 @@ export function initLanHubUi() {
     });
     if (hub.getHubUrl()) {
       hub.probeHub().then(updateHubBadge);
-      hub.hubDeviceHello().catch(() => {});
+      if (!isHubMasterFlag()) {
+        hub.hubDeviceHello().catch(() => {});
+      }
     }
     // Resume Master stream if this PC was marked Master (was never started before)
     if (isHubMasterFlag() && hub.getHubUrl()) {

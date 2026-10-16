@@ -107,5 +107,5 @@ export function buildSearchUrl(base, entity, sku, warehouseId) {
 export function buildDetailUrl(base, entity, productId, warehouseId) {
   const w = encodeURIComponent(warehouseId);
   const id = encodeURIComponent(productId);
-  return `${base}/${entity}/warehouse/${w}/products/${id}`;
+  return `${base}/${entity}/warehouse/${w}/product/${id}`;
 }

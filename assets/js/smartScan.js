@@ -80,6 +80,7 @@ export function createSmartScan(deps = {}) {
   let zxingReader = null;
   let zxingControls = null;
   let nativeDetector = null;
+  let _scanAudioCtx = null;
   let nativeCheckId = null;
   let ocrTimer = null;
   let running = false;
@@ -307,8 +308,12 @@ export function createSmartScan(deps = {}) {
       if (!running || !nativeDetector || !els.video.videoWidth) return;
       try {
         const roiBitmap = await centerRoiBitmap();
-        const codes = await nativeDetector.detect(roiBitmap);
-        if (codes && codes.length && running) onCodeDetected(codes[0].rawValue);
+        try {
+          const codes = await nativeDetector.detect(roiBitmap);
+          if (codes && codes.length && running) onCodeDetected(codes[0].rawValue);
+        } finally {
+          try { if (roiBitmap && typeof roiBitmap.close === 'function') roiBitmap.close(); } catch (e2) {}
+        }
       } catch (e) { /* opportunistic only — ignore and keep relying on ZXing */ }
     }, 150);
   }

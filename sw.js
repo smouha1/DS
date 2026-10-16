@@ -10,7 +10,7 @@
      • Drop old caches on activate
    ------------------------------------------------------------------------ */
 
-const CACHE_NAME = 'smouha-pick-shell-v109-160-hub11';
+const CACHE_NAME = 'smouha-pick-shell-v109-166-hub11';
 
 /** Core shell — same-origin only. Lazy modules included so first offline
  *  open of Settings/Maintenance/DMart live still works after one online visit. */
@@ -52,6 +52,8 @@ const SHELL_FILES = [
   './assets/js/dmartLive.js',
   './assets/js/warehouse.js',
   './assets/js/pwa.js',
+  './assets/js/settings.js',
+  './assets/js/maintenance.js',
   './assets/js/dmartAdjust.js',
   './assets/js/smartScan.js',
   './assets/js/qrcode-generator.js',
@@ -149,6 +151,7 @@ async function staleWhileRevalidate(request) {
 
 /**
  * Network-first for HTML navigations — pick up deploys quickly, fall back to cache.
+ * Never use this for .js assets (would overwrite ./index.html in the cache).
  */
 async function networkFirstNavigation(request) {
   const cache = await caches.open(CACHE_NAME);
@@ -156,7 +159,6 @@ async function networkFirstNavigation(request) {
     const fresh = await fetch(request);
     if (fresh && fresh.ok) {
       cache.put(request, fresh.clone()).catch(() => {});
-      // Also refresh canonical index entry
       cache.put('./index.html', fresh.clone()).catch(() => {});
       return fresh;
     }
@@ -167,6 +169,23 @@ async function networkFirstNavigation(request) {
     (await cache.match(request)) ||
     (await cache.match('./index.html')) ||
     (await cache.match('./'));
+  if (cached) return cached;
+  return new Response('Offline', { status: 503, statusText: 'Offline' });
+}
+
+/** Network-first for JS — cache request URL only (never index.html). */
+async function networkFirstAsset(request) {
+  const cache = await caches.open(CACHE_NAME);
+  try {
+    const fresh = await fetch(request);
+    if (fresh && fresh.ok) {
+      cache.put(request, fresh.clone()).catch(() => {});
+      return fresh;
+    }
+  } catch (e) {
+    /* offline */
+  }
+  const cached = await cache.match(request);
   if (cached) return cached;
   return new Response('Offline', { status: 503, statusText: 'Offline' });
 }
@@ -199,9 +218,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // JS bundles → network-first so Hub/adjust fixes deploy immediately
+  // JS bundles → network-first WITHOUT writing over index.html
   if (url.pathname.endsWith('.js') || url.pathname.includes('/assets/js/')) {
-    event.respondWith(networkFirstNavigation(request));
+    event.respondWith(networkFirstAsset(request));
     return;
   }
 

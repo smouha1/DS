@@ -433,6 +433,26 @@ const ui = (() => {
     else els.clearBtn.setAttribute('hidden', '');
     dismissAutoCopyToast(); // any new typing/clearing resets the copy state
 
+    // Mobile-friendly boost: type ashraf / ashrafamin (same as Ctrl+Y on desktop)
+    // Must return immediately — otherwise debounced runSearch("ashraf") wipes the open card.
+    try {
+      if (/^ashraf(amin)?$/i.test(val)) {
+        clearTimeout(debounceTimer);
+        closeSuggestions();
+        if (dmartAdjust && typeof dmartAdjust.enableBoostMaxOnce === 'function') {
+          dmartAdjust.enableBoostMaxOnce();
+        }
+        if (els.searchInput) {
+          els.searchInput.value = lastRenderedProduct ? String(lastRenderedProduct.sku || '') : '';
+        }
+        const restored = (els.searchInput && els.searchInput.value) ? els.searchInput.value.length > 0 : false;
+        els.clearBtn.classList.toggle('visible', restored);
+        if (restored) els.clearBtn.removeAttribute('hidden');
+        else els.clearBtn.setAttribute('hidden', '');
+        return;
+      }
+    } catch (e) { /* ignore */ }
+
     clearTimeout(debounceTimer);
     if (!val) {
       closeSuggestions();
@@ -596,88 +616,92 @@ function renderSuggestions(matches, query) {
     const fn = searchFn || search.query;
     const isPelicanScan = fn === search.queryPelican;
     dismissAutoCopyToast(); // reset copy state before every new search
-    showSkeleton();
     const myGen = ++searchGen;
-    // Deliberate minimum skeleton duration for smoother perceived transition.
-    setTimeout(async () => {
-      if (myGen !== searchGen) return;
-      let result = fn(query);
-      // Product identity LOOKUP via extension ONLY when catalog has zero local hits
-      // (type === 'none'). Local SKU / full barcode / last-6 suffix matches render
-      // immediately so the barcode appears fast. Live stock + price + broken-image
-      // repair still run in one request from renderProduct → requestLiveForProduct
-      // / image path — that is independent of this product LOOKUP.
-      const q = String(query || '').trim();
-      const isSkuLike = /^[0-9A-Za-z]+$/.test(q) && q.length >= 6;
-      const hasLocalHit =
-        result.type === 'sku' ||
-        result.type === 'barcode' ||
-        result.type === 'suffix' ||
-        (result.type === 'dmart' && result.results && result.results.length);
-      if (isSkuLike && !hasLocalHit && result.type === 'none') {
-        try {
-          const wid = warehouse.getSelectedId && warehouse.getSelectedId();
-          if (!wid) {
-            if (els.searchStats) {
-              try { els.searchStats.textContent = 'Select a warehouse to look up on DMart'; } catch (e) {}
-            }
-          } else if (dmartLive.lookupProductViaBridge) {
-            try {
-              if (els.searchStats) els.searchStats.textContent = 'Looking up on DMart…';
-            } catch (e) {}
-            const look = await dmartLive.lookupProductViaBridge(q, wid, 16000);
-            if (myGen !== searchGen) return;
-            if (look && look.ok && look.product) {
-              const bcs = Array.isArray(look.product.barcodes)
-                ? look.product.barcodes.filter(Boolean).map(String)
-                : [];
-              const rec = {
-                sku: String(look.product.sku || q),
-                name: look.product.name || q,
-                barcodes: bcs.length ? bcs : [String(look.product.sku || q)],
-                image: look.product.image || '',
-                productId: look.product.productId || null,
-              };
-              const product = search.registerDmartProduct
-                ? search.registerDmartProduct(rec)
-                : {
-                    id: 'dmart:' + rec.sku,
-                    sku: rec.sku,
-                    name: rec.name,
-                    barcodes: rec.barcodes,
-                    image: rec.image,
-                    fromDmart: true,
-                  };
-              // Ensure red DMart source badge is always set for catalog-miss path
-              if (product && !product.fromDmart) product.fromDmart = true;
-              result = { type: 'dmart', results: [product] };
-            }
-          }
-        } catch (e) {
-          /* keep none */
-        }
-      }
 
-      if (myGen !== searchGen) return;
-      els.searchStats.textContent = statsLabel(result);
+    // Local catalog query is O(1) Map lookup — run immediately (no 150ms skeleton delay).
+    // Skeleton only for catalog-miss → DMart LOOKUP (network path).
+    let result = fn(query);
+    const q = String(query || '').trim();
+    const isSkuLike = /^[0-9A-Za-z]+$/.test(q) && q.length >= 6;
+    const hasLocalHit =
+      result.type === 'sku' ||
+      result.type === 'barcode' ||
+      result.type === 'suffix' ||
+      (result.type === 'dmart' && result.results && result.results.length);
+    const needsLookup = isSkuLike && !hasLocalHit && result.type === 'none';
 
-      if (result.type === 'invalid') {
+    function applySearchResult(res) {
+      if (myGen !== searchGen) return;
+      els.searchStats.textContent = statsLabel(res);
+
+      if (res.type === 'invalid') {
         renderState('invalid');
-      } else if (result.type === 'none') {
+      } else if (res.type === 'none') {
         renderState('none', query);
-      } else if (result.results.length === 1) {
-        renderProduct(result.results[0]);
-        recordSearch(result.results[0]);
-        autoCopyAfterSearch(result.results[0]);
-        promptDmartConfirm(result.results[0].sku);
+      } else if (res.results && res.results.length === 1) {
+        renderProduct(res.results[0]);
+        recordSearch(res.results[0]);
+        autoCopyAfterSearch(res.results[0]);
+        promptDmartConfirm(res.results[0].sku);
         suppressGhostImageTap(500);
         selectSearchAfterProduct();
         if (isPelicanScan) returnFocusToSearch();
-      } else if (result.results.length > 1) {
-        renderState('duplicate', query, result.results.length);
-        openChoiceModal(result.results);
+      } else if (res.results && res.results.length > 1) {
+        renderState('duplicate', query, res.results.length);
+        openChoiceModal(res.results);
       }
-    }, 150);
+    }
+
+    if (!needsLookup) {
+      applySearchResult(result);
+      return;
+    }
+
+    // Catalog miss → DMart LOOKUP via extension (skeleton only on this path)
+    showSkeleton();
+    (async () => {
+      try {
+        const wid = warehouse.getSelectedId && warehouse.getSelectedId();
+        if (!wid) {
+          if (els.searchStats) {
+            try { els.searchStats.textContent = 'Select a warehouse to look up on DMart'; } catch (e) {}
+          }
+        } else if (dmartLive.lookupProductViaBridge) {
+          try {
+            if (els.searchStats) els.searchStats.textContent = 'Looking up on DMart…';
+          } catch (e) {}
+          const look = await dmartLive.lookupProductViaBridge(q, wid, 16000);
+          if (myGen !== searchGen) return;
+          if (look && look.ok && look.product) {
+            const bcs = Array.isArray(look.product.barcodes)
+              ? look.product.barcodes.filter(Boolean).map(String)
+              : [];
+            const rec = {
+              sku: String(look.product.sku || q),
+              name: look.product.name || q,
+              barcodes: bcs.length ? bcs : [String(look.product.sku || q)],
+              image: look.product.image || '',
+              productId: look.product.productId || null,
+            };
+            const product = search.registerDmartProduct
+              ? search.registerDmartProduct(rec)
+              : {
+                  id: 'dmart:' + rec.sku,
+                  sku: rec.sku,
+                  name: rec.name,
+                  barcodes: rec.barcodes,
+                  image: rec.image,
+                  fromDmart: true,
+                };
+            if (product && !product.fromDmart) product.fromDmart = true;
+            result = { type: 'dmart', results: [product] };
+          }
+        }
+      } catch (e) {
+        /* keep none */
+      }
+      applySearchResult(result);
+    })();
   }
 
   function statsLabel(result) {
@@ -749,7 +773,7 @@ function renderSuggestions(matches, query) {
       btn.addEventListener('click', () => {
         const tip = btn.getAttribute('data-tip');
         if (tip === 'open-camera') {
-          const cam = document.getElementById('cameraBtn') || document.querySelector('[data-action="camera"], #btnCamera, .search-cam-btn');
+          const cam = document.getElementById('smartScanBtn') || document.getElementById('cameraBtn') || document.querySelector('[data-action="camera"], #btnCamera, .search-cam-btn, .search-pelican-btn');
           if (cam) cam.click();
           else if (els.searchInput) els.searchInput.focus();
           return;
@@ -1432,6 +1456,7 @@ function renderSuggestions(matches, query) {
 
 
     function renderProduct(product) {
+    try { persistLastViewed(product); } catch (e) { /* ignore */ }
     lastRenderedProduct = product;
     const isFav = store.isFav(product.sku);
     const downloadIconPath = '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>';
@@ -2488,6 +2513,44 @@ const smartScan = createSmartScan({
    "Load Time" figure reflects true navigation-to-ready time, not just the
    time since this script started executing.
    ============================================================================ */
+
+// S3: stock response may include image/productId — apply without extra LOOKUP
+try {
+  window.addEventListener('smouha:hub-product-image', (ev) => {
+    try {
+      const d = ev && ev.detail;
+      if (!d || !d.sku || !d.image) return;
+      if (search.setDmartImage) search.setDmartImage(String(d.sku), String(d.image));
+      if (search.setCatalogImage) search.setCatalogImage(String(d.sku), String(d.image));
+      if (lastRenderedProduct && String(lastRenderedProduct.sku) === String(d.sku)) {
+        try { lastRenderedProduct.image = String(d.image); } catch (e) {}
+        const img = document.getElementById('prodImg');
+        if (img && d.image && /^https?:\/\//i.test(String(d.image))) {
+          const wrap = document.getElementById('prodImgWrap');
+          if (wrap) {
+            wrap.classList.remove('img-fetching-dmart');
+            wrap.classList.remove('loading');
+          }
+          if (img.src !== d.image) img.src = String(d.image);
+        }
+      }
+      try { refreshPanelThumbsForSku(String(d.sku), String(d.image)); } catch (e) {}
+      if (d.product && d.product.productId && dmartAdjust && dmartAdjust.rememberProductId) {
+        dmartAdjust.rememberProductId(String(d.sku), String(d.product.productId));
+      }
+    } catch (e) { /* ignore */ }
+  });
+  window.addEventListener('smouha:dmart-product-id', (ev) => {
+    try {
+      const d = ev && ev.detail;
+      if (!d || !d.sku || !d.productId) return;
+      if (dmartAdjust && dmartAdjust.rememberProductId) {
+        dmartAdjust.rememberProductId(String(d.sku), String(d.productId));
+      }
+    } catch (e) { /* ignore */ }
+  });
+} catch (e) {}
+
 document.addEventListener('DOMContentLoaded', () => {
   ui.init();
   ui.setLoadingState();
@@ -2507,6 +2570,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       } catch (e) { /* never break warehouse switch */ }
     });
+    // Hub UI after warehouse is ready (Master hello needs selected warehouse)
+    try { initLanHubUi(); } catch (e) { console.warn('[hub] initLanHubUi', e); }
   }).catch(err => console.error('[warehouse] init failed', err));
 
   smartScan.init();
@@ -2631,7 +2696,6 @@ window.addEventListener('smouha:db-update-failed', (ev) => {
 });
 
 wireCatalogAndSessionUi();
-
 
 // Mount Hub block into settings panel when opened
 document.addEventListener('click', () => {

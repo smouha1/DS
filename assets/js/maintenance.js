@@ -99,7 +99,7 @@ async function renderPanel() {
       <h4>Actions</h4>
       <button class="btn settings-action" id="maintForceUpdate">Force Update</button>
       <button class="btn settings-action" id="maintClearDb">Clear Database</button>
-      <a class="btn settings-action" href="../image-check/" target="_blank" rel="noopener noreferrer" style="text-decoration:none;text-align:center;">Image Check</a>
+      <button type="button" class="btn settings-action" disabled title="Replaced by offline Python tools/image-scan (faster bulk check). Live product images unchanged.">Image Check (disabled — use tools/image-scan)</button>
       <button class="btn settings-action" id="maintExportBroken">Broken Images Export (via Image Check)</button>
     </div>
 
@@ -136,7 +136,7 @@ async function renderPanel() {
   });
 
   panelBodyEl.querySelector('#maintExportBroken').addEventListener('click', () => {
-    window.open('../image-check/', '_blank', 'noopener,noreferrer');
+    try { console.info('[maintenance] Image Check disabled — use tools/image-scan'); } catch (e) {}
   });
 
   panelBodyEl.querySelector('#maintLock').addEventListener('click', () => {

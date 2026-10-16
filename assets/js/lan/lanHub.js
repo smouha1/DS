@@ -144,6 +144,13 @@ export function getLastHubHealth() {
 }
 
 export async function hubDeviceHello() {
+  // Master PC must never register as a phone device (consumes a slot / can KICK itself)
+  try {
+    if (localStorage.getItem('smouha_hub_is_master') === '1') {
+      try { localStorage.removeItem('smouha_hub_blocked'); } catch (e2) {}
+      return { ok: true, skipped: true, reason: 'master' };
+    }
+  } catch (e) {}
   const base = getHubUrl();
   if (!base) return { ok: false, reason: 'no-hub', message: 'Hub URL not set' };
   const id = getHubIdentity();
@@ -792,7 +799,13 @@ export function startHubHealthLoop() {
           window.dispatchEvent(new CustomEvent('smouha:hub-health', { detail: h }));
         } catch (e) {}
       });
-      hubDeviceHello().catch(() => {});
+      try {
+        if (localStorage.getItem('smouha_hub_is_master') !== '1') {
+          hubDeviceHello().catch(() => {});
+        }
+      } catch (e) {
+        hubDeviceHello().catch(() => {});
+      }
     }
   }, 10000);
   if (getHubUrl()) probeHub();

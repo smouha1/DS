@@ -54,7 +54,7 @@ export function rememberProductId(sku, productId) {
   if (!sku || !productId) return;
   productIdBySku.set(String(sku), String(productId));
 }
-function resolveProductId(sku) {
+export function resolveProductId(sku) {
   const s = String(sku || '');
   if (productIdBySku.has(s)) return productIdBySku.get(s);
   try {
@@ -169,6 +169,9 @@ function enableBoostMaxOnce() {
   document.querySelectorAll('.dmart-adjust-qty').forEach((inp) => {
     inp.max = String(ADJUST_MAX_BOOST);
   });
+  document.querySelectorAll('.dmart-adjust-title-hint').forEach((el) => {
+    el.textContent = '1–' + ADJUST_MAX_BOOST + ' units';
+  });
   if (boostMaxTimer) clearTimeout(boostMaxTimer);
   boostMaxTimer = setTimeout(() => {
     clearBoostMaxOnce();
@@ -185,6 +188,9 @@ function clearBoostMaxOnce() {
     inp.max = String(ADJUST_MAX_DEFAULT);
     const n = parseInt(inp.value, 10);
     if (Number.isFinite(n) && n > ADJUST_MAX_DEFAULT) inp.value = String(ADJUST_MAX_DEFAULT);
+  });
+  document.querySelectorAll('.dmart-adjust-title-hint').forEach((el) => {
+    el.textContent = '1–' + ADJUST_MAX_DEFAULT + ' units';
   });
 }
 
@@ -476,18 +482,19 @@ function playCardDrop(root) {
 
 function buildAdjustPanelHtml(sku) {
   const safe = String(sku || '').replace(/"/g, '');
+  const maxQty = getAdjustMax();
   return `
     <div class="dmart-adjust-panel" data-adjust-sku="${safe}" hidden>
       <div class="dmart-adjust-title">
         <span class="dmart-adjust-title-text">Adjust stock</span>
-        <span class="dmart-adjust-title-hint">1–5 units</span>
+        <span class="dmart-adjust-title-hint">1–${maxQty} units</span>
       </div>
       <div class="dmart-adjust-row" role="group" aria-label="Quantity">
         <button type="button" class="dmart-adjust-btn dmart-adjust-minus" data-adj="minus" aria-label="Decrease">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 12h12"/></svg>
         </button>
         <div class="dmart-adjust-qty-wrap">
-          <input type="number" class="dmart-adjust-qty" min="1" max="5" value="1" inputmode="numeric" aria-label="Quantity" />
+          <input type="number" class="dmart-adjust-qty" min="1" max="${maxQty}" value="1" inputmode="numeric" aria-label="Quantity" />
         </div>
         <button type="button" class="dmart-adjust-btn dmart-adjust-plus" data-adj="plus" aria-label="Increase">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg>
@@ -663,6 +670,7 @@ function bindAdjustPanel(root, sku) {
     }
 
     playSuccessOverlay(direction, quantity);
+    try { clearBoostMaxOnce(); } catch (e) { /* ignore */ }
 
     const applyValues = () => {
       if (d.available != null || d.reserved != null || d.price != null) {

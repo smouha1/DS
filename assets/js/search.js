@@ -132,7 +132,7 @@ function pruneImageCache(maxEntries) {
   const drop = keys.length - limit;
   for (let i = 0; i < drop; i++) delete map[keys[i]];
   imageCache = map;
-  saveImageCache();
+  persistImageCache();
 }
 
 const DMART_IMAGE_KEY = 'smouha_dmart_image_cache_v1';

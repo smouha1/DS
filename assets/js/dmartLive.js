@@ -31,6 +31,7 @@ import {
   initDmartAdjust,
   buildAdjustPanelHtml,
   bindAdjustPanel,
+  resolveProductId,
 } from './dmartAdjust.js';
 import { setLastAvailable } from './appStore.js';
 
@@ -176,6 +177,35 @@ function requestViaExtensionOnce(sku, warehouseId, timeoutMs, force) {
         const onHand = Number(data.data.available);
         const reserved = Number(data.data.reserved);
         const price = Number(data.data.price);
+        const img = data.data.image ? String(data.data.image).trim() : '';
+        const pid = data.data.productId ? String(data.data.productId).trim() : '';
+        const nm = data.data.name ? String(data.data.name).trim() : '';
+        // Side-channel: stock response may already carry DMart image/name (S3) —
+        // avoids a second LOOKUP when EGY_*.JPG 404s.
+        if (img && /^https?:\/\//i.test(img)) {
+          try {
+            window.dispatchEvent(new CustomEvent('smouha:hub-product-image', {
+              detail: {
+                sku: String(data.data.sku || ''),
+                image: img,
+                product: {
+                  sku: String(data.data.sku || ''),
+                  name: nm || undefined,
+                  image: img,
+                  productId: pid || null,
+                  barcodes: Array.isArray(data.data.barcodes) ? data.data.barcodes : undefined,
+                },
+              },
+            }));
+          } catch (e) { /* ignore */ }
+        }
+        if (pid) {
+          try {
+            window.dispatchEvent(new CustomEvent('smouha:dmart-product-id', {
+              detail: { sku: String(data.data.sku || ''), productId: pid },
+            }));
+          } catch (e) { /* ignore */ }
+        }
         finish({
           ok: true,
           onHand: Number.isFinite(onHand) ? onHand : null,
@@ -183,6 +213,9 @@ function requestViaExtensionOnce(sku, warehouseId, timeoutMs, force) {
           reserved: Number.isFinite(reserved) && reserved >= 0 ? reserved : null,
           price: Number.isFinite(price) ? price : null,
           via: 'extension',
+          image: img || null,
+          productId: pid || null,
+          name: nm || null,
         });
         return;
       }
@@ -196,12 +229,17 @@ function requestViaExtensionOnce(sku, warehouseId, timeoutMs, force) {
     }
 
     window.addEventListener('message', onMsg);
+    let knownPid = '';
+    try {
+      knownPid = (resolveProductId && resolveProductId(sku)) || '';
+    } catch (e) {}
     const payload = {
       type: 'SMOUHA_PICK_DMART_REQUEST',
       requestId,
       warehouseId: String(warehouseId),
       sku: String(sku),
       force: !!force,
+      productId: knownPid || undefined,
     };
     try {
       window.postMessage(payload, window.location.origin);
@@ -249,9 +287,9 @@ async function fetchViaDirect(sku, warehouseId) {
         const detailRaw = await fetchJson(buildDetailUrl(fields.productId, warehouseId), bearer);
         const detail = extractLiveFields(detailRaw, sku);
         fields = {
-          onHand: fields.onHand !== null ? fields.onHand : detail.onHand,
-          reserved: fields.reserved !== null ? fields.reserved : detail.reserved,
-          price: fields.price !== null ? fields.price : detail.price,
+          onHand: detail.onHand !== null ? detail.onHand : fields.onHand,
+          reserved: detail.reserved !== null ? detail.reserved : fields.reserved,
+          price: detail.price !== null ? detail.price : fields.price,
           productId: fields.productId,
         };
       } catch (e) {
@@ -721,8 +759,13 @@ export async function fetchLiveProductInfo(sku, warehouseId, opts = {}) {
       if (!isMasterPc) {
         const hub = await import('./lan/lanHub.js');
         if (hub.getHubUrl && hub.getHubUrl()) {
-          const h = await hub.probeHub();
-          if (h && h.ok) {
+          // S5: skip probe when health is still fresh; probe on miss/failure only
+          let hubOk = !!(hub.isHubReachable && hub.isHubReachable());
+          if (!hubOk) {
+            const h = await hub.probeHub();
+            hubOk = !!(h && h.ok);
+          }
+          if (hubOk) {
             const hubRes = await hub.hubRequestStock(sku, warehouseId);
             if (hubRes && hubRes.ok && hasCompleteLiveData(hubRes)) {
               const data = {
@@ -744,6 +787,7 @@ export async function fetchLiveProductInfo(sku, warehouseId, opts = {}) {
               return { ...data, ok: true, via: 'hub', image: img };
             }
             if (hubRes && hubRes.reason === 'MASTER_OFFLINE') {
+              try { await hub.probeHub(); } catch (e) {}
               // fall through
             } else if (hubRes && (hubRes.onHand != null || hubRes.price != null)) {
               return {
@@ -755,6 +799,8 @@ export async function fetchLiveProductInfo(sku, warehouseId, opts = {}) {
                 message: hubRes.message || null,
                 via: 'hub',
               };
+            } else {
+              try { await hub.probeHub(); } catch (e) {}
             }
           }
         }
@@ -994,8 +1040,9 @@ export function requestLiveForProduct(sku) {
           // live-relay (mobile via Supabase) already waited for a fresh PC→DMart
           // round-trip — requiring 2–3 matches meant 2–3 full relay cycles (~10s+).
           // Direct extension on PC still uses multi-match to filter phantom Reserved.
-          const viaRelay = data.via === 'live-relay';
-          const need = viaRelay ? 1 : ((data.reserved > 0) ? 3 : 2);
+          const viaRelay = data.via === 'live-relay' || data.via === 'hub';
+          // After detail-wins reserved fix: 1 read when reserved=0; 2 when reserved>0 (was 3)
+          const need = viaRelay ? 1 : ((data.reserved > 0) ? 2 : 1);
           if ((pollState.matches || 0) < need && attempt < 6) {
             continue;
           }
@@ -1149,12 +1196,15 @@ window.addEventListener('message', (event) => {
 
 function watchBridgeHeartbeat() {
   updateBridgeStatusUi();
+  // One-shot: content script may set data-dmart-bridge before message listeners bind
+  try {
+    if (!bridgeReadyKnown && document.documentElement.getAttribute('data-dmart-bridge') === '1') {
+      markBridgeReady();
+    }
+  } catch (e) {}
   setInterval(() => {
-    try {
-      if (document.documentElement.getAttribute('data-dmart-bridge') === '1') {
-        markBridgeReady();
-      }
-    } catch (e) {}
+    // Do not call markBridgeReady here — it was resetting lastBridgeAt every 4s
+    // and preventing the silence watchdog from firing.
     updateBridgeStatusUi();
   }, 4000);
   try {
