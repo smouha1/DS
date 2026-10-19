@@ -327,6 +327,63 @@ function sleep(ms) {
 
 
 
+
+/** Read last known stock written by the PC extension (dmart_stock). Stale-ok fallback for phones outside branch. */
+async function fetchViaStockMirror(sku, warehouseId) {
+  if (!SB_URL || !SB_ANON || !sku || !warehouseId) {
+    return { ok: false, reason: 'supabase-config', onHand: null, reserved: null, price: null };
+  }
+  try {
+    const q =
+      SB_URL +
+      '/rest/v1/dmart_stock?warehouse_id=eq.' + encodeURIComponent(String(warehouseId)) +
+      '&sku=eq.' + encodeURIComponent(String(sku)) +
+      '&select=available,reserved,price,updated_at&limit=1';
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 6000);
+    let res;
+    try {
+      res = await fetch(q, {
+        signal: ctrl.signal,
+        headers: {
+          apikey: SB_ANON,
+          Authorization: 'Bearer ' + SB_ANON,
+          Accept: 'application/json',
+        },
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+    if (!res.ok) {
+      return { ok: false, reason: 'mirror-http-' + res.status, onHand: null, reserved: null, price: null };
+    }
+    const rows = await res.json();
+    if (!Array.isArray(rows) || !rows.length) {
+      return { ok: false, reason: 'mirror-empty', onHand: null, reserved: null, price: null };
+    }
+    const r = rows[0];
+    const updatedAt = r.updated_at ? Date.parse(r.updated_at) : 0;
+    if (updatedAt && Date.now() - updatedAt > SB_MAX_AGE_MS) {
+      return { ok: false, reason: 'mirror-stale', onHand: null, reserved: null, price: null };
+    }
+    const onHand = r.available != null ? Number(r.available) : null;
+    const reserved = r.reserved != null ? Number(r.reserved) : null;
+    const price = r.price != null ? Number(r.price) : null;
+    const data = {
+      onHand: Number.isFinite(onHand) ? onHand : null,
+      reserved: Number.isFinite(reserved) ? reserved : 0,
+      price: Number.isFinite(price) ? price : null,
+    };
+    if (data.onHand == null && data.price == null) {
+      return { ok: false, reason: 'mirror-empty', onHand: null, reserved: null, price: null };
+    }
+    return { ...data, ok: true, via: 'stock-mirror', cached: true };
+  } catch (e) {
+    return { ok: false, reason: 'mirror-error', onHand: null, reserved: null, price: null };
+  }
+}
+
+
 async function fetchViaLiveRelay(sku, warehouseId) {
   if (!SB_URL || !SB_ANON || !sku || !warehouseId) {
     return { ok: false, reason: 'supabase-config', onHand: null, reserved: null, price: null };
@@ -365,7 +422,18 @@ async function fetchViaLiveRelay(sku, warehouseId) {
       return { ok: false, reason: 'aborted', onHand: null, reserved: null, price: null };
     }
     if (!createRes.ok) {
-      return { ok: false, reason: 'relay-create-failed', onHand: null, reserved: null, price: null };
+      return {
+        ok: false,
+        reason: createRes.status === 401 || createRes.status === 403
+          ? 'relay-rls-denied'
+          : createRes.status === 404
+            ? 'relay-table-missing'
+            : 'relay-create-failed',
+        onHand: null,
+        reserved: null,
+        price: null,
+        http: createRes.status,
+      };
     }
     const created = await createRes.json();
     const row = Array.isArray(created) ? created[0] : created;
@@ -375,7 +443,7 @@ async function fetchViaLiveRelay(sku, warehouseId) {
     const id = row.id;
 
     // 2) Poll for done/error — tight cadence; extension polls pending ~400ms
-    const deadline = Date.now() + 6000;
+    const deadline = Date.now() + 18000; // outside-branch: SW cold start + DMart can exceed 6s
     let pollN = 0;
     while (Date.now() < deadline) {
       if (aborted()) {
@@ -417,12 +485,13 @@ async function fetchViaLiveRelay(sku, warehouseId) {
       const r = rows[0];
       if (r.status === 'done') {
         const onHand = r.available != null ? Number(r.available) : null;
-        const reserved = r.reserved != null ? Number(r.reserved) : null;
+        // reserved null from DB → 0 so hasCompleteLiveData accepts the row
+        const reserved = r.reserved != null ? Number(r.reserved) : 0;
         const price = r.price != null ? Number(r.price) : null;
         return {
           ok: true,
           onHand: Number.isFinite(onHand) ? onHand : null,
-          reserved: Number.isFinite(reserved) ? reserved : null,
+          reserved: Number.isFinite(reserved) ? reserved : 0,
           price: Number.isFinite(price) ? price : null,
           via: 'live-relay',
         };
@@ -451,6 +520,16 @@ export function isBridgeOnline() {
   // Online only when content-script is present AND session/API is usable
   return !!bridgeReady && !!bridgeSessionOk;
 }
+
+/** True only when the DMart Bridge content-script has announced itself on THIS page. */
+function isExtensionLikelyPresent() {
+  try {
+    if (document.documentElement.getAttribute('data-dmart-bridge') === '1') return true;
+  } catch (e) {}
+  return !!bridgeReady;
+}
+
+
 
 function isDesktopViewport() {
   try {
@@ -808,23 +887,28 @@ export async function fetchLiveProductInfo(sku, warehouseId, opts = {}) {
     } catch (e) { /* continue */ }
   }
 
-  // 1) Prefer extension bridge (PC — solves CORS, uses portal session)
-  // Pass force so the extension skips its own TTL cache and hits DMart fresh
-  const bridge = await requestViaExtension(sku, warehouseId, force);
-  if (bridge.ok) {
-    const data = {
-      onHand: bridge.onHand,
-      reserved: bridge.reserved,
-      price: bridge.price,
-    };
-    if (hasCompleteLiveData(data)) {
-      cache.set(cacheKey, { at: Date.now(), data });
-      return { ...data, ok: true, via: 'extension' };
+  // 1) Prefer extension bridge ONLY when present on this page (desktop + extension).
+  // Phones outside the branch must NOT wait 12s for a bridge that will never answer —
+  // go straight to Supabase live-relay (PC extension fulfills pending rows).
+  let bridge = { ok: false, reason: 'no-bridge', onHand: null, reserved: null, price: null };
+  if (isExtensionLikelyPresent()) {
+    bridge = await requestViaExtension(sku, warehouseId, force);
+    if (bridge.ok) {
+      const data = {
+        onHand: bridge.onHand,
+        reserved: bridge.reserved,
+        price: bridge.price,
+      };
+      if (hasCompleteLiveData(data)) {
+        cache.set(cacheKey, { at: Date.now(), data });
+        return { ...data, ok: true, via: 'extension' };
+      }
+      return { ...data, ok: false, reason: 'partial-data', via: 'extension' };
     }
-    return { ...data, ok: false, reason: 'partial-data', via: 'extension' };
   }
 
   // 2) Live relay via Supabase → PC extension → DMart (fresh numbers)
+  // This is the primary path for phones outside the branch.
   const relay = await fetchViaLiveRelay(sku, warehouseId);
   if (relay.ok) {
     const data = {
@@ -837,6 +921,20 @@ export async function fetchLiveProductInfo(sku, warehouseId, opts = {}) {
       return { ...data, ok: true, via: 'live-relay' };
     }
     return { ...data, ok: false, reason: 'partial-data', via: 'live-relay' };
+  }
+
+  // 2b) Outside branch fallback: last numbers the PC extension wrote to dmart_stock
+  const mirror = await fetchViaStockMirror(sku, warehouseId);
+  if (mirror.ok) {
+    const data = {
+      onHand: mirror.onHand,
+      reserved: mirror.reserved,
+      price: mirror.price,
+    };
+    if (hasCompleteLiveData(data) || data.onHand != null || data.price != null) {
+      cache.set(cacheKey, { at: Date.now(), data });
+      return { ...data, ok: true, via: 'stock-mirror', cached: true };
+    }
   }
 
   // Bridge present but auth missing
@@ -915,11 +1013,12 @@ export function setLiveValues(root, data) {
   const price = root.querySelector('[data-live="price"]');
   // Only paint stock numbers when the payload is complete + ok.
   // Partial/error payloads used to leak a fake Reserved (1–2) until page refresh.
-  const complete = !!(data && data.ok && data.onHand != null && data.reserved != null);
+  // Show stock when we have onHand or price (reserved may be null → treat as 0)
+  const complete = !!(data && data.ok && (data.onHand != null || data.price != null));
   if (complete) {
-    if (avail) avail.textContent = formatUnits(data.onHand);
-    if (res) res.textContent = formatUnits(data.reserved);
-    if (price) price.textContent = formatPrice(data.price);
+    if (avail) avail.textContent = data.onHand != null ? formatUnits(data.onHand) : '—';
+    if (res) res.textContent = formatUnits(data.reserved != null ? data.reserved : 0);
+    if (price) price.textContent = data.price != null ? formatPrice(data.price) : '—';
     try {
       const sku =
         (root && root.getAttribute && root.getAttribute('data-sku')) ||
@@ -955,6 +1054,13 @@ export function setLiveValues(root, data) {
         'partial-data': 'Waiting for complete DMart data…',
         'missing-ids': 'Select a warehouse first',
         'bridge-timeout': 'DMart Bridge timed out — check portal login',
+        'relay-timeout': 'Waiting for PC extension timed out — keep portal + Bridge open on the store PC',
+        'relay-create-failed': 'Could not create live request (check Supabase / network)',
+        'relay-table-missing': 'Supabase table dmart_live_requests missing',
+        'relay-rls-denied': 'Supabase blocked the request (RLS / anon key) — fix table policies',
+        'relay-error': 'Live relay error from PC extension',
+        'mirror-stale': 'No fresh stock on PC (last update too old)',
+        'mirror-empty': 'No stock cached yet — open this SKU once on the store PC',
       };
       status.textContent = map[data.reason] || 'Live data unavailable';
       status.hidden = false;
@@ -1040,7 +1146,7 @@ export function requestLiveForProduct(sku) {
           // live-relay (mobile via Supabase) already waited for a fresh PC→DMart
           // round-trip — requiring 2–3 matches meant 2–3 full relay cycles (~10s+).
           // Direct extension on PC still uses multi-match to filter phantom Reserved.
-          const viaRelay = data.via === 'live-relay' || data.via === 'hub';
+          const viaRelay = data.via === 'live-relay' || data.via === 'hub' || data.via === 'stock-mirror';
           // After detail-wins reserved fix: 1 read when reserved=0; 2 when reserved>0 (was 3)
           const need = viaRelay ? 1 : ((data.reserved > 0) ? 2 : 1);
           if ((pollState.matches || 0) < need && attempt < 6) {

@@ -1,37 +1,34 @@
-# Image URL scan tools (batch — not part of live product UI)
+# Image URL scan tools (batch only — not live site pipeline)
 
-These scripts **do not** change how the website loads product images at runtime.
-They only help build optional override data offline.
+## Quick start (Windows)
 
-## Phase 1 — EGY CDN check
+1. Double-click **`run-phase1.bat`** → builds `out/image-miss.json`
+2. Chrome: DMart Bridge → **Export session for image-scan**
+3. Double-click **`run-phase2.bat`** → builds `out/image-url-overrides.json`
+
+Phase 2 **resumes** automatically if you stop mid-way or token expires.
+
+## Phase 1 (EGY check)
 
 ```bash
-cd tools/image-scan
 pip install -r requirements.txt
 python3 scan_egy.py --products ../../data/products.json --out-dir ./out
 ```
 
-Outputs:
+- Retries timeouts / 429 / 5xx twice (does not mark healthy URLs as miss)
+- Primary barcode only (no secondary-barcode trials)
 
-- `out/image-scan-summary.json` — counts
-- `out/image-miss.json` — SKUs where `EGY_<barcode>.JPG` did not return OK
-
-## Phase 2 — DMart images for misses only
-
-1. In Chrome, open **DMart Bridge** popup while logged into portal.talabat.com.
-2. Click **Export session for image-scan** → save `session-export.json` next to the scripts.
-3. Run:
+## Phase 2 (DMart for misses)
 
 ```bash
-python3 fetch_dmart_miss.py \
-  --miss ./out/image-miss.json \
-  --session ./session-export.json \
-  --out-dir ./out
+python3 fetch_dmart_miss.py
+# or:
+python3 fetch_dmart_miss.py --miss ./out/image-miss.json --session ./session-export.json
 ```
 
-Outputs:
+- Skips SKUs already present in `out/image-url-overrides.json`
+- Saves every 100 SKUs + on Ctrl+C
+- Stops after 5 consecutive 401/403 and asks for a fresh session export
+- Auto-picks newest `~/Downloads/session-export*.json` if `--session` omitted
 
-- `out/image-url-overrides.json` — `{ "urls": { "SKU": "https://..." } }`
-- `out/dmart-miss-report.json` — per-SKU detail
-
-Website integration of `image-url-overrides.json` is a **later** step (not done by these tools).
+Website integration of overrides is a **later** step — these tools never change live product image loading.

@@ -1,16 +1,10 @@
 #!/usr/bin/env python3
 """
-Phase 1 — Scan all catalog products against EGY_<barcode>.JPG on DHMedia.
+Phase 1 — Scan catalog products against EGY_<barcode>.JPG on DHMedia.
 
-Does NOT touch the website image pipeline. Offline / batch tool only.
-
-Usage (from tools/image-scan):
-  python3 scan_egy.py --products ../../data/products.json --out-dir ./out
-
-Outputs:
-  out/image-scan-summary.json
-  out/image-miss.json          # products whose EGY URL did not return 2xx
-  out/image-ok-count only in summary (OK rows not fully listed by default)
+Does NOT touch the website live image pipeline.
+Retries transient CDN failures so brief network blips don't pollute miss list.
+Secondary-barcode fallback is intentionally NOT used (primary barcode only).
 """
 from __future__ import annotations
 
@@ -29,33 +23,60 @@ except ImportError:
 
 from egy_url import row_fields
 
-# Concurrent HEAD requests — polite to CDN
 DEFAULT_CONCURRENCY = 40
 TIMEOUT_S = 12
+MAX_RETRIES = 2
+RETRY_BACKOFF_S = 0.6
+TRANSIENT_HTTP = {429, 500, 502, 503, 504}
 
 
-async def head_ok(session: aiohttp.ClientSession, url: str, sem: asyncio.Semaphore) -> tuple[str, int | None, str]:
+async def head_ok(
+    session: aiohttp.ClientSession, url: str, sem: asyncio.Semaphore
+) -> tuple[str, int | None, str]:
+    """Return (status, http_code, error_msg). status in ok|miss|error|no-url."""
     if not url:
         return "no-url", None, "empty barcode / no url"
-    async with sem:
-        try:
-            async with session.head(url, allow_redirects=True) as resp:
-                code = resp.status
-                if code == 405 or code == 403:
-                    # some CDNs block HEAD — fall back to GET range
-                    async with session.get(
-                        url,
-                        headers={"Range": "bytes=0-0"},
-                        allow_redirects=True,
-                    ) as resp2:
-                        code = resp2.status
-                if 200 <= code < 300 or code == 206:
-                    return "ok", code, ""
-                return "miss", code, f"HTTP {code}"
-        except asyncio.TimeoutError:
-            return "error", None, "timeout"
-        except Exception as e:
-            return "error", None, str(e)[:120]
+
+    last_code: int | None = None
+    last_err = ""
+
+    for attempt in range(MAX_RETRIES + 1):
+        async with sem:
+            try:
+                async with session.head(url, allow_redirects=True) as resp:
+                    code = resp.status
+                    if code in (403, 405):
+                        async with session.get(
+                            url,
+                            headers={"Range": "bytes=0-0"},
+                            allow_redirects=True,
+                        ) as resp2:
+                            code = resp2.status
+                    last_code = code
+                    if 200 <= code < 300 or code == 206:
+                        return "ok", code, ""
+                    if code in TRANSIENT_HTTP and attempt < MAX_RETRIES:
+                        last_err = f"HTTP {code}"
+                        # release sem before sleep via exiting async with
+                    else:
+                        return "miss", code, f"HTTP {code}"
+            except asyncio.TimeoutError:
+                last_err = "timeout"
+                last_code = None
+                if attempt >= MAX_RETRIES:
+                    return "error", None, "timeout"
+            except aiohttp.ClientError as e:
+                last_err = str(e)[:120]
+                last_code = None
+                if attempt >= MAX_RETRIES:
+                    return "error", None, last_err
+            except Exception as e:
+                return "error", None, str(e)[:120]
+
+        if attempt < MAX_RETRIES:
+            await asyncio.sleep(RETRY_BACKOFF_S * (attempt + 1))
+
+    return "miss" if last_code is not None else "error", last_code, last_err or "unknown"
 
 
 async def run_scan(products_path: Path, out_dir: Path, concurrency: int) -> dict:
@@ -68,12 +89,13 @@ async def run_scan(products_path: Path, out_dir: Path, concurrency: int) -> dict
         name, sku, bcs, url = row_fields(row)
         if not sku:
             continue
+        # Primary barcode URL only (no secondary-barcode trials)
         items.append({"sku": sku, "name": name, "barcodes": bcs, "egyUrl": url})
 
     sem = asyncio.Semaphore(concurrency)
     timeout = aiohttp.ClientTimeout(total=TIMEOUT_S)
     headers = {
-        "User-Agent": "SmouhaPick-ImageScan/1.0 (catalog batch; contact store IT)",
+        "User-Agent": "SmouhaPick-ImageScan/1.1 (catalog batch)",
         "Accept": "*/*",
     }
 
@@ -84,8 +106,9 @@ async def run_scan(products_path: Path, out_dir: Path, concurrency: int) -> dict
     t0 = time.time()
 
     connector = aiohttp.TCPConnector(limit=concurrency, ttl_dns_cache=300)
-    async with aiohttp.ClientSession(timeout=timeout, headers=headers, connector=connector) as session:
-        # chunk progress
+    async with aiohttp.ClientSession(
+        timeout=timeout, headers=headers, connector=connector
+    ) as session:
         total = len(items)
         done = 0
 
@@ -111,7 +134,7 @@ async def run_scan(products_path: Path, out_dir: Path, concurrency: int) -> dict
     out_dir.mkdir(parents=True, exist_ok=True)
 
     summary = {
-        "version": 1,
+        "version": 2,
         "phase": "egy-scan",
         "productsFile": str(products_path),
         "totalRows": len(raw),
@@ -121,12 +144,13 @@ async def run_scan(products_path: Path, out_dir: Path, concurrency: int) -> dict
         "noUrl": no_url_count,
         "errors": len(results_error),
         "concurrency": concurrency,
+        "retries": MAX_RETRIES,
         "elapsedSec": elapsed,
-        "note": "OK products use standard EGY_<barcode>.JPG — no override file needed for them.",
+        "note": "Primary barcode EGY URL only. OK products need no override file.",
     }
 
     miss_payload = {
-        "version": 1,
+        "version": 2,
         "phase": "egy-miss",
         "count": len(results_miss) + len(results_error),
         "items": results_miss + results_error,
@@ -146,7 +170,9 @@ async def run_scan(products_path: Path, out_dir: Path, concurrency: int) -> dict
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Phase 1: EGY image URL scan for Smouha Pick catalog")
+    ap = argparse.ArgumentParser(
+        description="Phase 1: EGY image URL scan for Smouha Pick catalog"
+    )
     ap.add_argument(
         "--products",
         type=Path,
