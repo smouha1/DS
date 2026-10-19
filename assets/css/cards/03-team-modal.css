@@ -89,10 +89,10 @@
 .product-hover-preview{
   position:fixed;
   z-index:90;
-  width:260px;
-  height:320px;
-  max-width:min(260px,42vw);
-  max-height:min(320px,70vh);
+  width:520px;
+  height:640px;
+  max-width:min(520px,56vw);
+  max-height:min(640px,85vh);
   border-radius:14px;
   overflow:hidden;
   pointer-events:none;

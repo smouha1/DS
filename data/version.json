@@ -1,14 +1,15 @@
 {
   "version": "1.9.12",
-  "build": 170,
+  "build": 171,
   "updated": "2026-10-19",
   "products": 41931,
   "changelogByVersion": [
     {
       "version": "1.9.12",
-      "build": 170,
+      "build": 171,
       "date": "2026-10-19",
       "items": [
+        "build 171 — Hover preview size doubled again (520×640), still always to the right of cursor",
         "build 170 — Hover Preview: compact 260×320 float always to the RIGHT of cursor (not fullscreen); 100ms delay; avoids covering DMart card vertically; click still full zoom",
         "build 169 — FIX outside-branch stock: skip 12s extension wait on phones (go straight to Supabase relay); reserved null→0 so qty displays; stock-mirror counts as complete",
         "build 168 — outside-branch live stock: relay wait 18s, dmart_stock mirror fallback, clearer relay/RLS errors, show qty when reserved null",
@@ -18,8 +19,7 @@
         "build 165 — S3 complete: REQUEST may send productId; extension seeds detail cache",
         "build 165 — S4: ignore webRequest tabId=-1; batched cookie collection",
         "build 165 — S5: Hub stock optimistic when health fresh; probe on failure",
-        "build 165 — Pair extension 1.11.15",
-        "build 164 — S3: stock response carries image/name/barcodes from DMart detail (additive; old clients ignore)"
+        "build 165 — Pair extension 1.11.15"
       ]
     },
     {

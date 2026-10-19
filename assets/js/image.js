@@ -51,7 +51,7 @@ export function closeZoom(opts = {}) {
  *  behavior for one rendered product card. `wrap`/`img` are the specific
  *  DOM nodes for the currently-shown product (re-called on every render).
  *
- *  Desktop hover uses a compact floating preview (~260×320) always to the
+ *  Desktop hover uses a compact floating preview (~520×640) always to the
  *  RIGHT of the cursor (never covers the full screen). Click still opens
  *  the full zoom modal. Preview closes when the cursor leaves the thumbnail.
  *
@@ -59,8 +59,8 @@ export function closeZoom(opts = {}) {
  *  via the passed-in `settings` accessor so this module doesn't need to
  *  import settings.js directly (keeps the dependency graph one-directional). */
 /* ---- Desktop hover preview (small float to the RIGHT of the cursor) ---- */
-const HOVER_W = 260;
-const HOVER_H = 320;
+const HOVER_W = 520;
+const HOVER_H = 640;
 const HOVER_GAP = 14;
 const HOVER_DELAY_MS = 100;
 
