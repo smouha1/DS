@@ -58,8 +58,9 @@ export function createSmartScan(deps = {}) {
     if (scanLibsPromise) return scanLibsPromise;
     scanLibsPromise = (async () => {
       try {
-        await loadExternalScript('https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js');
-        await loadExternalScript('https://unpkg.com/@zxing/browser@0.1.5');
+        // ZXing 0.23 + browser 0.2.1 (peer: library ^0.22). Same globals: ZXing / ZXingBrowser.
+        await loadExternalScript('https://cdn.jsdelivr.net/npm/@zxing/library@0.23.0/umd/index.min.js');
+        await loadExternalScript('https://cdn.jsdelivr.net/npm/@zxing/browser@0.2.1/umd/zxing-browser.min.js');
         // OCR is optional — load in background, do not block camera start
         loadExternalScript('https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js').catch(() => {});
         return !!(window.ZXingBrowser && window.ZXing);

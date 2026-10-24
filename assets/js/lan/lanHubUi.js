@@ -32,6 +32,18 @@ async function ensureMasterSession(on) {
       isBridgeOnline: () => !!(live.isBridgeOnline && live.isBridgeOnline()),
       fetchLive: (sku, wid, opts) => live.fetchLiveProductInfo(sku, wid, opts || { force: true, skipHub: true }),
       lookupProduct: (sku, wid, ms) => live.lookupProductViaBridge(sku, wid, ms || 14000, { skipHub: true }),
+      fetchCycle: async (opts) => {
+        try {
+          const cyc = await import('../cycleCount.js');
+          if (opts && opts.kind === 'kpi' && cyc.requestCycleKpiBridgeOnly) {
+            return cyc.requestCycleKpiBridgeOnly(opts.warehouseId, !!opts.force);
+          }
+          if (cyc.requestCycleListBridgeOnly) {
+            return cyc.requestCycleListBridgeOnly(opts.warehouseId, opts.page || 1, opts.perPage || 10, !!opts.force);
+          }
+        } catch (e) {}
+        return { success: false, error: { code: 'CYCLE_UNAVAILABLE', message: 'Cycle module unavailable' } };
+      },
       adjustStock: async ({ sku, warehouseId, quantity, direction }) => {
         // Master must call extension only — never re-enter Hub (would loop / fail silently)
         if (typeof adj.requestStockAdjustBridgeOnly === 'function') {

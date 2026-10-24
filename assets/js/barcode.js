@@ -272,3 +272,103 @@ export function renderSkuQr(svgEl, value) {
     return Promise.resolve(false);
   }
 }
+
+
+// ---------------------------------------------------------------------------
+// Multi-Slot Barcode / QR Renderer for Cycle Count & Batch Lists
+// Avoids duplicate #c128-0 IDs while reusing the exact same JsBarcode +
+// qrcode-generator engines and SVG caches.
+// ---------------------------------------------------------------------------
+
+let sharedQrLibPromise = null;
+
+/** Ensures local assets/js/qrcode-generator.js is loaded (window.qrcode). */
+export function ensureQrLibraryLoaded() {
+  if (typeof window !== 'undefined' && typeof window.qrcode === 'function') {
+    return Promise.resolve(true);
+  }
+  if (sharedQrLibPromise) return sharedQrLibPromise;
+
+  sharedQrLibPromise = new Promise((resolve) => {
+    try {
+      const existing = document.querySelector('script[src*="qrcode-generator.js"]');
+      if (existing && typeof window.qrcode === 'function') {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'assets/js/qrcode-generator.js';
+      script.async = true;
+      script.onload = () => resolve(typeof window.qrcode === 'function');
+      script.onerror = () => {
+        sharedQrLibPromise = null;
+        resolve(false);
+      };
+      document.head.appendChild(script);
+    } catch (e) {
+      sharedQrLibPromise = null;
+      resolve(false);
+    }
+  });
+  return sharedQrLibPromise;
+}
+
+/**
+ * Renders either QR or Code128 into `wrapEl` with a unique SVG id (`slotId`),
+ * never colliding with `#c128-0` on the main product card.
+ * Returns Promise<SVGSVGElement | null>.
+ */
+export async function renderBarcodeInSlot(wrapEl, value, opts = {}) {
+  if (!wrapEl || !value) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+
+  const useQr = opts.useQr !== false;
+  const slotId = String(opts.slotId || 'bc-slot-' + Math.random().toString(36).slice(2, 9));
+
+  if (useQr) {
+    const okLib = await ensureQrLibraryLoaded();
+    if (okLib && typeof window.qrcode === 'function') {
+      const built = buildQrMarkup(raw);
+      if (built && built.markup) {
+        if (!wrapEl.isConnected) return null;
+        wrapEl.classList.add('is-qr');
+        wrapEl.classList.remove('is-code128');
+        // Replace hardcoded id="c128-0" with unique slotId for multi-card safety
+        const customMarkup = built.markup.replace('id="c128-0"', 'id="' + slotId + '"');
+        wrapEl.innerHTML = customMarkup;
+        const svg = wrapEl.querySelector('svg');
+        if (svg) {
+          svg.setAttribute('data-barcode-value', raw);
+          svg.setAttribute('data-barcode-format', 'qr');
+          svg.style.width = '100%';
+          svg.style.height = '100%';
+          svg.style.display = 'block';
+          return svg;
+        }
+      }
+    }
+  }
+
+  // Code128 path (or fallback if QR library unavailable)
+  wrapEl.classList.remove('is-qr');
+  wrapEl.classList.add('is-code128');
+  let svg = wrapEl.querySelector('svg');
+  if (!svg) {
+    svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    wrapEl.innerHTML = '';
+    wrapEl.appendChild(svg);
+  }
+  svg.setAttribute('id', slotId);
+  svg.setAttribute('data-barcode-value', raw);
+  svg.setAttribute('data-barcode-format', '128');
+
+  const ok128 = await renderCode128WhenReady(svg, raw, 2500);
+  if (ok128 && svg) {
+    svg.setAttribute('id', slotId);
+    svg.setAttribute('data-barcode-value', raw);
+    svg.setAttribute('data-barcode-format', '128');
+    return svg;
+  }
+  return null;
+}

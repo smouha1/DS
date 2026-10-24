@@ -10,7 +10,7 @@
      • Drop old caches on activate
    ------------------------------------------------------------------------ */
 
-const CACHE_NAME = 'smouha-pick-shell-v109-171-hub11';
+const CACHE_NAME = 'smouha-pick-shell-v109-173-hub11';
 
 /** Core shell — same-origin only. Lazy modules included so first offline
  *  open of Settings/Maintenance/DMart live still works after one online visit. */
@@ -33,6 +33,7 @@ const SHELL_FILES = [
   './assets/css/search.css',
   './assets/css/settings.css',
   './assets/css/warehouse.css',
+  './assets/css/cycle.css',
   './assets/js/app.js',
   './assets/js/lan/hubErrors.js',
   './assets/js/lan/lanHubUi.js',
@@ -56,6 +57,8 @@ const SHELL_FILES = [
   './assets/js/maintenance.js',
   './assets/js/dmartAdjust.js',
   './assets/js/smartScan.js',
+  './assets/js/cycleCountParse.js',
+  './assets/js/cycleCount.js',
   './assets/js/qrcode-generator.js',
   './assets/js/vendor/JsBarcode.all.min.js',
   './assets/img/pwa-icon-192.png',
@@ -204,7 +207,7 @@ self.addEventListener('fetch', (event) => {
   // Never intercept product catalog / version — updater.js owns freshness.
   if (isDataPath(url.pathname)) return;
 
-  // Third-party (CDN JsBarcode, ZXing, Tesseract, product images hosts): network only.
+  // Third-party CDN (ZXing, Tesseract) + product image hosts: network only. JsBarcode is local vendor.
   if (!isSameOrigin(url)) return;
 
   // HTML navigations → network-first

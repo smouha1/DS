@@ -442,6 +442,40 @@ export async function hubRequestLookup(sku, warehouseId, timeoutMs) {
   }
 }
 
+export async function hubRequestCycle({ kind = 'list', warehouseId, page = 1, perPage = 10, force = false } = {}) {
+  const base = getHubUrl();
+  if (!base) return { ok: false, success: false, reason: 'no-hub' };
+  const id = getHubIdentity();
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 23000);
+  try {
+    const res = await fetch(base + '/api/cycle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: ctrl.signal,
+      body: JSON.stringify({
+        kind,
+        warehouseId,
+        page,
+        perPage,
+        force: !!force,
+        deviceId: id.deviceId,
+        username: id.username,
+        role: id.role,
+      }),
+    });
+    const j = await res.json().catch(() => ({}));
+    if (res.status === 403 && j && j.error && j.error.code === 'KICKED') {
+      setHubBlocked('KICKED', j.error.message || 'Removed by Master');
+    }
+    return j || { ok: false, success: false };
+  } catch (e) {
+    return { ok: false, success: false, error: { code: 'NETWORK_ERROR', message: String(e && e.message || e) } };
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 export async function hubPushRecent({ sku, name }) {
   const base = getHubUrl();
   if (!base) return { ok: false };
@@ -720,6 +754,36 @@ export function startMasterHub(handlers) {
       await fetch(base + '/api/adjust-reply', {
         method: 'POST',
         headers: adjHeaders,
+        body: JSON.stringify({ reqId: data.reqId, result }),
+      });
+    } catch (e) {}
+  });
+
+  masterEs.addEventListener('cycle_req', async (ev) => {
+    if (masterSuperseded) return;
+    let data;
+    try { data = JSON.parse(ev.data); } catch (e) { return; }
+    let result = { success: false, error: { code: 'NO_HANDLER', message: 'Cycle handler not registered on Master' } };
+    try {
+      if (masterHandlers && typeof masterHandlers.fetchCycle === 'function') {
+        const wid = data.warehouseId || (masterHandlers.getWarehouseId && masterHandlers.getWarehouseId());
+        result = await masterHandlers.fetchCycle({
+          kind: data.kind || 'list',
+          warehouseId: wid,
+          page: data.page || 1,
+          perPage: data.perPage || 10,
+          force: !!data.force,
+        });
+      }
+    } catch (e) {
+      result = { success: false, error: { code: 'ERR', message: String(e && e.message || e) } };
+    }
+    try {
+      const h = { 'Content-Type': 'application/json' };
+      if (masterToken) h['X-Master-Token'] = masterToken;
+      await fetch(base + '/api/cycle-reply', {
+        method: 'POST',
+        headers: h,
         body: JSON.stringify({ reqId: data.reqId, result }),
       });
     } catch (e) {}

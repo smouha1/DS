@@ -36,6 +36,7 @@
 <link rel="stylesheet" href="assets/css/search.css">
 <link rel="stylesheet" href="assets/css/settings.css">
 <link rel="stylesheet" href="assets/css/warehouse.css">
+<link rel="stylesheet" href="assets/css/cycle.css">
 <!-- Pelican Mode dependencies: barcode decoder (primary), OCR engine, Code128 generator -->
 <script src="assets/js/vendor/JsBarcode.all.min.js" defer></script>
 <script>window.__smouhaLoadStart = performance.now();</script>
@@ -48,6 +49,10 @@
       </a>
     <div class="header-actions">
       <div class="header-wh-slot" id="warehouseSelectorMount"></div>
+      <button type="button" class="cycle-header-btn" id="cycleCountBtn" aria-label="Cycle Count" title="Cycle Count (جرد السايكل واللوكيشنات)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>
+        <span class="cyc-hdr-lbl">Cycle Count</span>
+      </button>
 <a class="apk-header-btn" id="apkDownloadBtn" href="downloads/Smouha-Pick.apk" download="Smouha-Pick.apk" title="Download Android APK" aria-label="Download Android APK">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m8 11 4 4 4-4"/><path d="M5 19h14"/></svg>
       </a>
@@ -63,6 +68,7 @@
 
 
 <main>
+  <section class="cycle-workspace" id="cycleWorkspace" hidden aria-live="polite"></section>
   <section class="search-section">
     <div class="search-main-row">
       <div class="search-box-wrap">

@@ -744,6 +744,54 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    // ---- cycle count relay (Master fetches via extension for LAN phones) ----
+    if (req.method === 'POST' && path === '/api/cycle') {
+      const body = await readJson(req);
+      const deviceId = String(body.deviceId || 'anon').slice(0, 64);
+      const kickedErr = assertNotKicked(deviceId);
+      if (kickedErr) {
+        sendJson(res, 403, kickedErr);
+        return;
+      }
+      if (!masterOnline()) {
+        sendJson(res, 503, errBody('MASTER_OFFLINE', 'Master PC not connected — open the site on the branch PC'));
+        return;
+      }
+      touchDevice(body);
+      const reqId = rid('cyc');
+      const kind = body.kind === 'kpi' ? 'kpi' : 'list';
+      const warehouseId = body.warehouseId || masterMeta.warehouseId || null;
+      const page = Math.max(1, Number(body.page) || 1);
+      const perPage = Math.max(1, Math.min(50, Number(body.perPage) || 10));
+      const force = !!body.force;
+      const username = String(body.username || '').slice(0, 32);
+      logEntry({ type: 'cycle', action: kind, username, deviceId });
+
+      const waitMs = 22000;
+      const result = await new Promise((resolve) => {
+        const t = setTimeout(() => {
+          pending.delete(reqId);
+          resolve(null);
+        }, waitMs);
+        pending.set(reqId, { resolve, timer: t, kind: 'cycle' });
+        broadcast('cycle_req', { reqId, kind, warehouseId, page, perPage, force, deviceId, username });
+      });
+      if (!result) {
+        sendJson(res, 504, errBody('TIMEOUT', 'Cycle request timed out — check extension on Master PC'));
+        return;
+      }
+      sendJson(res, 200, result);
+      return;
+    }
+
+    if (req.method === 'POST' && path === '/api/cycle-reply') {
+      if (!assertMasterWriteAuth(req, res)) return;
+      const body = await readJson(req);
+      cleanupPending(body.reqId, body.result || { ok: false, success: false });
+      sendJson(res, 200, { ok: true });
+      return;
+    }
+
     if (req.method === 'GET' && path === '/api/log') {
       sendJson(res, 200, { ok: true, log: auditLog.slice(0, 200) });
       return;

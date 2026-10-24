@@ -42,6 +42,7 @@ import {
 } from './appSettingsQuick.js';
 import { wireCatalogAndSessionUi } from './appCatalogUi.js';
 import { createSmartScan } from './smartScan.js';
+import * as cycleCount from './cycleCount.js';
 
 /* ============================================================================
    MODULE: ui — rendering & DOM interaction
@@ -1043,6 +1044,11 @@ function renderSuggestions(matches, query) {
       if (lastRenderedProduct) {
         try { refreshPrimaryBarcode(lastRenderedProduct); } catch (err) {}
       }
+      try {
+        if (cycleCount && cycleCount.refreshVisibleCycleBarcodes) {
+          cycleCount.refreshVisibleCycleBarcodes();
+        }
+      } catch (err) {}
     });
   }
 
@@ -2130,6 +2136,11 @@ function renderSuggestions(matches, query) {
       try { fillInlineRecent(); } catch (e) { /* ignore */ }
     });
     window.addEventListener('smouha:settings-barcode', () => {
+      try {
+        if (cycleCount && cycleCount.refreshVisibleCycleBarcodes) {
+          cycleCount.refreshVisibleCycleBarcodes();
+        }
+      } catch (e) {}
       if (!lastRenderedProduct) return;
       // Defer one frame so the settings switch animation finishes first.
       requestAnimationFrame(() => {
@@ -2239,6 +2250,55 @@ function renderSuggestions(matches, query) {
 
     els.teamModalClose.addEventListener('click', closeTeamModal);
     els.teamModal.addEventListener('click', (e) => { if (e.target === els.teamModal) closeTeamModal(); });
+    try {
+      cycleCount.initCycleCount({
+        toast,
+        playScanFeedback,
+        openInPicker: (sku, prodMeta) => {
+          const s = String(sku || '').trim();
+          if (!s) return;
+          if (prodMeta && search.registerDmartProduct) {
+            try {
+              search.registerDmartProduct({
+                sku: s,
+                name: prodMeta.name || s,
+                barcodes: Array.isArray(prodMeta.barcodes) && prodMeta.barcodes.length ? prodMeta.barcodes : [s],
+                image: prodMeta.imageUrl || '',
+              });
+            } catch (e) {}
+          }
+          if (prodMeta && prodMeta.imageUrl && search.setDmartImage) {
+            try { search.setDmartImage(s, prodMeta.imageUrl); } catch (e) {}
+          }
+          if (prodMeta && prodMeta.id && dmartAdjust && dmartAdjust.rememberProductId) {
+            try { dmartAdjust.rememberProductId(s, prodMeta.id); } catch (e) {}
+          }
+          els.searchInput.value = s;
+          els.clearBtn.classList.add('visible');
+          els.clearBtn.removeAttribute('hidden');
+          const found = search.getBySkuList ? search.getBySkuList([s]) : [];
+          if (found && found[0]) {
+            renderProduct(found[0]);
+            recordSearch(found[0]);
+          } else if (prodMeta) {
+            const synthetic = {
+              sku: s,
+              name: prodMeta.name || s,
+              barcodes: Array.isArray(prodMeta.barcodes) && prodMeta.barcodes.length ? prodMeta.barcodes : [s],
+              image: prodMeta.imageUrl || '',
+              fromDmart: true,
+            };
+            renderProduct(synthetic);
+            recordSearch(synthetic);
+          } else {
+            runSearch(s);
+          }
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
+      });
+    } catch (e) {
+      console.warn('[cycleCount] init failed', e);
+    }
     renderEmptyState();
   }
 
@@ -2340,6 +2400,12 @@ function renderSuggestions(matches, query) {
    *  priority order (full barcode -> SKU -> last 6 digits) while reusing
    *  the exact same rendering/skeleton/choice-modal code as manual typing. */
   function searchFromExternalInput(code) {
+    try {
+      if (cycleCount && cycleCount.isCycleViewOpen && cycleCount.isCycleViewOpen()) {
+        cycleCount.handleExternalScanInCycle(code);
+        return;
+      }
+    } catch (e) {}
     playScanFeedback();
     els.searchInput.value = code;
     els.clearBtn.classList.toggle('visible', code.length > 0);
