@@ -42,41 +42,7 @@
 }
 
 
-/* ============================================================
-   AVAILABLE ROW NORMALIZE 111 — same box as Reserved/Price;
-   label black; value stays green
-   ============================================================ */
-.dmart-live-row.dmart-live-available-row,
-.dmart-live-row:has(.dmart-live-available) {
-  background: #F3F5F7 !important;
-  border: none !important;
-  border-radius: 12px !important;
-  box-shadow: none !important;
-  padding: 10px 12px !important;
-  margin: 0 !important;
-}
-.dmart-live-row.dmart-live-available-row .dmart-live-label,
-.dmart-live-row:has(.dmart-live-available) .dmart-live-label {
-  color: #1b1d21 !important;
-  font-weight: 600 !important;
-  font-size: 13px !important;
-}
-.dmart-live-row.dmart-live-available-row .dmart-live-available,
-.dmart-live-row:has(.dmart-live-available) .dmart-live-available,
-.dmart-live-available {
-  color: #16a34a !important;
-  font-weight: 800 !important;
-}
-[data-theme="dark"] .dmart-live-row.dmart-live-available-row,
-[data-theme="dark"] .dmart-live-row:has(.dmart-live-available) {
-  background: #24303a !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-[data-theme="dark"] .dmart-live-row.dmart-live-available-row .dmart-live-label,
-[data-theme="dark"] .dmart-live-row:has(.dmart-live-available) .dmart-live-label {
-  color: #eef0f2 !important;
-}
+/* legacy v1 available-row block removed in v3.1 */
 
 
 /* ============================================================
@@ -639,14 +605,12 @@ html.recent-beside-barcode .recent-rail-meta {
 
 
 /* ============================================================================
-   DMART LIVE CARD v3 — PREMIUM ENTERPRISE REDESIGN (Build 174)
+   DMART LIVE CARD v3.1 — REFINED TYPOGRAPHY, TIGHT ALIGNMENT & VIVID PALETTE (Build 175)
    ----------------------------------------------------------------------------
-   • Sculpted glass-surface hierarchy (Crystal-Aqua + Dark Mode native)
-   • Dominant Available Hero card with On-Hand badge & tabular numerals
-   • Calm neutral Reserved=0 vs highlighted Amber Reserved>0 + Free Stock Pill
+   • Softer, calmer font weights (600–700 instead of 800–900) & balanced scale
+   • Tighter vertical rhythm & uniform internal padding/alignment
+   • Vivid, crisp emerald, Talabat orange, amber, and crimson accents (light & dark)
    • Shimmer skeleton pulse while loading (never flashes fake numbers)
-   • Refined Adjust Stock stepper + structured inline alert banner
-   • High-contrast Check in Dmart CTA with external arrow icon
    ============================================================================ */
 
 .dmart-live-card.dmart-live-v3,
@@ -654,47 +618,47 @@ html.recent-beside-barcode .recent-rail-meta {
   position: relative;
   display: flex !important;
   flex-direction: column !important;
-  gap: 10px !important;
-  padding: 14px !important;
-  border-radius: 20px !important;
-  background: linear-gradient(165deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 252, 254, 0.92) 100%) !important;
-  border: 1.5px solid rgba(135, 185, 202, 0.48) !important;
+  gap: 8px !important;
+  padding: 12px 13px !important;
+  border-radius: 16px !important;
+  background: #ffffff !important;
+  border: 1.5px solid rgba(14, 116, 144, 0.24) !important;
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.9) inset,
-    0 10px 26px -8px rgba(15, 50, 75, 0.11),
-    0 2px 6px rgba(15, 50, 75, 0.04) !important;
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 8px 22px -8px rgba(15, 23, 42, 0.10),
+    0 2px 5px rgba(15, 23, 42, 0.04) !important;
   box-sizing: border-box !important;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease !important;
 }
 
 .dmart-live-card.dmart-live-v3.is-ready {
-  border-color: rgba(22, 163, 74, 0.34) !important;
+  border-color: rgba(5, 150, 105, 0.38) !important;
 }
 
 .dmart-live-card.dmart-live-v3.has-reserved {
-  border-color: rgba(245, 158, 11, 0.45) !important;
+  border-color: rgba(217, 119, 6, 0.52) !important;
 }
 
 .dmart-live-card.dmart-live-v3.is-all-reserved,
 .dmart-live-card.dmart-live-v3.is-error {
-  border-color: rgba(220, 38, 38, 0.42) !important;
+  border-color: rgba(225, 29, 72, 0.48) !important;
 }
 
 [data-theme="dark"] .dmart-live-card.dmart-live-v3,
 [data-theme="dark"] .product-card .dmart-live-card.dmart-live-v3 {
-  background: linear-gradient(165deg, rgba(22, 30, 38, 0.96) 0%, rgba(15, 22, 28, 0.94) 100%) !important;
-  border-color: rgba(255, 255, 255, 0.11) !important;
+  background: #131b24 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.06) inset,
-    0 14px 30px -10px rgba(0, 0, 0, 0.5) !important;
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 12px 26px -10px rgba(0, 0, 0, 0.55) !important;
 }
 
 [data-theme="dark"] .dmart-live-card.dmart-live-v3.is-ready {
-  border-color: rgba(52, 211, 153, 0.32) !important;
+  border-color: rgba(16, 185, 129, 0.40) !important;
 }
 
 [data-theme="dark"] .dmart-live-card.dmart-live-v3.has-reserved {
-  border-color: rgba(251, 191, 36, 0.38) !important;
+  border-color: rgba(245, 158, 11, 0.48) !important;
 }
 
 /* Header Row: Brand + Live Dot + Dynamic Free Pill */
@@ -703,9 +667,9 @@ html.recent-beside-barcode .recent-rail-meta {
   align-items: center !important;
   justify-content: space-between !important;
   gap: 6px !important;
-  padding-bottom: 8px !important;
+  padding-bottom: 6px !important;
   margin-bottom: 0 !important;
-  border-bottom: 1px solid rgba(15, 45, 65, 0.08) !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.07) !important;
 }
 
 [data-theme="dark"] .dmart-live-v3 .dmart-live-head {
@@ -715,27 +679,27 @@ html.recent-beside-barcode .recent-rail-meta {
 .dmart-live-v3 .dmart-live-brand {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 7px !important;
+  gap: 6px !important;
 }
 
 .dmart-live-v3 .dmart-live-title {
-  font-size: 11px !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.09em !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
   text-transform: uppercase !important;
-  color: #334155 !important;
+  color: #FF5A00 !important;
   margin: 0 !important;
   padding: 0 !important;
   border: none !important;
 }
 
 [data-theme="dark"] .dmart-live-v3 .dmart-live-title {
-  color: #cbd5e1 !important;
+  color: #fb923c !important;
 }
 
 .dmart-live-v3 .dmart-live-head-dot {
-  width: 8px !important;
-  height: 8px !important;
+  width: 7px !important;
+  height: 7px !important;
   border-radius: 50% !important;
   background: #94a3b8 !important;
   flex-shrink: 0 !important;
@@ -743,19 +707,19 @@ html.recent-beside-barcode .recent-rail-meta {
 }
 
 .dmart-live-v3.is-ready .dmart-live-head-dot {
-  background: #10b981 !important;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
+  background: #059669 !important;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.20) !important;
 }
 
 .dmart-live-v3.is-loading .dmart-live-head-dot {
   background: #f59e0b !important;
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.22) !important;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.24) !important;
   animation: dmartDotPulse 1s ease-in-out infinite !important;
 }
 
 .dmart-live-v3.is-error .dmart-live-head-dot {
-  background: #ef4444 !important;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+  background: #e11d48 !important;
+  box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.22) !important;
 }
 
 @keyframes dmartDotPulse {
@@ -767,10 +731,10 @@ html.recent-beside-barcode .recent-rail-meta {
 .dmart-live-v3 .dmart-live-free-pill {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
+  padding: 2px 7px;
   border-radius: 999px;
-  font-size: 10.5px;
-  font-weight: 800;
+  font-size: 10px;
+  font-weight: 700;
   letter-spacing: 0.01em;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -781,49 +745,54 @@ html.recent-beside-barcode .recent-rail-meta {
 }
 
 .dmart-live-v3 .dmart-live-free-pill.is-partial {
-  background: rgba(245, 158, 11, 0.15);
+  background: #fffbeb;
   color: #b45309;
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  border: 1px solid #f59e0b;
 }
 
 .dmart-live-v3 .dmart-live-free-pill.is-locked {
-  background: rgba(220, 38, 38, 0.14);
-  color: #dc2626;
-  border: 1px solid rgba(220, 38, 38, 0.35);
+  background: #fff1f2;
+  color: #be123c;
+  border: 1px solid #f43f5e;
 }
 
 [data-theme="dark"] .dmart-live-v3 .dmart-live-free-pill.is-partial {
-  background: rgba(251, 191, 36, 0.16);
-  color: #fcd34d;
-  border-color: rgba(251, 191, 36, 0.32);
+  background: rgba(245, 158, 11, 0.20);
+  color: #fde68a;
+  border-color: rgba(251, 191, 36, 0.45);
 }
 
 [data-theme="dark"] .dmart-live-v3 .dmart-live-free-pill.is-locked {
-  background: rgba(248, 113, 113, 0.18);
-  color: #fca5a5;
-  border-color: rgba(248, 113, 113, 0.35);
+  background: rgba(225, 29, 72, 0.22);
+  color: #fecdd3;
+  border-color: rgba(251, 113, 133, 0.45);
 }
 
-/* Dominant Hero Slot: Available Stock */
+/* Primary Hero Slot: Available Stock (Vivid Emerald, Softer 20px/700 Typography) */
 .dmart-live-v3 .dmart-live-hero {
   display: flex !important;
   flex-direction: column !important;
-  gap: 4px !important;
-  padding: 11px 13px !important;
-  border-radius: 14px !important;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.11) 0%, rgba(22, 163, 74, 0.05) 100%) !important;
-  border: 1px solid rgba(16, 185, 129, 0.26) !important;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.05) !important;
+  gap: 3px !important;
+  padding: 9px 11px !important;
+  border-radius: 12px !important;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
+  border: 1px solid #6ee7b7 !important;
+  box-shadow: 0 1px 4px rgba(5, 150, 105, 0.07) !important;
 }
 
 .dmart-live-v3.is-zero-stock .dmart-live-hero {
-  background: linear-gradient(135deg, rgba(249, 115, 22, 0.11) 0%, rgba(234, 88, 12, 0.05) 100%) !important;
-  border-color: rgba(249, 115, 22, 0.28) !important;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%) !important;
+  border-color: #fdba74 !important;
 }
 
 [data-theme="dark"] .dmart-live-v3 .dmart-live-hero {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 95, 70, 0.12) 100%) !important;
-  border-color: rgba(52, 211, 153, 0.26) !important;
+  background: linear-gradient(135deg, rgba(6, 95, 70, 0.38) 0%, rgba(4, 120, 87, 0.22) 100%) !important;
+  border-color: rgba(52, 211, 153, 0.36) !important;
+}
+
+[data-theme="dark"] .dmart-live-v3.is-zero-stock .dmart-live-hero {
+  background: linear-gradient(135deg, rgba(154, 52, 18, 0.34) 0%, rgba(194, 65, 12, 0.20) 100%) !important;
+  border-color: rgba(251, 146, 60, 0.40) !important;
 }
 
 .dmart-live-v3 .dmart-live-hero-top {
@@ -834,9 +803,9 @@ html.recent-beside-barcode .recent-rail-meta {
 }
 
 .dmart-live-v3 .dmart-live-hero .dmart-live-label {
-  font-size: 11.5px !important;
-  font-weight: 700 !important;
-  color: #0f5132 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #065f46 !important;
   letter-spacing: 0.01em !important;
 }
 
@@ -845,33 +814,33 @@ html.recent-beside-barcode .recent-rail-meta {
 }
 
 .dmart-live-v3 .dmart-live-hero-tag {
-  font-size: 9.5px !important;
-  font-weight: 800 !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.05em !important;
   padding: 2px 6px !important;
-  border-radius: 6px !important;
-  background: rgba(16, 185, 129, 0.15) !important;
+  border-radius: 5px !important;
+  background: rgba(5, 150, 105, 0.16) !important;
   color: #047857 !important;
 }
 
 [data-theme="dark"] .dmart-live-v3 .dmart-live-hero-tag {
-  background: rgba(52, 211, 153, 0.18) !important;
+  background: rgba(16, 185, 129, 0.24) !important;
   color: #6ee7b7 !important;
 }
 
 .dmart-live-v3 .dmart-live-hero .dmart-live-available {
-  font-size: 24px !important;
-  font-weight: 900 !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
   font-variant-numeric: tabular-nums !important;
-  letter-spacing: -0.02em !important;
-  line-height: 1.15 !important;
-  color: #059669 !important;
+  letter-spacing: -0.015em !important;
+  line-height: 1.18 !important;
+  color: #047857 !important;
   text-align: left !important;
 }
 
 .dmart-live-v3.is-zero-stock .dmart-live-hero .dmart-live-available {
-  color: #ea580c !important;
+  color: #c2410c !important;
 }
 
 [data-theme="dark"] .dmart-live-v3 .dmart-live-hero .dmart-live-available {
@@ -882,37 +851,38 @@ html.recent-beside-barcode .recent-rail-meta {
   color: #fb923c !important;
 }
 
-/* Secondary Grid: Reserved & Price Tiles */
+/* Secondary Grid: Reserved & Price Tiles (Crisp Alignment & Softer 13.5px/700 Values) */
 .dmart-live-v3 .dmart-live-secondary {
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
-  gap: 8px !important;
+  gap: 7px !important;
 }
 
 .dmart-live-v3 .dmart-live-sec {
   display: flex !important;
   flex-direction: column !important;
   justify-content: space-between !important;
-  gap: 4px !important;
-  padding: 9px 11px !important;
-  border-radius: 12px !important;
-  background: #f1f5f9 !important;
-  border: 1px solid rgba(15, 23, 42, 0.07) !important;
-  transition: background 0.18s ease, border-color 0.18s ease !important;
+  gap: 3px !important;
+  padding: 8px 10px !important;
+  border-radius: 11px !important;
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  transition: background 0.16s ease, border-color 0.16s ease !important;
 }
 
 [data-theme="dark"] .dmart-live-v3 .dmart-live-sec {
-  background: rgba(30, 41, 59, 0.72) !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
 }
 
 .dmart-live-v3 .dmart-live-sec .dmart-live-label {
   display: inline-flex !important;
   align-items: center !important;
   gap: 4px !important;
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  color: #64748b !important;
+  font-size: 10.5px !important;
+  font-weight: 600 !important;
+  color: #475569 !important;
+  line-height: 1.2 !important;
 }
 
 [data-theme="dark"] .dmart-live-v3 .dmart-live-sec .dmart-live-label {
@@ -920,28 +890,30 @@ html.recent-beside-barcode .recent-rail-meta {
 }
 
 .dmart-live-v3 .dmart-sec-ic {
-  width: 12px !important;
-  height: 12px !important;
-  opacity: 0.75 !important;
+  width: 11.5px !important;
+  height: 11.5px !important;
+  opacity: 0.82 !important;
   flex-shrink: 0 !important;
+  color: #64748b !important;
 }
 
 .dmart-live-v3 .dmart-live-sec .dmart-live-value {
-  font-size: 14.5px !important;
-  font-weight: 800 !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
   font-variant-numeric: tabular-nums !important;
-  color: #1e293b !important;
+  line-height: 1.22 !important;
+  color: #0f172a !important;
   text-align: left !important;
 }
 
 [data-theme="dark"] .dmart-live-v3 .dmart-live-sec .dmart-live-value {
-  color: #f1f5f9 !important;
+  color: #f8fafc !important;
 }
 
-/* Reserved = 0 is calm neutral; Reserved > 0 highlights in warm amber */
+/* Reserved = 0 is calm slate; Reserved > 0 is vivid Amber; All-Locked is vivid Crimson */
 .dmart-live-v3 .dmart-live-reserved-row:not(.is-active-reserved) .dmart-live-reserved {
-  color: #64748b !important;
-  font-weight: 700 !important;
+  color: #475569 !important;
+  font-weight: 600 !important;
 }
 
 [data-theme="dark"] .dmart-live-v3 .dmart-live-reserved-row:not(.is-active-reserved) .dmart-live-reserved {
@@ -949,38 +921,49 @@ html.recent-beside-barcode .recent-rail-meta {
 }
 
 .dmart-live-v3 .dmart-live-reserved-row.is-active-reserved {
-  background: rgba(245, 158, 11, 0.12) !important;
-  border-color: rgba(245, 158, 11, 0.36) !important;
+  background: #fffbeb !important;
+  border-color: #f59e0b !important;
 }
 
 .dmart-live-v3 .dmart-live-reserved-row.is-active-reserved .dmart-live-label,
+.dmart-live-v3 .dmart-live-reserved-row.is-active-reserved .dmart-sec-ic,
 .dmart-live-v3 .dmart-live-reserved-row.is-active-reserved .dmart-live-reserved {
   color: #b45309 !important;
+  font-weight: 700 !important;
 }
 
 [data-theme="dark"] .dmart-live-v3 .dmart-live-reserved-row.is-active-reserved {
-  background: rgba(245, 158, 11, 0.16) !important;
-  border-color: rgba(251, 191, 36, 0.35) !important;
+  background: rgba(245, 158, 11, 0.18) !important;
+  border-color: rgba(251, 191, 36, 0.45) !important;
 }
 
 [data-theme="dark"] .dmart-live-v3 .dmart-live-reserved-row.is-active-reserved .dmart-live-label,
+[data-theme="dark"] .dmart-live-v3 .dmart-live-reserved-row.is-active-reserved .dmart-sec-ic,
 [data-theme="dark"] .dmart-live-v3 .dmart-live-reserved-row.is-active-reserved .dmart-live-reserved {
   color: #fbbf24 !important;
 }
 
 .dmart-live-v3 .dmart-live-reserved-row.is-all-locked {
-  background: rgba(220, 38, 38, 0.11) !important;
-  border-color: rgba(220, 38, 38, 0.35) !important;
+  background: #fff1f2 !important;
+  border-color: #f43f5e !important;
 }
 
 .dmart-live-v3 .dmart-live-reserved-row.is-all-locked .dmart-live-label,
+.dmart-live-v3 .dmart-live-reserved-row.is-all-locked .dmart-sec-ic,
 .dmart-live-v3 .dmart-live-reserved-row.is-all-locked .dmart-live-reserved {
-  color: #dc2626 !important;
+  color: #be123c !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="dark"] .dmart-live-v3 .dmart-live-reserved-row.is-all-locked {
+  background: rgba(225, 29, 72, 0.20) !important;
+  border-color: rgba(251, 113, 133, 0.45) !important;
 }
 
 [data-theme="dark"] .dmart-live-v3 .dmart-live-reserved-row.is-all-locked .dmart-live-label,
+[data-theme="dark"] .dmart-live-v3 .dmart-live-reserved-row.is-all-locked .dmart-sec-ic,
 [data-theme="dark"] .dmart-live-v3 .dmart-live-reserved-row.is-all-locked .dmart-live-reserved {
-  color: #f87171 !important;
+  color: #fda4af !important;
 }
 
 /* Shimmer / Soft Pulse on Value Slots While Loading (never looks like a final number) */
@@ -988,8 +971,8 @@ html.recent-beside-barcode .recent-rail-meta {
   color: transparent !important;
   position: relative;
   overflow: hidden;
-  border-radius: 6px;
-  background: linear-gradient(90deg, rgba(148, 163, 184, 0.18) 25%, rgba(148, 163, 184, 0.34) 50%, rgba(148, 163, 184, 0.18) 75%) !important;
+  border-radius: 5px;
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.16) 25%, rgba(148, 163, 184, 0.30) 50%, rgba(148, 163, 184, 0.16) 75%) !important;
   background-size: 200% 100% !important;
   animation: dmart-skel-shine 1.2s ease-in-out infinite !important;
   user-select: none;
@@ -999,97 +982,124 @@ html.recent-beside-barcode .recent-rail-meta {
   display: none !important;
 }
 
-/* Adjust Stock Panel Redesign inside v3 Card */
+/* Adjust Stock Panel Redesign inside v3.1 Card */
 .dmart-live-v3 .dmart-adjust-panel {
-  margin: 2px 0 0 !important;
-  padding: 11px !important;
-  border-radius: 14px !important;
-  background: rgba(248, 250, 252, 0.9) !important;
-  border: 1px solid rgba(15, 23, 42, 0.08) !important;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03) !important;
+  margin: 0 !important;
+  padding: 9px 10px !important;
+  border-radius: 12px !important;
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: none !important;
 }
 
 [data-theme="dark"] .dmart-live-v3 .dmart-adjust-panel {
-  background: rgba(15, 23, 42, 0.55) !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
 }
 
 .dmart-live-v3 .dmart-adjust-title {
-  margin-bottom: 8px !important;
+  margin-bottom: 6px !important;
 }
 
 .dmart-live-v3 .dmart-adjust-title-text {
-  font-size: 10.5px !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.06em !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em !important;
   color: #475569 !important;
 }
 
 [data-theme="dark"] .dmart-live-v3 .dmart-adjust-title-text {
-  color: #94a3b8 !important;
+  color: #cbd5e1 !important;
 }
 
 .dmart-live-v3 .dmart-adjust-title-hint {
-  font-size: 10px !important;
-  font-weight: 700 !important;
-  padding: 2px 6px !important;
-  border-radius: 6px !important;
-  background: rgba(255, 107, 0, 0.1) !important;
-  color: #ea580c !important;
+  font-size: 9.5px !important;
+  font-weight: 600 !important;
+  padding: 1.5px 6px !important;
+  border-radius: 5px !important;
+  background: #fff7ed !important;
+  border: 1px solid #fed7aa !important;
+  color: #c2410c !important;
 }
 
 [data-theme="dark"] .dmart-live-v3 .dmart-adjust-title-hint {
-  background: rgba(255, 122, 26, 0.16) !important;
+  background: rgba(255, 107, 0, 0.18) !important;
+  border-color: rgba(251, 146, 60, 0.35) !important;
   color: #fdba74 !important;
+}
+
+.dmart-live-v3 .dmart-adjust-row {
+  gap: 6px !important;
+}
+
+.dmart-live-v3 .dmart-adjust-btn {
+  height: 36px !important;
+  min-height: 36px !important;
+  border-radius: 9px !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}
+
+.dmart-live-v3 .dmart-adjust-qty {
+  height: 36px !important;
+  min-height: 36px !important;
+  border-radius: 9px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
 }
 
 /* Accessible Inline Alert Box for Adjust Messages */
 .dmart-live-v3 .dmart-adjust-msg:not([hidden]) {
   display: block !important;
-  margin-top: 8px !important;
-  padding: 7px 10px !important;
-  border-radius: 10px !important;
-  font-size: 11.5px !important;
-  font-weight: 700 !important;
+  margin-top: 6px !important;
+  padding: 6px 9px !important;
+  border-radius: 9px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
   line-height: 1.35 !important;
   text-align: center !important;
 }
 
 .dmart-live-v3 .dmart-adjust-msg.is-err {
-  background: rgba(220, 38, 38, 0.1) !important;
-  border: 1px solid rgba(220, 38, 38, 0.28) !important;
-  color: #b91c1c !important;
+  background: #fff1f2 !important;
+  border: 1px solid #fecdd3 !important;
+  color: #be123c !important;
 }
 
 [data-theme="dark"] .dmart-live-v3 .dmart-adjust-msg.is-err {
-  background: rgba(239, 68, 68, 0.16) !important;
-  border-color: rgba(248, 113, 113, 0.32) !important;
-  color: #fca5a5 !important;
+  background: rgba(225, 29, 72, 0.18) !important;
+  border-color: rgba(251, 113, 133, 0.35) !important;
+  color: #fda4af !important;
 }
 
 .dmart-live-v3 .dmart-adjust-msg.is-ok {
-  background: rgba(16, 185, 129, 0.12) !important;
-  border: 1px solid rgba(16, 185, 129, 0.28) !important;
+  background: #ecfdf5 !important;
+  border: 1px solid #a7f3d0 !important;
   color: #047857 !important;
 }
 
 [data-theme="dark"] .dmart-live-v3 .dmart-adjust-msg.is-ok {
   background: rgba(16, 185, 129, 0.18) !important;
-  border-color: rgba(52, 211, 153, 0.32) !important;
+  border-color: rgba(52, 211, 153, 0.35) !important;
   color: #6ee7b7 !important;
 }
 
-/* Check in Dmart CTA inside v3 Card */
+/* Check in Dmart CTA inside v3.1 Card */
 .dmart-live-v3 .dmart-check-btn-inline {
   gap: 6px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
   margin-top: 2px !important;
-  background: linear-gradient(180deg, #ff7a1a 0%, #FF6B00 100%) !important;
-  border-radius: 13px !important;
-  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.24), 0 1px 0 rgba(255, 255, 255, 0.22) inset !important;
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  background: linear-gradient(180deg, #FF7414 0%, #FF5800 100%) !important;
+  border-radius: 11px !important;
+  box-shadow: 0 3px 10px rgba(255, 88, 0, 0.25), 0 1px 0 rgba(255, 255, 255, 0.22) inset !important;
 }
 
 .dmart-live-v3 .dmart-check-ext-ic {
-  width: 15px !important;
-  height: 15px !important;
+  width: 14px !important;
+  height: 14px !important;
   flex-shrink: 0 !important;
 }

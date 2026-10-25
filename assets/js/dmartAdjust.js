@@ -694,8 +694,10 @@ function bindAdjustPanel(root, sku) {
       if (d.available != null || d.reserved != null || d.price != null) {
         try { if (d.available != null && sku) setLastAvailable(sku, d.available, { fromLive: true }); } catch (e) {}
         setLiveValues(root, {
+          sku: String(sku),
+          fromAdjust: true,
           onHand: d.available != null ? d.available : null,
-          reserved: d.reserved != null ? d.reserved : null,
+          reserved: d.reserved != null ? d.reserved : 0,
           price: d.price != null ? d.price : null,
           ok: true,
         });

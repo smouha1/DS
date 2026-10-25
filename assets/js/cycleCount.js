@@ -32,7 +32,6 @@ import {
   formatShortTimestamp,
   productMatchesCycleQuery,
   findProductByScanCode,
-  getSampleCycleData,
 } from './cycleCountParse.js';
 
 const SNAPSHOT_STORAGE_PREFIX = 'smouha_cycle_snapshot_v1_';
@@ -52,7 +51,6 @@ const state = {
   subView: 'batches', // 'batches' | 'detail'
   loading: false,
   error: null,
-  isDemoMode: false,
   fromCache: false,
   fetchedAt: null,
   page: 1,
@@ -65,7 +63,7 @@ const state = {
   batchSearchQuery: '',
   activeBatchId: null,
   itemFilter: 'all', // 'all' | 'multi' | 'unchecked' | 'discrepancy' | 'checked'
-  itemSort: 'aisle', // 'aisle' | 'portal' | 'multi_first' | 'qty_desc'
+  itemSort: 'aisle', // 'aisle' | 'qty_asc' | 'qty_desc' | 'multi_first' | 'portal'
   itemSearchQuery: '',
   selectedBarcodeIdxBySku: new Map(), // sku -> index in barcodes[]
   drafts: {}, // "${batchId}::${sku}::${locationName}" -> { checked: bool, countVal: string, at: number }
@@ -402,7 +400,6 @@ async function loadCycles({ force = false, keepSubView = true } = {}) {
   state.loading = false;
 
   if (res.ok && res.listData) {
-    state.isDemoMode = false;
     state.fromCache = false;
     state.fetchedAt = res.listData.fetchedAt || Date.now();
     if (res.kpiData) {
@@ -422,7 +419,6 @@ async function loadCycles({ force = false, keepSubView = true } = {}) {
   // Fallback to cached snapshot for this warehouse if available
   const snap = loadWarehouseSnapshot(whId);
   if (snap && snap.rawList) {
-    state.isDemoMode = false;
     state.fromCache = true;
     state.fetchedAt = snap.fetchedAt || null;
     if (snap.kpi) state.kpi = normalizeCycleKpi(snap.kpi);
@@ -442,24 +438,7 @@ async function loadCycles({ force = false, keepSubView = true } = {}) {
   renderCycleWorkspace();
 }
 
-function loadDemoSampleData() {
-  const sample = getSampleCycleData();
-  state.loading = false;
-  state.error = null;
-  state.isDemoMode = true;
-  state.fromCache = false;
-  state.fetchedAt = Date.now();
-  state.kpi = normalizeCycleKpi(sample.kpi);
-  const parsed = normalizeCycleListPayload(sample.list);
-  state.cycles = parsed.cycles;
-  state.batches = parsed.batches;
-  state.totalCycles = parsed.totalCycles;
-  warmAppCachesFromBatches(state.batches);
-  // Open the first open batch automatically or show batch list
-  updateHeaderBadge();
-  renderCycleWorkspace();
-  appCallbacks.toast('Loaded DS60 HAR Sample Data (Preview Mode)');
-}
+
 
 /* --------------------------------------------------------------------------
    Calculations & Progress Helpers
@@ -767,20 +746,16 @@ function renderTopHeaderHtml() {
   const whName = warehouse.getDisplayName ? warehouse.getDisplayName() : 'Smouha DS60';
   const useQr = effectiveCycleUseQr();
   const bridgeOnline = !!(dmartLive.isBridgeOnline && dmartLive.isBridgeOnline());
-  const statusLabel = state.isDemoMode
-    ? 'Sample Preview Mode'
-    : state.fromCache
-      ? 'Cached Snapshot'
-      : bridgeOnline
-        ? 'DMart Live Connected'
-        : 'Bridge Standby';
-  const statusCls = state.isDemoMode
-    ? 'is-demo'
-    : state.fromCache
-      ? 'is-cached'
-      : bridgeOnline
-        ? 'is-online'
-        : 'is-offline';
+  const statusLabel = state.fromCache
+    ? 'Cached Snapshot'
+    : bridgeOnline
+      ? 'DMart Live Connected'
+      : 'Bridge Standby';
+  const statusCls = state.fromCache
+    ? 'is-cached'
+    : bridgeOnline
+      ? 'is-online'
+      : 'is-offline';
 
   const k = state.kpi || {};
 
@@ -892,24 +867,8 @@ function renderBatchListViewHtml() {
           <strong>Connection Notice:</strong> ${esc(state.error)}
         </div>
         <div class="cyc-notice-actions">
-          <button type="button" class="cyc-btn-sm cyc-btn-primary" id="cycTryDemoBtn">
-            Preview DS60 HAR Sample Data
-          </button>
-          <button type="button" class="cyc-btn-sm" id="cycRetryLoadBtn">
-            Retry Live Connection
-          </button>
-        </div>
-      </div>
-    `;
-  } else if (state.isDemoMode) {
-    statusBannerHtml = `
-      <div class="cyc-notice-banner is-demo">
-        <div class="cyc-notice-text">
-          <strong>DS60 HAR Preview Mode:</strong> Viewing sample Cycle Count batches (#792013 / Batch #3358930 &amp; #3354112) with real multi-location &amp; barcode structure.
-        </div>
-        <div class="cyc-notice-actions">
           <button type="button" class="cyc-btn-sm cyc-btn-primary" id="cycRetryLoadBtn">
-            Connect to Live DMart
+            Retry Live Connection
           </button>
         </div>
       </div>
@@ -933,12 +892,9 @@ function renderBatchListViewHtml() {
       <div class="cyc-empty-card">
         <svg class="cyc-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/></svg>
         <h3>No Cycle Count Batches Loaded</h3>
-        <p>Open the Talabat Portal tab so DMart Bridge captures your session, or preview the built-in DS60 HAR sample batch to test multi-location cards and QR / Code128 scanning.</p>
+        <p>Ensure the Talabat Portal tab is signed in with DMart Bridge active on the branch PC (or connected via LAN Hub), then refresh to load active warehouse batches.</p>
         <div class="cyc-empty-actions">
-          <button type="button" class="cyc-btn-primary" id="cycEmptyDemoBtn">
-            Load DS60 HAR Sample Batch
-          </button>
-          <button type="button" class="cyc-btn-secondary" id="cycEmptyRetryBtn">
+          <button type="button" class="cyc-btn-primary" id="cycEmptyRetryBtn">
             Retry Live Fetch
           </button>
         </div>
@@ -1062,6 +1018,8 @@ function getFilteredAndSortedBatchProducts(batch) {
   // Filter
   if (state.itemFilter === 'multi') {
     list = list.filter((p) => p.isMultiLocation);
+  } else if (state.itemFilter === 'zero') {
+    list = list.filter((p) => Number(p.onHandQty || 0) <= 0);
   } else if (state.itemFilter === 'unchecked') {
     list = list.filter((p) => !isProductFullyChecked(batch.id, p));
   } else if (state.itemFilter === 'checked') {
@@ -1075,15 +1033,26 @@ function getFilteredAndSortedBatchProducts(batch) {
     list = list.filter((p) => productMatchesCycleQuery(p, state.itemSearchQuery));
   }
 
-  // Sort
+  // Sort (qty_asc & qty_desc sort by Total System On-Hand Qty)
   if (state.itemSort === 'aisle') {
     list.sort((a, b) =>
-      a.primaryAisleSortKey.localeCompare(b.primaryAisleSortKey, undefined, { numeric: true, sensitivity: 'base' })
+      a.primaryAisleSortKey.localeCompare(b.primaryAisleSortKey, undefined, { numeric: true, sensitivity: 'base' }) ||
+      (a.portalIndex - b.portalIndex)
+    );
+  } else if (state.itemSort === 'qty_asc') {
+    list.sort((a, b) =>
+      (Number(a.onHandQty || 0) - Number(b.onHandQty || 0)) ||
+      a.primaryAisleSortKey.localeCompare(b.primaryAisleSortKey, undefined, { numeric: true, sensitivity: 'base' }) ||
+      (a.portalIndex - b.portalIndex)
+    );
+  } else if (state.itemSort === 'qty_desc') {
+    list.sort((a, b) =>
+      (Number(b.onHandQty || 0) - Number(a.onHandQty || 0)) ||
+      a.primaryAisleSortKey.localeCompare(b.primaryAisleSortKey, undefined, { numeric: true, sensitivity: 'base' }) ||
+      (a.portalIndex - b.portalIndex)
     );
   } else if (state.itemSort === 'multi_first') {
     list.sort((a, b) => (b.locationCount - a.locationCount) || (a.portalIndex - b.portalIndex));
-  } else if (state.itemSort === 'qty_desc') {
-    list.sort((a, b) => (b.onHandQty - a.onHandQty) || (a.portalIndex - b.portalIndex));
   } else {
     list.sort((a, b) => a.portalIndex - b.portalIndex);
   }
@@ -1266,7 +1235,7 @@ function renderItemCardHtml(batch, product) {
         </div>
 
         <div class="cyc-item-head-right">
-          <div class="cyc-total-onhand-pill" title="Total System On-Hand Quantity across all locations">
+          <div class="cyc-total-onhand-pill ${Number(product.onHandQty || 0) <= 0 ? 'is-zero-qty' : ''}" title="Total System On-Hand Quantity across all locations">
             <span>Total On-Hand:</span>
             <strong>${product.onHandQty}</strong>
           </div>
@@ -1345,6 +1314,7 @@ function renderBatchDetailViewHtml(batch) {
   const prog = getBatchProgress(batch);
   const allProducts = batch.products || [];
   const multiCount = allProducts.filter((p) => p.isMultiLocation).length;
+  const zeroQtyCount = allProducts.filter((p) => Number(p.onHandQty || 0) <= 0).length;
   const uncheckedCount = allProducts.filter((p) => !isProductFullyChecked(batch.id, p)).length;
   const checkedCount = allProducts.length - uncheckedCount;
   const discCount = allProducts.filter((p) => doesProductHaveDiscrepancy(batch.id, p)).length;
@@ -1417,10 +1387,13 @@ function renderBatchDetailViewHtml(batch) {
           <button type="button" class="cyc-pill-btn is-multi-pill ${state.itemFilter === 'multi' ? 'is-active' : ''}" data-item-filter="multi">
             Multi-Location (${multiCount})
           </button>
+          <button type="button" class="cyc-pill-btn is-zero-pill ${state.itemFilter === 'zero' ? 'is-active' : ''}" data-item-filter="zero" title="Show only items with 0 Total System On-Hand Qty">
+            0 Qty (${zeroQtyCount})
+          </button>
           <button type="button" class="cyc-pill-btn ${state.itemFilter === 'unchecked' ? 'is-active' : ''}" data-item-filter="unchecked">
             Unchecked (${uncheckedCount})
           </button>
-          <button type="button" class="cyc-pill-btn ${state.itemFilter === 'discrepancy' ? 'is-active' : ''}" data-item-filter="discrepancy">
+          <button type="button" class="cyc-pill-btn is-disc-pill ${state.itemFilter === 'discrepancy' ? 'is-active' : ''}" data-item-filter="discrepancy">
             Discrepancies (${discCount})
           </button>
           <button type="button" class="cyc-pill-btn ${state.itemFilter === 'checked' ? 'is-active' : ''}" data-item-filter="checked">
@@ -1428,14 +1401,15 @@ function renderBatchDetailViewHtml(batch) {
           </button>
         </div>
 
-        <!-- Walk-Path Sort -->
+        <!-- Walk-Path & System Quantity Sort -->
         <div class="cyc-sort-wrap">
-          <label for="cycItemSortSelect" class="cyc-sort-lbl">Order:</label>
-          <select id="cycItemSortSelect" class="cyc-sort-select">
+          <label for="cycItemSortSelect" class="cyc-sort-lbl">Sort:</label>
+          <select id="cycItemSortSelect" class="cyc-sort-select" aria-label="Sort batch items by location or Total System On-Hand Quantity">
             <option value="aisle" ${state.itemSort === 'aisle' ? 'selected' : ''}>Walk-Path (Aisle A01 &rarr; Z99)</option>
+            <option value="qty_asc" ${state.itemSort === 'qty_asc' ? 'selected' : ''}>Quantity: Low &rarr; High (0 Qty First)</option>
+            <option value="qty_desc" ${state.itemSort === 'qty_desc' ? 'selected' : ''}>Quantity: High &rarr; Low (System On-Hand)</option>
             <option value="multi_first" ${state.itemSort === 'multi_first' ? 'selected' : ''}>Multi-Location First</option>
             <option value="portal" ${state.itemSort === 'portal' ? 'selected' : ''}>Portal Sequence (#1 &rarr; #N)</option>
-            <option value="qty_desc" ${state.itemSort === 'qty_desc' ? 'selected' : ''}>Highest On-Hand Qty</option>
           </select>
         </div>
       </div>
@@ -1523,10 +1497,7 @@ function wireCycleWorkspaceEvents() {
     };
   });
 
-  // Demo & Retry buttons
-  const demoBtn = document.getElementById('cycTryDemoBtn') || document.getElementById('cycEmptyDemoBtn');
-  if (demoBtn) demoBtn.onclick = () => loadDemoSampleData();
-
+  // Retry button
   const retryBtn = document.getElementById('cycRetryLoadBtn') || document.getElementById('cycEmptyRetryBtn');
   if (retryBtn) retryBtn.onclick = () => loadCycles({ force: true, keepSubView: true });
 

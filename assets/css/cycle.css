@@ -5,6 +5,19 @@
    high-contrast scannable QR / Code 128 blocks across Desktop & Mobile.
    ============================================================================ */
 
+/* Clean White Page Background in Light Mode (and Clean Dark Slate in Dark Mode) when Cycle Count is active */
+html.cycle-view-active,
+html.cycle-view-active body {
+  background: #ffffff !important;
+  background-image: none !important;
+}
+
+html[data-theme="dark"].cycle-view-active,
+html[data-theme="dark"].cycle-view-active body {
+  background: #0f1419 !important;
+  background-image: none !important;
+}
+
 /* Hide main picker sections cleanly when Cycle Count workspace is active */
 html.cycle-view-active main > :not(#cycleWorkspace) {
   display: none !important;
@@ -204,8 +217,7 @@ html.cycle-view-active #stickyBarcodeBar {
   border: 1px solid rgba(22, 163, 74, 0.28);
 }
 
-.cyc-conn-pill.is-cached,
-.cyc-conn-pill.is-demo {
+.cyc-conn-pill.is-cached {
   background: rgba(217, 119, 6, 0.13);
   color: #b45309;
   border: 1px solid rgba(217, 119, 6, 0.3);
@@ -346,12 +358,6 @@ html.cycle-view-active #stickyBarcodeBar {
   background: rgba(245, 158, 11, 0.14);
   border: 1px solid rgba(245, 158, 11, 0.35);
   color: #92400e;
-}
-
-.cyc-notice-banner.is-demo {
-  background: rgba(14, 116, 144, 0.12);
-  border: 1px solid rgba(14, 116, 144, 0.28);
-  color: #0f172a;
 }
 
 .cyc-notice-actions {
@@ -1574,7 +1580,6 @@ html.large-barcode .cyc-bc-wrap.is-qr {
   border-color: rgba(56, 189, 248, 0.28);
 }
 
-[data-theme="dark"] .cyc-notice-banner.is-demo,
 [data-theme="dark"] .cyc-notice-banner.is-warning {
   color: #f8fafc;
 }
@@ -1640,4 +1645,177 @@ html.large-barcode .cyc-bc-wrap.is-qr {
   .cycle-header-btn {
     padding: 0 9px;
   }
+}
+
+/* ============================================================================
+   Build 175 Polish — Crisp White Surfaces, Tighter Rhythm & Vivid Badges
+   ============================================================================ */
+.cycle-workspace {
+  margin: 8px auto 28px;
+  padding: 0 12px;
+}
+
+.cyc-container {
+  gap: 11px;
+}
+
+.cyc-top-bar,
+.cyc-kpi-card,
+.cyc-batch-card,
+.cyc-detail-sticky-bar,
+.cyc-item-card,
+.cyc-empty-card,
+.cyc-pagination-bar {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+}
+
+.cyc-top-bar {
+  padding: 11px 15px;
+  border-radius: 14px;
+}
+
+.cyc-kpi-strip {
+  gap: 8px;
+}
+
+.cyc-kpi-card {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.cyc-batch-card {
+  padding: 13px 15px;
+  gap: 10px;
+  border-radius: 15px;
+}
+
+.cyc-detail-sticky-bar {
+  padding: 11px 14px;
+  gap: 8px;
+  border-radius: 14px;
+  margin-bottom: 10px;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.cyc-items-list {
+  gap: 10px;
+}
+
+.cyc-item-card-head {
+  padding: 8px 14px;
+  background: #f8fafc;
+  border-bottom-color: #e2e8f0;
+}
+
+.cyc-item-card-body {
+  padding: 12px 14px;
+  gap: 12px;
+}
+
+.cyc-loc-row {
+  padding: 9px 12px;
+  gap: 8px;
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+/* Vivid High-Contrast Badges */
+.cyc-status-badge.is-open {
+  background: #fff7ed;
+  color: #ea580c;
+  border: 1.5px solid #fb923c;
+}
+
+.cyc-status-badge.is-completed {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1.5px solid #34d399;
+}
+
+.cyc-loc-count-badge.is-multi-loc {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1.5px solid #f59e0b;
+}
+
+.cyc-loc-count-badge.is-single-loc {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #93c5fd;
+}
+
+.cyc-total-onhand-pill {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.cyc-total-onhand-pill.is-zero-qty {
+  background: #fff1f2;
+  border-color: #fda4af;
+  color: #be123c;
+}
+
+.cyc-pill-btn.is-zero-pill:not(.is-active) {
+  background: #fff1f2;
+  border-color: #fda4af;
+  color: #be123c;
+}
+
+.cyc-pill-btn.is-disc-pill:not(.is-active) {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+.cyc-disc-pill,
+.cyc-loc-delta.is-short {
+  background: #fff1f2;
+  color: #be123c;
+  border: 1px solid #fda4af;
+}
+
+.cyc-ok-pill,
+.cyc-loc-delta.is-match {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #6ee7b7;
+}
+
+.cyc-loc-delta.is-over {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #93c5fd;
+}
+
+[data-theme="dark"] .cyc-top-bar,
+[data-theme="dark"] .cyc-kpi-card,
+[data-theme="dark"] .cyc-batch-card,
+[data-theme="dark"] .cyc-detail-sticky-bar,
+[data-theme="dark"] .cyc-item-card,
+[data-theme="dark"] .cyc-empty-card,
+[data-theme="dark"] .cyc-pagination-bar {
+  background: #161f29;
+  border-color: rgba(255, 255, 255, 0.11);
+}
+
+[data-theme="dark"] .cyc-item-card-head {
+  background: #111820;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .cyc-total-onhand-pill {
+  background: #1e293b;
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .cyc-total-onhand-pill.is-zero-qty {
+  background: rgba(225, 29, 72, 0.22);
+  border-color: rgba(251, 113, 133, 0.45);
+  color: #fda4af;
 }

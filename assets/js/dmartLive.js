@@ -23,6 +23,8 @@ import {
   asList,
   pickMatchingProduct,
   extractLiveFields,
+  extractSearchLiveFields,
+  extractDetailLiveFields,
   hasCompleteLiveData,
   buildSearchUrl as buildSearchUrlParsed,
   buildDetailUrl as buildDetailUrlParsed,
@@ -286,18 +288,27 @@ async function fetchViaDirect(sku, warehouseId) {
 
   try {
     const searchRaw = await fetchJson(buildSearchUrl(sku, warehouseId), bearer);
-    let fields = extractLiveFields(searchRaw, sku);
+    const searchFields = extractSearchLiveFields(searchRaw, sku);
+    let fields = {
+      onHand: searchFields.onHand,
+      reserved: null,
+      price: searchFields.price,
+      productId: searchFields.productId,
+    };
 
-    if (fields.productId && (fields.onHand === null || fields.reserved === null || fields.price === null)) {
+    // Always fetch Product Detail when productId is available — search-list reserved is never trusted
+    if (fields.productId) {
       try {
         const detailRaw = await fetchJson(buildDetailUrl(fields.productId, warehouseId), bearer);
-        const detail = extractLiveFields(detailRaw, sku);
-        fields = {
-          onHand: detail.onHand !== null ? detail.onHand : fields.onHand,
-          reserved: detail.reserved !== null ? detail.reserved : fields.reserved,
-          price: detail.price !== null ? detail.price : fields.price,
-          productId: fields.productId,
-        };
+        const detail = extractDetailLiveFields(detailRaw, sku);
+        if (detail.matched) {
+          fields = {
+            onHand: detail.onHand !== null ? detail.onHand : fields.onHand,
+            reserved: detail.reserved !== null ? detail.reserved : 0,
+            price: detail.price !== null ? detail.price : fields.price,
+            productId: fields.productId,
+          };
+        }
       } catch (e) {
         console.info('[dmartLive] detail fetch failed:', e && e.message ? e.message : 'error');
       }
@@ -373,11 +384,12 @@ async function fetchViaStockMirror(sku, warehouseId) {
       return { ok: false, reason: 'mirror-stale', onHand: null, reserved: null, price: null };
     }
     const onHand = r.available != null ? Number(r.available) : null;
-    const reserved = r.reserved != null ? Number(r.reserved) : null;
+    // Historical mirror snapshot (up to 15m old) cannot assert an active reservation lock;
+    // keep reserved at 0 on passive mirror fallback so stale DB rows never flash phantom Reserved.
     const price = r.price != null ? Number(r.price) : null;
     const data = {
       onHand: Number.isFinite(onHand) ? onHand : null,
-      reserved: Number.isFinite(reserved) ? reserved : 0,
+      reserved: 0,
       price: Number.isFinite(price) ? price : null,
     };
     if (data.onHand == null && data.price == null) {
@@ -894,8 +906,14 @@ export async function fetchLiveProductInfo(sku, warehouseId, opts = {}) {
   }
 
   // 1) Prefer extension bridge ONLY when present on this page (desktop + extension).
-  // Phones outside the branch must NOT wait 12s for a bridge that will never answer —
-  // go straight to Supabase live-relay (PC extension fulfills pending rows).
+  // On desktop cold-boot (e.g. restoreLastRecentProduct on page load), wait briefly (up to 450ms)
+  // for content-smouha.js to inject data-dmart-bridge="1" so the 1st request never falls through
+  // to stale Supabase mirror rows.
+  if (!isExtensionLikelyPresent() && isDesktopViewport() && !bridgeReadyKnown) {
+    for (let i = 0; i < 9 && !isExtensionLikelyPresent(); i++) {
+      await sleep(50);
+    }
+  }
   let bridge = { ok: false, reason: 'no-bridge', onHand: null, reserved: null, price: null };
   if (isExtensionLikelyPresent()) {
     bridge = await requestViaExtension(sku, warehouseId, force);
@@ -911,6 +929,18 @@ export async function fetchLiveProductInfo(sku, warehouseId, opts = {}) {
       }
       return { ...data, ok: false, reason: 'partial-data', via: 'extension' };
     }
+    // CRITICAL: When the Chrome Extension is present on this machine, do NOT fall through
+    // to Supabase live-relay or stock-mirror (which can return stale cached numbers while
+    // the extension service worker is waking up). Return the extension failure so poll()
+    // retries the extension directly.
+    return {
+      onHand: null,
+      reserved: null,
+      price: null,
+      ok: false,
+      reason: bridge.reason || 'fetch-failed',
+      via: 'extension',
+    };
   }
 
   // 2) Live relay via Supabase → PC extension → DMart (fresh numbers)
@@ -1025,16 +1055,20 @@ export function setLiveLoading(root) {
 
 export function setLiveValues(root, data) {
   if (!root) return;
+  // SKU race guard: never paint a response for a SKU that no longer matches the active card DOM
+  if (data && data.sku && root.dataset && root.dataset.sku && String(data.sku) !== String(root.dataset.sku)) {
+    return;
+  }
   const avail = root.querySelector('[data-live="available"]');
   const res = root.querySelector('[data-live="reserved"]');
   const price = root.querySelector('[data-live="price"]');
   const freePill = root.querySelector('[data-live="free-pill"]');
   const resRow = root.querySelector('.dmart-live-reserved-row');
 
-  // Strict completeness check: both onHand and reserved must be confirmed (or post-adjust update)
+  // Strict completeness check: both onHand and reserved must be confirmed (or explicit post-adjust update)
   const hasStockPair = data && data.ok && data.onHand != null && data.reserved != null;
-  const hasPostAdjustOrMirror = data && data.ok && (data.onHand != null || data.price != null);
-  const complete = !!(hasStockPair || hasPostAdjustOrMirror);
+  const hasPostAdjust = data && data.ok && data.fromAdjust === true && (data.onHand != null || data.price != null);
+  const complete = !!(hasStockPair || hasPostAdjust);
 
   if (complete) {
     const onHandNum = data.onHand != null && Number.isFinite(Number(data.onHand)) ? Number(data.onHand) : null;
@@ -1044,7 +1078,7 @@ export function setLiveValues(root, data) {
 
     if (avail) avail.textContent = onHandNum != null ? formatUnits(onHandNum) : '—';
     // Only display a confirmed Reserved number; if unknown, show '—' rather than inventing a number
-    if (res) res.textContent = reservedNum != null ? formatUnits(reservedNum) : '0 Units';
+    if (res) res.textContent = reservedNum != null ? formatUnits(reservedNum) : '—';
     if (price) price.textContent = data.price != null ? formatPrice(Number(data.price)) : '—';
 
     const hasPosReserved = reservedNum != null && reservedNum > 0;
@@ -1210,15 +1244,19 @@ export function requestLiveForProduct(sku) {
               price: data.price,
             };
           }
-          // Extension v1.12.1+ guarantees `data.reserved` is extracted exclusively from
-          // the authoritative Product Detail endpoint (`/product/{id}`), never from the
-          // stale search list. 1 completed detail read is immediately authoritative.
-          const need = 1;
+          // Multi-read agreement defense-in-depth:
+          // When Reserved === 0, 1 authoritative detail read is accepted immediately.
+          // When Reserved > 0 on direct/extension path, require 2 consecutive identical
+          // readings (so a second poll hits cachedPid detail directly and filters out any
+          // transient BFF replica lag without needing a 2nd user click).
+          const viaRelay = data.via === 'live-relay' || data.via === 'hub' || data.via === 'stock-mirror';
+          const need = viaRelay ? 1 : ((data.reserved > 0) ? 2 : 1);
           if ((pollState.matches || 0) < need && attempt < 6) {
             continue;
           }
           try { window.__smouhaLastLiveMs = Date.now() - startedAt; } catch (e) {}
           setLiveValues(root, {
+            sku: String(sku),
             onHand: data.onHand,
             reserved: data.reserved,
             price: data.price,
@@ -1262,10 +1300,11 @@ export function requestLiveForProduct(sku) {
     // Only accept a fully complete + stable pair. Never paint partial lastData
     // (that was the main source of a phantom Reserved until refresh).
     const stable = pollState.stable;
-    if (stable && stable.onHand != null && stable.reserved != null) {
-      setLiveValues(root, { ...stable, ok: true });
+    if (stable && stable.onHand != null && stable.reserved != null && (stable.reserved === 0 || (pollState.matches || 0) >= 2)) {
+      setLiveValues(root, { ...stable, sku: String(sku), ok: true });
     } else {
       setLiveValues(root, {
+        sku: String(sku),
         ok: false,
         reason: (lastData && lastData.reason) || 'bridge-timeout',
         onHand: null,
