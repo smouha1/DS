@@ -2664,43 +2664,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-window.addEventListener('smouha:hub-product-image', (ev) => {
-  try {
-    const d = ev.detail || {};
-    const sku = d.sku;
-    const url = d.image;
-    if (!sku || !url || !/^https?:\/\//i.test(String(url))) return;
-    if (search.setDmartImage) search.setDmartImage(sku, String(url));
-    const img = document.getElementById('prodImg');
-    const wrap = document.getElementById('prodImgWrap');
-    const liveCard = document.getElementById('dmartLiveCard');
-    const currentSku = liveCard ? liveCard.getAttribute('data-sku') : null;
-    const inputSku = (document.getElementById('searchInput') || {}).value || '';
-    const match =
-      String(inputSku).trim() === String(sku) ||
-      String(currentSku || '') === String(sku);
-    if (img && match) {
-      img.onload = () => {
-        if (wrap) {
-          wrap.classList.remove('loading', 'img-fetching-dmart', 'no-image');
-        }
-      };
-      img.onerror = () => {};
-      img.removeAttribute('hidden');
-      img.style.display = '';
-      img.alt = '';
-      img.src = String(url);
-      if (wrap) {
-        wrap.classList.remove('loading', 'img-fetching-dmart', 'no-image');
-        const placeholder = wrap.querySelector('.img-placeholder, .no-image-label');
-        if (placeholder) placeholder.style.display = 'none';
-      }
-    }
-    document.querySelectorAll('.panel-item[data-sku="' + String(sku).replace(/"/g, '') + '"] .panel-thumb').forEach((t) => {
-      t.src = String(url);
-    });
-  } catch (e) {}
-});
+/* smouha:hub-product-image handled by primary S3 listener above */
 
 window.addEventListener('smouha:hub-recent', (ev) => {
   try {

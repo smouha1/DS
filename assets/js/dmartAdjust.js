@@ -222,6 +222,17 @@ function readAvailableNumber(root) {
   }
 }
 
+function readReservedNumber(root) {
+  try {
+    const el = root && root.querySelector('[data-live="reserved"]');
+    if (!el) return null;
+    const m = String(el.textContent || '').match(/-?\d+/);
+    return m ? parseInt(m[0], 10) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 function ensureAdjustModal() {
   let modal = document.getElementById('dmartAdjustModal');
   if (modal) return modal;
@@ -320,7 +331,7 @@ function ensureAdjustModal() {
   return modal;
 }
 
-function openAdjustConfirm({ sku, direction, quantity, available }) {
+function openAdjustConfirm({ sku, direction, quantity, available, reserved }) {
   return new Promise((resolve) => {
     const modal = ensureAdjustModal();
     const ctx = getProductContext(sku);
@@ -332,8 +343,14 @@ function openAdjustConfirm({ sku, direction, quantity, available }) {
     img.style.display = ctx.image ? '' : 'none';
     nameEl.textContent = ctx.name || ('SKU ' + sku);
     modal.querySelector('#dmartAdjSku').textContent = sku;
+    const hasRes = reserved != null && Number.isFinite(reserved) && reserved > 0;
+    const freeNow = (available != null && Number.isFinite(available) && hasRes)
+      ? Math.max(0, available - reserved)
+      : null;
     modal.querySelector('#dmartAdjAvail').textContent =
-      available != null && Number.isFinite(available) ? String(available) + ' units' : '—';
+      available != null && Number.isFinite(available)
+        ? (hasRes ? `${available} units (${reserved} reserved · ${freeNow} free)` : `${available} units`)
+        : '—';
     modal.querySelector('#dmartAdjWh').textContent = getWarehouseLabel();
     const act = modal.querySelector('#dmartAdjAction');
     act.textContent = (isInc ? 'Increase stock' : 'Decrease stock') + ' · ' + quantity;
@@ -614,7 +631,8 @@ function bindAdjustPanel(root, sku) {
     }
 
     const available = readAvailableNumber(root);
-    const confirmed = await openAdjustConfirm({ sku, direction, quantity, available });
+    const reserved = readReservedNumber(root);
+    const confirmed = await openAdjustConfirm({ sku, direction, quantity, available, reserved });
     if (!confirmed) { done(); return; }
 
     panel.classList.add('is-busy');

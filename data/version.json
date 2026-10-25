@@ -1,14 +1,15 @@
 {
   "version": "1.9.12",
-  "build": 173,
-  "updated": "2026-10-24",
+  "build": 174,
+  "updated": "2026-10-25",
   "products": 41931,
   "changelogByVersion": [
     {
       "version": "1.9.12",
-      "build": 173,
-      "date": "2026-10-24",
+      "build": 174,
+      "date": "2026-10-25",
       "items": [
+        "build 174 \u2014 Root-cause fix for Phantom Reserved (detail-only authority, no search-list fallback, fix Number(null) coercion & productId relay), smart free-stock check on adjust, and Premium DMart Live Card v3 redesign",
         "build 173 \u2014 Cycle Count Workspace: live DMart Cycle/Batch viewer, multi-location & expiry breakdown per SKU, walk-path aisle sorting, floor verification checklist, and per-item scannable QR / Code 128 barcodes",
         "build 172 \u2014 libs: JsBarcode 3.11.6\u21923.12.3 (local vendor); ZXing library 0.20\u21920.23.0 + @zxing/browser 0.1.5\u21920.2.1 (CDN jsdelivr)",
         "build 171 \u2014 Hover preview size doubled again (520\u00d7640), still always to the right of cursor",

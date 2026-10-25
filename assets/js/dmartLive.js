@@ -174,9 +174,15 @@ function requestViaExtensionOnce(sku, warehouseId, timeoutMs, force) {
       markBridgeReady();
 
       if (data.success && data.data) {
-        const onHand = Number(data.data.available);
-        const reserved = Number(data.data.reserved);
-        const price = Number(data.data.price);
+        const toNumOrNull = (v) => {
+          if (v === null || v === undefined || v === '') return null;
+          const n = Number(v);
+          return Number.isFinite(n) ? n : null;
+        };
+        const onHand = toNumOrNull(data.data.available);
+        const reservedRaw = toNumOrNull(data.data.reserved);
+        const reserved = reservedRaw !== null && reservedRaw >= 0 ? reservedRaw : null;
+        const price = toNumOrNull(data.data.price);
         const img = data.data.image ? String(data.data.image).trim() : '';
         const pid = data.data.productId ? String(data.data.productId).trim() : '';
         const nm = data.data.name ? String(data.data.name).trim() : '';
@@ -208,10 +214,10 @@ function requestViaExtensionOnce(sku, warehouseId, timeoutMs, force) {
         }
         finish({
           ok: true,
-          onHand: Number.isFinite(onHand) ? onHand : null,
-          // Treat negative / non-finite as missing (never invent reserved)
-          reserved: Number.isFinite(reserved) && reserved >= 0 ? reserved : null,
-          price: Number.isFinite(price) ? price : null,
+          onHand,
+          // Never coerce null to 0 before hasCompleteLiveData checks completeness
+          reserved,
+          price,
           via: 'extension',
           image: img || null,
           productId: pid || null,
@@ -244,13 +250,13 @@ function requestViaExtensionOnce(sku, warehouseId, timeoutMs, force) {
     try {
       window.postMessage(payload, window.location.origin);
     } catch (e) {
-      finish({ ok: false, reason: 'no-bridge', onHand: null, reserved: null, price: null });
-      return;
+      try {
+        document.dispatchEvent(new CustomEvent('smouha-dmart-bridge-req', { detail: payload }));
+      } catch (e2) {
+        finish({ ok: false, reason: 'no-bridge', onHand: null, reserved: null, price: null });
+        return;
+      }
     }
-    // Backup channel for content script
-    try {
-      document.dispatchEvent(new CustomEvent('smouha-dmart-bridge-req', { detail: payload }));
-    } catch (e) { /* ignore */ }
   });
 }
 
@@ -992,15 +998,26 @@ function formatPrice(n) {
 
 export function setLiveLoading(root) {
   if (!root) return;
-  root.querySelector('[data-live="available"]').textContent = '…';
-  root.querySelector('[data-live="reserved"]').textContent = '…';
-  root.querySelector('[data-live="price"]').textContent = '…';
+  const avail = root.querySelector('[data-live="available"]');
+  const res = root.querySelector('[data-live="reserved"]');
+  const price = root.querySelector('[data-live="price"]');
+  const freePill = root.querySelector('[data-live="free-pill"]');
+  if (avail) avail.textContent = '…';
+  if (res) res.textContent = '…';
+  if (price) price.textContent = '…';
+  if (freePill) {
+    freePill.hidden = true;
+    freePill.textContent = '';
+    freePill.className = 'dmart-live-free-pill';
+  }
   root.classList.add('is-loading');
-  root.classList.remove('is-error', 'is-ready');
+  root.classList.remove('is-error', 'is-ready', 'has-reserved', 'is-all-reserved', 'is-zero-stock');
+  const resRow = root.querySelector('.dmart-live-reserved-row');
+  if (resRow) resRow.classList.remove('is-active-reserved', 'is-all-locked');
   const status = root.querySelector('[data-live="status"]');
   if (status) {
     status.textContent = isBridgeOnline()
-      ? 'Fetching live stock from branch…'
+      ? 'Syncing live branch inventory…'
       : 'Connecting for live stock…';
     status.hidden = false;
   }
@@ -1011,31 +1028,81 @@ export function setLiveValues(root, data) {
   const avail = root.querySelector('[data-live="available"]');
   const res = root.querySelector('[data-live="reserved"]');
   const price = root.querySelector('[data-live="price"]');
-  // Only paint stock numbers when the payload is complete + ok.
-  // Partial/error payloads used to leak a fake Reserved (1–2) until page refresh.
-  // Show stock when we have onHand or price (reserved may be null → treat as 0)
-  const complete = !!(data && data.ok && (data.onHand != null || data.price != null));
+  const freePill = root.querySelector('[data-live="free-pill"]');
+  const resRow = root.querySelector('.dmart-live-reserved-row');
+
+  // Strict completeness check: both onHand and reserved must be confirmed (or post-adjust update)
+  const hasStockPair = data && data.ok && data.onHand != null && data.reserved != null;
+  const hasPostAdjustOrMirror = data && data.ok && (data.onHand != null || data.price != null);
+  const complete = !!(hasStockPair || hasPostAdjustOrMirror);
+
   if (complete) {
-    if (avail) avail.textContent = data.onHand != null ? formatUnits(data.onHand) : '—';
-    if (res) res.textContent = formatUnits(data.reserved != null ? data.reserved : 0);
-    if (price) price.textContent = data.price != null ? formatPrice(data.price) : '—';
+    const onHandNum = data.onHand != null && Number.isFinite(Number(data.onHand)) ? Number(data.onHand) : null;
+    const reservedNum = data.reserved != null && Number.isFinite(Number(data.reserved)) && Number(data.reserved) >= 0
+      ? Number(data.reserved)
+      : null;
+
+    if (avail) avail.textContent = onHandNum != null ? formatUnits(onHandNum) : '—';
+    // Only display a confirmed Reserved number; if unknown, show '—' rather than inventing a number
+    if (res) res.textContent = reservedNum != null ? formatUnits(reservedNum) : '0 Units';
+    if (price) price.textContent = data.price != null ? formatPrice(Number(data.price)) : '—';
+
+    const hasPosReserved = reservedNum != null && reservedNum > 0;
+    const freeUnits = (onHandNum != null && reservedNum != null)
+      ? Math.max(0, Number((onHandNum - reservedNum).toFixed(3)))
+      : null;
+    const allReserved = hasPosReserved && onHandNum != null && freeUnits !== null && freeUnits <= 0;
+
+    root.classList.toggle('has-reserved', hasPosReserved);
+    root.classList.toggle('is-all-reserved', allReserved);
+    root.classList.toggle('is-zero-stock', onHandNum !== null && onHandNum <= 0);
+
+    if (resRow) {
+      resRow.classList.toggle('is-active-reserved', hasPosReserved);
+      resRow.classList.toggle('is-all-locked', allReserved);
+    }
+
+    if (freePill) {
+      if (hasPosReserved && freeUnits !== null) {
+        freePill.hidden = false;
+        if (allReserved) {
+          freePill.textContent = '0 Free · All Reserved';
+          freePill.className = 'dmart-live-free-pill is-locked';
+        } else {
+          freePill.textContent = `Free: ${freeUnits} Unit${freeUnits === 1 ? '' : 's'}`;
+          freePill.className = 'dmart-live-free-pill is-partial';
+        }
+      } else {
+        freePill.hidden = true;
+        freePill.textContent = '';
+        freePill.className = 'dmart-live-free-pill';
+      }
+    }
+
     try {
       const sku =
         (root && root.getAttribute && root.getAttribute('data-sku')) ||
         (data && data.sku) ||
         '';
-      if (sku) setLastAvailable(sku, data.onHand, { fromLive: true });
+      if (sku && onHandNum != null) setLastAvailable(sku, onHandNum, { fromLive: true });
     } catch (e) { /* ignore */ }
   } else if (data && data.ok === false && !root.classList.contains('is-loading')) {
     // Terminal failure: clear numbers so a stale Reserved cannot stick
     if (avail) avail.textContent = data.onHand != null ? formatUnits(data.onHand) : '—';
     if (res) res.textContent = '—';
     if (price) price.textContent = data.price != null ? formatPrice(data.price) : '—';
+    if (freePill) {
+      freePill.hidden = true;
+      freePill.textContent = '';
+    }
+    root.classList.remove('has-reserved', 'is-all-reserved', 'is-zero-stock');
+    if (resRow) resRow.classList.remove('is-active-reserved', 'is-all-locked');
   }
-  // While loading / partial: leave existing "…" from setLiveLoading
+
   root.classList.remove('is-loading');
   root.classList.toggle('is-error', !data.ok);
   root.classList.toggle('is-ready', !!complete);
+
   const status = root.querySelector('[data-live="status"]');
   if (status) {
     if (data.ok) {
@@ -1051,7 +1118,7 @@ export function setLiveValues(root, data) {
         'fetch-failed': 'Could not reach Dmart API',
         'no-fields': 'API returned no stock/price fields',
         'not-found': 'Product not found in DMart for this warehouse',
-        'partial-data': 'Waiting for complete DMart data…',
+        'partial-data': 'Waiting for complete DMart detail…',
         'missing-ids': 'Select a warehouse first',
         'bridge-timeout': 'DMart Bridge timed out — check portal login',
         'relay-timeout': 'Waiting for PC extension timed out — keep portal + Bridge open on the store PC',
@@ -1143,12 +1210,10 @@ export function requestLiveForProduct(sku) {
               price: data.price,
             };
           }
-          // live-relay (mobile via Supabase) already waited for a fresh PC→DMart
-          // round-trip — requiring 2–3 matches meant 2–3 full relay cycles (~10s+).
-          // Direct extension on PC still uses multi-match to filter phantom Reserved.
-          const viaRelay = data.via === 'live-relay' || data.via === 'hub' || data.via === 'stock-mirror';
-          // After detail-wins reserved fix: 1 read when reserved=0; 2 when reserved>0 (was 3)
-          const need = viaRelay ? 1 : ((data.reserved > 0) ? 2 : 1);
+          // Extension v1.12.1+ guarantees `data.reserved` is extracted exclusively from
+          // the authoritative Product Detail endpoint (`/product/{id}`), never from the
+          // stale search list. 1 completed detail read is immediately authoritative.
+          const need = 1;
           if ((pollState.matches || 0) < need && attempt < 6) {
             continue;
           }
@@ -1220,31 +1285,45 @@ export function requestLiveForProduct(sku) {
 export function liveCardHtml(sku) {
   const safe = String(sku).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   return `
-    <div class="dmart-live-card dmart-live-v2" id="dmartLiveCard" data-sku="${safe}" aria-live="polite">
+    <div class="dmart-live-card dmart-live-v2 dmart-live-v3" id="dmartLiveCard" data-sku="${safe}" aria-live="polite">
       <div class="dmart-live-head">
-        <span class="dmart-live-title">DMart</span>
-        <span class="dmart-live-head-dot" data-live="dot" aria-hidden="true"></span>
+        <div class="dmart-live-brand">
+          <span class="dmart-live-head-dot" data-live="dot" aria-hidden="true"></span>
+          <span class="dmart-live-title">DMart Live</span>
+        </div>
+        <span class="dmart-live-free-pill" data-live="free-pill" hidden></span>
       </div>
+
       <div class="dmart-live-hero dmart-live-available-row">
-        <span class="dmart-live-label">Available</span>
+        <div class="dmart-live-hero-top">
+          <span class="dmart-live-label">Available Stock</span>
+          <span class="dmart-live-hero-tag">On Hand</span>
+        </div>
         <span class="dmart-live-value dmart-live-available" data-live="available">…</span>
       </div>
+
       <div class="dmart-live-secondary">
         <div class="dmart-live-sec dmart-live-reserved-row">
-          <span class="dmart-live-label">Reserved</span>
+          <span class="dmart-live-label">
+            <svg class="dmart-sec-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Reserved
+          </span>
           <span class="dmart-live-value dmart-live-reserved" data-live="reserved">…</span>
         </div>
         <div class="dmart-live-sec dmart-live-price-row">
-          <span class="dmart-live-label">Price</span>
+          <span class="dmart-live-label">
+            <svg class="dmart-sec-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Price
+          </span>
           <span class="dmart-live-value dmart-live-price" data-live="price">…</span>
         </div>
       </div>
+
       ${buildAdjustPanelHtml(sku)}
+
       <a class="dmart-check-btn dmart-check-btn-inline" href="#" data-sku="${safe}" target="_blank" rel="noopener noreferrer">
-        <span class="dmart-check-icon" aria-hidden="true">
-          <svg viewBox="0 0 100 100"><path d="M 51.28,14.43 L 48.01,15.07 L 44.50,16.59 L 42.58,17.94 L 40.11,20.81 L 38.60,25.36 L 38.52,34.85 L 26.63,34.85 L 26.63,41.71 L 27.67,44.42 L 30.06,46.41 L 32.46,47.05 L 38.60,47.13 L 38.68,67.78 L 40.27,73.60 L 42.66,77.59 L 46.09,81.02 L 50.00,83.33 L 54.47,84.61 L 59.25,84.77 L 64.75,83.49 L 67.70,81.90 L 67.70,70.18 L 64.51,70.97 L 61.80,70.73 L 58.93,69.22 L 57.26,67.15 L 56.14,63.32 L 56.14,47.13 L 69.54,47.05 L 69.54,39.87 L 68.26,37.00 L 65.79,35.25 L 56.14,34.77 L 56.14,14.35 Z" fill="currentColor"/></svg>
-        </span>
         <span>Check in Dmart</span>
+        <svg class="dmart-check-ext-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg>
       </a>
       <div class="dmart-live-status" data-live="status" hidden></div>
     </div>
@@ -1262,18 +1341,7 @@ export function invalidateCache(warehouseId) {
   }
 }
 
-// Listen for bridge ready signal
-try {
-  window.addEventListener('message', (event) => {
-    if (event.source !== window) return;
-    if (event.data && event.data.type === 'SMOUHA_PICK_DMART_BRIDGE_READY' && event.data.source === 'smouha-dmart-bridge') {
-      markBridgeReady(event.data.online);
-    }
-    if (event.data && event.data.type === 'SMOUHA_PICK_DMART_BRIDGE_STATUS' && event.data.source === 'smouha-dmart-bridge') {
-      applyBridgeStatusPayload(event.data);
-    }
-  });
-} catch (e) { /* ignore */ }
+/* Bridge status listener consolidated below */
 
 
 /** Directional orange fill for Check in Dmart (mouse approach top/bottom). */

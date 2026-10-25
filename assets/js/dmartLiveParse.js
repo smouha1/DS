@@ -41,13 +41,35 @@ export function asList(data) {
 }
 
 export function pickMatchingProduct(data, sku) {
+  if (!data || typeof data !== 'object') return null;
+  // Single-product detail unwrap ({ product: {...} } or direct detail object)
+  if (!Array.isArray(data)) {
+    if (data.product && typeof data.product === 'object' && !Array.isArray(data.product)) {
+      return data.product;
+    }
+    if (
+      data.id != null &&
+      (data.on_hand_quantity != null || data.onHandQuantity != null || Array.isArray(data.locations_with_expiry_date))
+    ) {
+      return data;
+    }
+  }
   const list = asList(data);
   const skuStr = String(sku).trim();
   if (!skuStr) return null;
+  // Pass 1: exact primary SKU match
+  const exactSku = list.find((row) => {
+    if (!row || typeof row !== 'object') return false;
+    const primary = [
+      row.sku, row.SKU, row.product_sku, row.productSku, row.sku_code, row.skuCode,
+    ].filter((x) => x != null).map((x) => String(x).trim());
+    return primary.includes(skuStr);
+  });
+  if (exactSku) return exactSku;
+  // Pass 2: secondary / barcode candidates
   const match = list.find((row) => {
     if (!row || typeof row !== 'object') return false;
     const candidates = [
-      row.sku, row.SKU, row.product_sku, row.productSku, row.sku_code, row.skuCode,
       row.external_id, row.externalId, row.barcode, row.product_barcode,
       row.merchant_sku, row.merchantSku, row.item_sku, row.itemSku,
     ].filter((x) => x != null).map((x) => String(x).trim());
